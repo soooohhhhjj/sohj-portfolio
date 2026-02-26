@@ -1,12 +1,179 @@
-:root {
-  color-scheme: light;
-}
-
+/* #region Global Base */
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  background-color: #000000;
+  color: #ffffff;
 }
+/* #endregion */
+
+/* #region Root */
+#root {
+  min-height: 100vh;
+}
+/* #endregion */
+
+/* #region Scroll */
+/* #region Scroll - Overflow */
+html,
+body,
+#root {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+/* #endregion */
+
+/* #region Scroll - Hide Scrollbar */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+/* #endregion */
+/* #endregion */
+
+/* #region App Shell */
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
+}
+/* #endregion */
+
+/* #region Layout Primitives */
+.section-shell {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.section-content {
+  width: 100%;
+  margin-inline: auto;
+}
+/* #endregion */
+
+/* #region Starfield */
+.starfield-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+/* #endregion */
+
+/* #region Debug Panels */
+.debug-vh-block {
+  height: 100vh;
+}
+
+/* #region Debug Panels - Breakpoint Guide */
+.debug-breakpoint-guide {
+  border-left: 1px dashed rgba(255, 255, 255, 0.5);
+  border-right: 1px dashed rgba(255, 255, 255, 0.5);
+}
+/* #endregion */
+
+/* #region Debug Panels - Section Colors */
+.debug-vh-block--1 {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.debug-vh-block--2 {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.debug-vh-block--3 {
+  background-color: rgba(234, 179, 8, 0.1);
+}
+
+.debug-vh-block--4 {
+  background-color: rgba(244, 63, 94, 0.1);
+}
+
+.debug-vh-block--5 {
+  background-color: rgba(168, 85, 247, 0.1);
+}
+/* #endregion */
+/* #endregion */
+
+/* #region Debug Overlay */
+.breakpoint-debug {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+/* #region Debug Overlay - Frame */
+.breakpoint-debug__frame {
+  height: 100%;
+  border-left: 1px dashed rgba(255, 255, 255, 0.9);
+  border-right: 1px dashed rgba(255, 255, 255, 0.9);
+}
+
+.breakpoint-debug__frame--xl {
+  width: 1280px;
+}
+
+.breakpoint-debug__frame--lg {
+  width: 1024px;
+}
+
+.breakpoint-debug__frame--md {
+  width: 768px;
+}
+
+.breakpoint-debug__frame--sm {
+  width: 640px;
+}
+
+.breakpoint-debug__frame--xsm {
+  width: 480px;
+}
+
+.breakpoint-debug__frame--xxsm {
+  width: 400px;
+}
+
+.breakpoint-debug__frame--dinosaur {
+  width: 350px;
+}
+/* #endregion */
+
+/* #region Debug Overlay - Label */
+.breakpoint-debug__label {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.breakpoint-debug__label--dragging {
+  cursor: grabbing;
+}
+/* #endregion */
+/* #endregion */
