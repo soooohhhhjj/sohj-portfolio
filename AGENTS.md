@@ -116,14 +116,59 @@ Each feature must contain:
 - features/ may import from shared/.
 - services/ must not depend on UI components.
 
-5. Styling
+## 5. Styling
+
 - Tailwind CSS only.
 - Mobile-first responsive design.
 - No inline styles.
 - No arbitrary spacing.
 - Use consistent spacing scale.
+- Screen-size and layout tokens must originate from shared constants (breakpoints.ts); 
+  CSS should consume those via generated/runtime variables. Avoid hardcoded width tokens except media-query conditions.
+- Tailwind screens must be sourced from the same shared responsive tokens used by 
+  breakpoints.ts (single source of truth).
+- Fallback CSS token values are allowed only as non-authoritative defaults; primary 
+  values must be injected/generated from shared responsive tokens.
+- Do not hardcode numeric breakpoint/content-width values in component CSS/TS unless  
+  justified and documented.
 - Extract reusable layout primitives.
 - Prefer reusable component variants over duplication.
+
+### CSS File Organization Rules
+
+When writing CSS files (global styles, overrides, or scoped CSS files):
+
+- Use `#region` and `#endregion` to group related styles.
+- Group styles by logical ownership (parent → children).
+- Keep related selectors physically close.
+- Order styles from high-level container to nested elements.
+- Separate major sections clearly for easier scrolling.
+
+Example structure:
+
+```css
+/* #region Hero Section */
+.hero {
+  ...
+}
+
+/* #region Hero - Content */
+.hero__content {
+  ...
+}
+
+.hero__title {
+  ...
+}
+/* #endregion Hero - Content */
+
+/* #region Hero - Actions */
+.hero__actions {
+  ...
+}
+/* #endregion Hero - Actions */
+
+/* #endregion Hero Section */
 
 6. State Management
 - Prefer local state when possible.

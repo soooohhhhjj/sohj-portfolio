@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { BREAKPOINTS } from '../../constants/breakpoints';
+import { useEffect, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { BREAKPOINTS, CONTENT_MAX_WIDTH } from '../../constants/breakpoints';
 
 type ActiveBreakpoint = 'mobile' | 'dinosaur' | 'xxsm' | 'xsm' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -9,12 +10,7 @@ interface ThresholdInfo {
   threshold: number;
 }
 
-interface Position {
-  x: number;
-  y: number;
-}
-
-const LABEL_STORAGE_KEY = 'sohj.breakpointDebug.labelPosition';
+const VISIBILITY_STORAGE_KEY = 'sohj.breakpointDebug.visible';
 
 function getActiveBreakpoint(width: number): ActiveBreakpoint {
   if (width >= BREAKPOINTS.xl) return 'xl';
@@ -54,28 +50,59 @@ function getFrameClass(threshold: number) {
   return 'breakpoint-debug__frame--sm';
 }
 
+function getContentFrameClass(threshold: number) {
+  if (threshold === BREAKPOINTS.xl) return 'breakpoint-debug__content-frame--xl';
+  if (threshold === BREAKPOINTS.lg) return 'breakpoint-debug__content-frame--lg';
+  if (threshold === BREAKPOINTS.md) return 'breakpoint-debug__content-frame--md';
+  if (threshold === BREAKPOINTS.sm) return 'breakpoint-debug__content-frame--sm';
+  if (threshold === BREAKPOINTS.xsm) return 'breakpoint-debug__content-frame--xsm';
+  if (threshold === BREAKPOINTS.xxsm) return 'breakpoint-debug__content-frame--xxsm';
+  if (threshold === BREAKPOINTS.dinosaur) return 'breakpoint-debug__content-frame--dinosaur';
+  return 'breakpoint-debug__content-frame--sm';
+}
+
+function getContentWidthClass(width: number) {
+  if (width >= BREAKPOINTS.xl) return 'breakpoint-debug__content-width--xl';
+  if (width >= BREAKPOINTS.lg) return 'breakpoint-debug__content-width--lg';
+  if (width >= BREAKPOINTS.md) return 'breakpoint-debug__content-width--md';
+  if (width >= BREAKPOINTS.sm) return 'breakpoint-debug__content-width--sm';
+  if (width >= BREAKPOINTS.xsm) return 'breakpoint-debug__content-width--xsm';
+  if (width >= BREAKPOINTS.xxsm) return 'breakpoint-debug__content-width--xxsm';
+  if (width >= BREAKPOINTS.dinosaur) return 'breakpoint-debug__content-width--dinosaur';
+  return 'breakpoint-debug__content-width--mobile';
+}
+
+function getContentMaxWidth(width: number) {
+  if (width >= BREAKPOINTS.xl) return CONTENT_MAX_WIDTH.xl;
+  if (width >= BREAKPOINTS.lg) return CONTENT_MAX_WIDTH.lg;
+  if (width >= BREAKPOINTS.md) return CONTENT_MAX_WIDTH.md;
+  if (width >= BREAKPOINTS.sm) return CONTENT_MAX_WIDTH.sm;
+  if (width >= BREAKPOINTS.xsm) return CONTENT_MAX_WIDTH.xsm;
+  if (width >= BREAKPOINTS.xxsm) return CONTENT_MAX_WIDTH.xxsm;
+  if (width >= BREAKPOINTS.dinosaur) return CONTENT_MAX_WIDTH.dinosaur;
+  return CONTENT_MAX_WIDTH.mobile;
+}
+
+function getLabelClass(threshold: number) {
+  if (threshold === BREAKPOINTS.xl) return 'breakpoint-debug__label--xl';
+  if (threshold === BREAKPOINTS.lg) return 'breakpoint-debug__label--lg';
+  if (threshold === BREAKPOINTS.md) return 'breakpoint-debug__label--md';
+  if (threshold === BREAKPOINTS.sm) return 'breakpoint-debug__label--sm';
+  if (threshold === BREAKPOINTS.xsm) return 'breakpoint-debug__label--xsm';
+  if (threshold === BREAKPOINTS.xxsm) return 'breakpoint-debug__label--xxsm';
+  if (threshold === BREAKPOINTS.dinosaur) return 'breakpoint-debug__label--dinosaur';
+  return 'breakpoint-debug__label--sm';
+}
+
 export function BreakpointDebugOverlay() {
-  const labelRef = useRef<HTMLParagraphElement>(null);
   const [viewportWidth, setViewportWidth] = useState<number>(
     typeof window === 'undefined' ? BREAKPOINTS.lg : window.innerWidth,
   );
-  const [labelPosition, setLabelPosition] = useState<Position | null>(() => {
-    if (typeof window === 'undefined') return null;
-
-    const savedPosition = window.localStorage.getItem(LABEL_STORAGE_KEY);
-    if (!savedPosition) return null;
-
-    try {
-      const parsed = JSON.parse(savedPosition) as Position;
-      if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-        return parsed;
-      }
-      return null;
-    } catch {
-      return null;
-    }
+  const [isVisible, setIsVisible] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const saved = window.localStorage.getItem(VISIBILITY_STORAGE_KEY);
+    return saved === null ? true : saved === 'true';
   });
-  const [dragOffset, setDragOffset] = useState<Position | null>(null);
 
   useEffect(() => {
     const handleResize = () => setViewportWidth(window.innerWidth);
@@ -88,84 +115,43 @@ export function BreakpointDebugOverlay() {
   }, []);
 
   useEffect(() => {
-    if (!labelPosition) return;
-    window.localStorage.setItem(LABEL_STORAGE_KEY, JSON.stringify(labelPosition));
-  }, [labelPosition]);
-
-  useEffect(() => {
-    if (!dragOffset) return;
-
-    const clampPosition = (x: number, y: number): Position => {
-      const labelWidth = labelRef.current?.offsetWidth ?? 0;
-      const labelHeight = labelRef.current?.offsetHeight ?? 0;
-      const margin = 8;
-      const maxX = Math.max(margin, window.innerWidth - labelWidth - margin);
-      const maxY = Math.max(margin, window.innerHeight - labelHeight - margin);
-
-      return {
-        x: Math.max(margin, Math.min(maxX, x)),
-        y: Math.max(margin, Math.min(maxY, y)),
-      };
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      const nextX = event.clientX - dragOffset.x;
-      const nextY = event.clientY - dragOffset.y;
-      setLabelPosition(clampPosition(nextX, nextY));
-    };
-
-    const handlePointerUp = () => {
-      setDragOffset(null);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [dragOffset]);
-
-  const handleLabelPointerDown = (event: ReactPointerEvent<HTMLParagraphElement>) => {
-    if (!labelRef.current) return;
-
-    const labelRect = labelRef.current.getBoundingClientRect();
-    const currentPosition: Position = {
-      x: labelRect.left,
-      y: labelRect.top,
-    };
-
-    setLabelPosition(currentPosition);
-    setDragOffset({
-      x: event.clientX - currentPosition.x,
-      y: event.clientY - currentPosition.y,
-    });
-  };
+    window.localStorage.setItem(VISIBILITY_STORAGE_KEY, String(isVisible));
+  }, [isVisible]);
 
   const thresholdInfo = getThresholdInfo(viewportWidth);
+  const contentMaxWidth = getContentMaxWidth(viewportWidth);
 
   if (!thresholdInfo) return null;
 
+  const nextBreakpointPx = thresholdInfo.next === 'mobile' ? 0 : BREAKPOINTS[thresholdInfo.next];
+
   return (
     <div className="breakpoint-debug" aria-hidden="true">
-      <div className={`breakpoint-debug__frame ${getFrameClass(thresholdInfo.threshold)}`} />
-      <p
-        ref={labelRef}
-        className={`breakpoint-debug__label ${dragOffset ? 'breakpoint-debug__label--dragging' : ''}`}
-        onPointerDown={handleLabelPointerDown}
-        style={
-          labelPosition
-            ? {
-                left: `${labelPosition.x}px`,
-                top: `${labelPosition.y}px`,
-                transform: 'none',
-              }
-            : undefined
-        }
+      {isVisible ? (
+        <>
+          <div className={`breakpoint-debug__frame ${getFrameClass(thresholdInfo.threshold)}`} />
+          <div
+            className={`breakpoint-debug__content-frame ${getContentFrameClass(thresholdInfo.threshold)} ${getContentWidthClass(viewportWidth)}`}
+          />
+          <p
+            className={`breakpoint-debug__label ${getLabelClass(thresholdInfo.threshold)}`}
+          >
+            <span>{`Current: ${thresholdInfo.current.toUpperCase()} = ${Math.round(viewportWidth)}px`}</span>
+            <span>{`Breakpoint = ${thresholdInfo.threshold}px`}</span>
+            <span>{`Content = ${contentMaxWidth}px`}</span>
+            <span>{`Next = ${nextBreakpointPx}px`}</span>
+          </p>
+        </>
+      ) : null}
+
+      <button
+        type="button"
+        className={`breakpoint-debug__toggle ${getLabelClass(thresholdInfo.threshold)}`}
+        onClick={() => setIsVisible((prev) => !prev)}
+        aria-label={isVisible ? 'Hide debug overlay' : 'Show debug overlay'}
       >
-        {`Current: ${thresholdInfo.current.toUpperCase()} | Switch to ${thresholdInfo.next.toUpperCase()} below ${thresholdInfo.threshold}px`}
-      </p>
+        {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
     </div>
   );
 }

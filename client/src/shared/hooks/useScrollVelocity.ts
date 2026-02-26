@@ -4,8 +4,13 @@ import { setScrollVelocity } from '../utils/scrollState';
 
 const MAX_SCROLL_VELOCITY = 30;
 
-export function useScrollVelocity() {
+export function useScrollVelocity(enabled = true) {
   useEffect(() => {
+    if (!enabled) {
+      setScrollVelocity(0);
+      return;
+    }
+
     const lenis = new Lenis({
       lerp: 0.1,
       wheelMultiplier: 1,
@@ -35,5 +40,5 @@ export function useScrollVelocity() {
       lenis.destroy();
       setScrollVelocity(0);
     };
-  }, []);
+  }, [enabled]);
 }

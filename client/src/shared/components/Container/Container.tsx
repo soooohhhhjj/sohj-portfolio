@@ -1,5 +1,5 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import { BREAKPOINTS, CONTENT_MAX_WIDTH } from '../../constants/breakpoints';
+import { useEffect, useState, type ReactNode } from 'react';
+import { BREAKPOINTS } from '../../constants/breakpoints';
 
 interface SectionProps {
   children: ReactNode;
@@ -11,16 +11,18 @@ interface SectionContentProps {
   className?: string;
 }
 
-const getContentMaxWidth = (width: number) => {
-  if (width >= BREAKPOINTS.xl) return CONTENT_MAX_WIDTH.xl;
-  if (width >= BREAKPOINTS.lg) return CONTENT_MAX_WIDTH.lg;
-  if (width >= BREAKPOINTS.md) return CONTENT_MAX_WIDTH.md;
-  if (width >= BREAKPOINTS.sm) return CONTENT_MAX_WIDTH.sm;
-  if (width >= BREAKPOINTS.xsm) return CONTENT_MAX_WIDTH.xsm;
-  if (width >= BREAKPOINTS.xxsm) return CONTENT_MAX_WIDTH.xxsm;
-  if (width >= BREAKPOINTS.dinosaur) return CONTENT_MAX_WIDTH.dinosaur;
-  return CONTENT_MAX_WIDTH.mobile;
-};
+type ContentWidthKey = 'mobile' | 'dinosaur' | 'xxsm' | 'xsm' | 'sm' | 'md' | 'lg' | 'xl';
+
+function getContentWidthKey(width: number): ContentWidthKey {
+  if (width >= BREAKPOINTS.xl) return 'xl';
+  if (width >= BREAKPOINTS.lg) return 'lg';
+  if (width >= BREAKPOINTS.md) return 'md';
+  if (width >= BREAKPOINTS.sm) return 'sm';
+  if (width >= BREAKPOINTS.xsm) return 'xsm';
+  if (width >= BREAKPOINTS.xxsm) return 'xxsm';
+  if (width >= BREAKPOINTS.dinosaur) return 'dinosaur';
+  return 'mobile';
+}
 
 function useViewportWidth() {
   const [viewportWidth, setViewportWidth] = useState<number>(
@@ -47,13 +49,10 @@ export function Section({ children, className }: SectionProps) {
 
 export function SectionContent({ children, className }: SectionContentProps) {
   const viewportWidth = useViewportWidth();
-  const contentMaxWidth = getContentMaxWidth(viewportWidth);
-  const style: CSSProperties = { maxWidth: `${contentMaxWidth}px` };
-  const combinedClassName = className ? `section-content ${className}` : 'section-content';
+  const contentWidthKey = getContentWidthKey(viewportWidth);
+  const combinedClassName = className
+    ? `section-content responsiveness content-width content-width--${contentWidthKey} ${className}`
+    : `section-content responsiveness content-width content-width--${contentWidthKey}`;
 
-  return (
-    <div className={combinedClassName} style={style}>
-      {children}
-    </div>
-  );
+  return <div className={combinedClassName}>{children}</div>;
 }

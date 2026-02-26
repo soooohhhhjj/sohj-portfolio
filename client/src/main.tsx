@@ -1,27 +1,37 @@
 import { StrictMode } from 'react';
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
-import { BreakpointDebugOverlay } from './shared/components/BreakpointDebugOverlay';
-import { Section, SectionContent } from './shared/components/Container';
+import { HomePage } from './features/homepage/HomePage';
+import { Footer, Navbar } from './shared/layouts';
 import { StarfieldBackground } from './shared/components/StarfieldBackground';
+import { BreakpointDebugOverlay } from './shared/components/BreakpointDebugOverlay';
 import { useScrollVelocity } from './shared/hooks/useScrollVelocity';
+import { useResponsiveTokens } from './shared/hooks/useResponsiveTokens';
+
+type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 'forward';
 
 export function App() {
-  useScrollVelocity();
+  const [starMode, setStarMode] = useState<StarMode>('normal');
+  const [isWelcomeFinished, setIsWelcomeFinished] = useState(false);
+  const [isIntroFinished, setIsIntroFinished] = useState(false);
+  const showDebugPanels = import.meta.env.DEV;
+  useResponsiveTokens();
+  useScrollVelocity(isIntroFinished);
 
   return (
     <div className="app-shell">
-      <StarfieldBackground />
-      <BreakpointDebugOverlay />
+      <StarfieldBackground mode={starMode} />
+      <Navbar shouldAnimate={isWelcomeFinished} />
       <main className="app-content">
-        {Array.from({ length: 5 }, (_, index) => (
-          <Section key={`debug-panel-${index}`}>
-            <SectionContent>
-              <div className={`debug-vh-block debug-breakpoint-guide debug-vh-block--${index + 1}`} />
-            </SectionContent>
-          </Section>
-        ))}
+        <HomePage
+          setStarMode={setStarMode}
+          onWelcomeFinishedChange={setIsWelcomeFinished}
+          onIntroFinishedChange={setIsIntroFinished}
+        />
       </main>
+      <Footer />
+      {showDebugPanels ? <BreakpointDebugOverlay /> : null}
     </div>
   );
 }
