@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { motion, type Easing } from 'framer-motion';
-import { Download, Mail } from 'lucide-react';
+import { FileText, Github, Linkedin, Mail } from 'lucide-react';
 import { Section, SectionContent } from '../../../shared/components/Container';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import HeroCards from './hero/HeroCards';
@@ -11,11 +11,9 @@ const easeSmooth: Easing = [0.12, 0.7, 0.63, 0.9];
 interface HeroProps {
   shouldAnimate: boolean;
   onAnimationsComplete: () => void;
-  onContactClick?: () => void;
 }
 
-export function Hero({ shouldAnimate, onAnimationsComplete, onContactClick }: HeroProps) {
-  const [outlineHover, setOutlineHover] = useState(false);
+export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
   const resumeUrl = `${import.meta.env.BASE_URL}sohj-resume.pdf`;
 
   useEffect(() => {
@@ -91,28 +89,49 @@ export function Hero({ shouldAnimate, onAnimationsComplete, onContactClick }: He
                 initial={{ y: '100vh' }}
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 1.2, ease: easeSmooth, delay: 0.04 }}
-                className="btn-pair flex flex-wrap justify-center md:justify-start gap-3 sm:gap-4 mt-6 sm:mt-7 text-[11px] sm:text-[12px] md:text-[11px] lg:text-[11px] tracking-[.2px] font-[700] font-jura"
+                className="hero-icon-links mt-6 sm:mt-7"
               >
                 <a
                   href={resumeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`hero-btn hero-btn-solid flex items-center gap-[4px] lg:gap-2 px-[14px] md:px-[15px] lg:px-[22px] py-[8px] md:py-[7px] lg:py-[7px] rounded-[4px] font-jura font-[700] tracking-[.2px] ${outlineHover ? 'btn-drain' : ''}`}
+                  className="hero-icon-link"
+                  aria-label="Open resume"
                 >
-                  <Download className="w-3 h-3 lg:w-[12px] lg:h-[12px]" />
-                  Resume
+                  <FileText className="hero-icon-link__icon" />
+                  <span className="hero-icon-link__label">Resume</span>
                 </a>
 
-                <button
-                  type="button"
-                  className="hero-btn hero-btn-outline flex items-center gap-[4px] lg:gap-2 px-[14px] md:px-[15px] lg:px-[22px] py-[8px] md:py-[7px] lg:py-[7px] rounded-[4px] font-jura font-[700] tracking-[.2px]"
-                  onClick={onContactClick}
-                  onMouseEnter={() => setOutlineHover(true)}
-                  onMouseLeave={() => setOutlineHover(false)}
+                <a
+                  href="https://github.com/soooohhhhjj"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hero-icon-link"
+                  aria-label="Open GitHub profile"
                 >
-                  <Mail className="w-3 h-3 lg:w-[12px] lg:h-[12px]" />
-                  Contact
-                </button>
+                  <Github className="hero-icon-link__icon" />
+                  <span className="hero-icon-link__label">GitHub</span>
+                </a>
+
+                <a
+                  href="http://linkedin.com/in/carlojoshua-abellera"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hero-icon-link"
+                  aria-label="Open LinkedIn profile"
+                >
+                  <Linkedin className="hero-icon-link__icon" />
+                  <span className="hero-icon-link__label">LinkedIn</span>
+                </a>
+
+                <a
+                  href="mailto:carlojoshua.abellera.ph@gmail.com"
+                  className="hero-icon-link"
+                  aria-label="Send an email"
+                >
+                  <Mail className="hero-icon-link__icon" />
+                  <span className="hero-icon-link__label">Email</span>
+                </a>
               </motion.div>
             </div>
           </div>
