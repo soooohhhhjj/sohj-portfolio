@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* #region Hero Root */
 :root {
   --btn-c1: #cfc232;
   --btn-c2: #ccbe27;
@@ -11,23 +12,27 @@
   --color-test: #b9b84c3b;
   --color-test-2: #ffffff0c;
 }
+/* #endregion Hero Root */
 
 @layer components {
+  /* #region Hero Typography */
   .hero-big-text {
     text-shadow: 0 0 15px rgba(206, 226, 252, 0.336);
-     -webkit-text-stroke: 1px;
+    -webkit-text-stroke: 1px;
   }
 
   .hero-name-text {
     text-shadow: 0 0 10px rgba(206, 226, 252, 0.432);
-    -webkit-text-stroke: .2px;
+    -webkit-text-stroke: 0.2px;
   }
 
   .hero-role-text {
     text-shadow: 0 0 30px rgba(206, 226, 252, 0.432);
     -webkit-text-stroke: 1.3px;
   }
+  /* #endregion Hero Typography */
 
+  /* #region Navbar Keyframes */
   @keyframes navbar-flicker-strong {
     0% { opacity: 1; }
     10% { opacity: 0; }
@@ -54,7 +59,9 @@
     50% { opacity: 0.7; }
     100% { opacity: 1; }
   }
+  /* #endregion Navbar Keyframes */
 
+  /* #region Navbar Flicker Targets */
   .char-0.flicker-once {
     animation: navbar-flicker-strong 0.55s linear;
     animation-delay: 0.05s;
@@ -79,7 +86,9 @@
     animation: navbar-flicker-light 0.45s linear;
     animation-delay: 0.41s;
   }
+  /* #endregion Navbar Flicker Targets */
 
+  /* #region Hero Buttons */
   .hero-btn {
     position: relative;
     overflow: hidden;
@@ -195,7 +204,9 @@
     color: #1a1a1a;
     filter: drop-shadow(0 0 20px var(--btn-glow));
   }
+  /* #endregion Hero Buttons */
 
+  /* #region Hero Icon Links */
   .hero-icon-links {
     --hero-action-icon-size: 21px;
     display: inline-flex;
@@ -266,9 +277,21 @@
     box-shadow: 0 0 8px rgba(240, 246, 255, 0.4);
     width: calc(100% + 6px);
   }
+  /* #endregion Hero Icon Links */
 
+  /* #region Hero Icon Links Responsive */
+  @media (min-width: 768px) {
+    .hero-icon-links {
+      justify-content: flex-start;
+    }
 
+    .hero-icon-link {
+      height: calc(var(--hero-action-icon-size) + 10px);
+    }
+  }
+  /* #endregion Hero Icon Links Responsive */
 
+  /* #region Navbar Hamburger */
   .hamburger {
     position: relative;
     align-items: center;
@@ -299,7 +322,9 @@
   .hamburger.is-open .line-1 { transform: rotate(45deg); }
   .hamburger.is-open .line-2 { opacity: 0; }
   .hamburger.is-open .line-3 { transform: rotate(-45deg); }
+  /* #endregion Navbar Hamburger */
 
+  /* #region Navbar Hamburger Responsive */
   @media (min-width: 640px) {
     .hamburger { width: 40px; height: 40px; }
     .hamburger-line { width: 26px; }
@@ -313,7 +338,9 @@
     .hamburger .line-1 { transform: translateY(-6px); }
     .hamburger .line-3 { transform: translateY(6px); }
   }
+  /* #endregion Navbar Hamburger Responsive */
 
+  /* #region Navbar Mobile Menu */
   .nav-mobile {
     overflow: hidden;
     width: 100%;
@@ -331,15 +358,18 @@
     opacity: 1;
     pointer-events: auto;
   }
+  /* #endregion Navbar Mobile Menu */
 
+  /* #region Hero Card Text */
   .hero-card-section-title {
     text-shadow: 0 0 13px rgba(255, 255, 255, 0.479);
-    -webkit-text-stroke: .2px;
+    -webkit-text-stroke: 0.2px;
   }
 
   .hero-card-title {
     text-shadow: 0 0 7px rgba(255, 255, 255, 0.479);
   }
+  /* #endregion Hero Card Text */
 
   /* #region Hero Card Shell */
   .hero-card-shell {
@@ -516,5 +546,5 @@
       gap: 0.5rem;
     }
   }
-  /* #endregion */
+  /* #endregion Hero Card Shell */
 }
