@@ -17,6 +17,7 @@ body {
 
 /* #region Root Variables */
 :root {
+  --base-text-color: rgb(247,247,217);
   --bp-dinosaur: 350px;
   --bp-xxsm: 400px;
   --bp-xsm: 480px;
@@ -32,6 +33,12 @@ body {
   --cw-md: 730px;
   --cw-lg: 930px;
   --cw-xl: 930px;
+}
+/* #endregion */
+
+/* #region Color Utilities */
+.base-text-color {
+  color: var(--base-text-color);
 }
 /* #endregion */
 
@@ -91,59 +98,11 @@ body,
   background-image: none !important;
 }
 
-.perf-debug-lite .hero-gradient-text,
 .perf-debug-lite .nav-link:hover {
   -webkit-background-clip: initial !important;
   color: #ffffff !important;
 }
 /* #endregion */
-/* #endregion */
-
-/* #region Navbar */
-.navbar-shell {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  display: flex;
-  justify-content: center;
-  padding: 24px 0 8px;
-}
-
-.navbar {
-  width: 100%;
-  max-width: var(--cw-lg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.navbar__brand {
-  margin: 0;
-  font-family: 'Bruno Ace SC', sans-serif;
-  font-size: 20px;
-  letter-spacing: 2px;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.35);
-}
-
-.navbar__links {
-  display: flex;
-  gap: 14px;
-}
-
-.navbar__link {
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.85);
-  font-family: 'Jura', sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.4px;
-  cursor: pointer;
-  transition: color 0.25s ease;
-}
-
-.navbar__link:hover {
-  color: #ffffff;
-}
 /* #endregion */
 
 /* #region Layout Primitives */
@@ -584,220 +543,6 @@ body,
 }
 /* #endregion */
 
-/* #region Hero */
-.hero-section {
-  margin-top: 20px;
-}
-
-.hero-content {
-  max-width: var(--cw-lg);
-}
-
-.hero-main {
-  display: flex;
-  flex-direction: column;
-  gap: 64px;
-}
-
-.hero-top {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 48px;
-}
-
-.hero-avatar-wrap {
-  width: 100%;
-  max-width: 320px;
-}
-
-.hero-avatar-frame {
-  max-height: 440px;
-}
-
-.hero-avatar-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top;
-}
-
-.hero-avatar-fallback {
-  display: flex;
-  min-height: 320px;
-  align-items: center;
-  justify-content: center;
-  font-size: 72px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: rgba(255, 255, 255, 0.9);
-  background:
-    radial-gradient(circle at 30% 20%, rgba(207, 194, 50, 0.35), transparent 50%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-}
-
-.hero-copy {
-  flex: 1;
-  max-width: 600px;
-  text-align: center;
-}
-
-.hero-intro {
-  font-family: 'Jura', sans-serif;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.hero-heading {
-  font-family: 'Anta', sans-serif;
-  margin-top: 8px;
-  font-size: 42px;
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-}
-
-.hero-gradient-text {
-  background: linear-gradient(135deg, #ffffff, #ffee00, #000000);
-  -webkit-background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 30px rgba(102, 105, 62, 0.35);
-}
-
-.hero-text {
-  text-shadow: 0 0 30px rgba(102, 105, 62, 0.35);
-}
-
-.hero-role {
-  font-family: 'Bruno Ace SC', sans-serif;
-  margin-top: 36px;
-  font-size: 20px;
-  letter-spacing: 1px;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.45);
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.hero-btn {
-  font-family: 'Jura', sans-serif;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 4px;
-  padding: 10px 18px;
-  border: 1px solid transparent;
-  text-decoration: none;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.35s ease, filter 0.35s ease, color 0.35s ease, border-color 0.35s ease;
-}
-
-.hero-btn__icon {
-  width: 13px;
-  height: 13px;
-}
-
-.hero-btn-solid {
-  color: #1a1a1a;
-  background: linear-gradient(135deg, #cfc232 0%, #ccbe27 20%, #b4a719 55%, #8a8011 100%);
-  filter: drop-shadow(0 0 20px rgba(102, 105, 62, 0.35));
-}
-
-.hero-btn-solid.btn-drain {
-  color: #cfc232;
-  border-color: #cfc232;
-  background: transparent;
-  filter: none;
-}
-
-.hero-btn-outline {
-  color: #cfc232;
-  border-color: #ccbe27;
-  background: transparent;
-}
-
-.hero-btn-outline:hover {
-  color: #1a1a1a;
-  border-color: transparent;
-  background: linear-gradient(135deg, #cfc232 0%, #ccbe27 20%, #b4a719 55%, #8a8011 100%);
-}
-
-.hero-cards {
-  width: 100%;
-}
-
-.hero-cards__label {
-  font-family: 'Bruno Ace SC', sans-serif;
-  margin-bottom: 20px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1.3px;
-  text-transform: uppercase;
-  text-shadow: 0 0 13px rgba(255, 255, 255, 0.45);
-}
-
-.hero-cards__grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1fr;
-}
-
-.hero-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 5px;
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1), inset 0 0 15px rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
-}
-
-.hero-card--hovered {
-  transform: translateY(-8px);
-  box-shadow: 0 0 36px rgba(255, 255, 255, 0.18), 0 0 20px rgba(251, 191, 36, 0.25);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.hero-card__icon-wrap {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.hero-card__icon {
-  width: 20px;
-  height: 20px;
-}
-
-.hero-card__title {
-  font-family: 'Bruno Ace SC', sans-serif;
-  margin: 14px 0 10px;
-  font-size: 14px;
-  letter-spacing: 0.8px;
-}
-
-.hero-card__subtitle {
-  font-family: 'Jura', sans-serif;
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.8);
-}
-/* #endregion */
-
 /* #region Journey */
 .journey-section {
   min-height: 100vh;
@@ -834,131 +579,6 @@ body,
 }
 /* #endregion */
 
-/* #region Footer */
-.footer {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  border-top: 2px solid rgba(255, 255, 255, 0.15);
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.95));
-}
-
-.footer__content {
-  max-width: var(--cw-lg);
-  padding: 28px 0 34px;
-}
-
-.footer__top {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-
-.footer__name {
-  margin: 0;
-  font-family: 'Bruno Ace SC', sans-serif;
-  font-size: 18px;
-  letter-spacing: 2px;
-}
-
-.footer__role {
-  margin: 8px 0 0;
-  font-family: 'Jura', sans-serif;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.footer__tagline {
-  margin: 8px 0 0;
-  max-width: 320px;
-  font-family: 'Jura', sans-serif;
-  font-size: 12px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.footer__columns {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-
-.footer__title {
-  margin: 0;
-  font-family: 'Bruno Ace SC', sans-serif;
-  font-size: 13px;
-  letter-spacing: 1px;
-}
-
-.footer__link-list {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.footer__link {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  text-align: left;
-  color: rgba(255, 255, 255, 0.75);
-  font-family: 'Jura', sans-serif;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.footer__link:hover {
-  color: #ffffff;
-}
-
-.footer__social-list {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.footer__social {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  padding: 6px 10px;
-  color: rgba(255, 255, 255, 0.75);
-  text-decoration: none;
-  font-family: 'Jura', sans-serif;
-  font-size: 11px;
-}
-
-.footer__social:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.footer__social-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.footer__divider {
-  margin: 22px 0;
-  height: 1px;
-  width: 100%;
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
-}
-
-.footer__bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: 'Jura', sans-serif;
-  font-size: 11px;
-}
-/* #endregion */
 
 /* #region Responsive */
 @media (min-width: 640px) {
@@ -976,48 +596,8 @@ body,
     max-width: var(--cw-md);
   }
 
-  .navbar-shell {
-    padding-top: 28px;
-  }
-
   .welcome-text {
     font-size: 28px;
-  }
-
-  .hero-top {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 32px;
-  }
-
-  .hero-copy {
-    text-align: left;
-  }
-
-  .hero-actions {
-    justify-content: flex-start;
-  }
-
-  .hero-cards__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-  }
-
-  .footer__top {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .footer__columns {
-    flex-direction: row;
-    gap: 40px;
-  }
-
-  .footer__bottom {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
   }
 }
 
@@ -1028,18 +608,6 @@ body,
 
   .welcome-text {
     font-size: 30px;
-  }
-
-  .hero-section {
-    margin-top: 30px;
-  }
-
-  .navbar__links {
-    gap: 18px;
-  }
-
-  .hero-cards__grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 /* #endregion */
