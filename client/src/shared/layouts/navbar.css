@@ -5,8 +5,8 @@
   --navlink-glow: rgb(255, 255, 255);
 }
 
-.icon-role-text {
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.479);
+.icon-text {
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.705);
   -webkit-text-stroke: 1px #fdf5c6de;
 }
 

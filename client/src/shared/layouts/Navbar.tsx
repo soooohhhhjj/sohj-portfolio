@@ -69,7 +69,7 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
           transition={{ duration: 0.6, ease: [0.12, 0.7, 0.63, 0.9] }}
           className="w-full flex justify-between items-center lg:items-end mt-[30px] md:mt-[32px] lg:mt-[30px] relative z-0"
         >
-          <h1 className="icon-role-text font-bruno text-[18px] font-[500] tracking-[2px] text-white sm:text-[20px] md:text-[18px] lg:text-[20px]">
+          <h1 className="icon-text font-bruno text-[15px] font-[500] text-white tracking-[2px] sm:text-[20px] md:text-[18px] lg:text-[20px]">
             {'sohj.abe'.split('').map((char, i) => (
               <span key={i} className={`char-${i} ${runFlicker ? 'flicker-once' : ''}`}>
                 {char}
@@ -77,31 +77,31 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
             ))}
           </h1>
 
-          <div className="nav-links hidden items-center gap-6 lg:flex">
+          <div className="items-center hidden gap-6 nav-links lg:flex">
             <button
               type="button"
-              className="nav-link nav-link-size border-0 bg-transparent p-0"
+              className="p-0 bg-transparent border-0 nav-link nav-link-size"
               onClick={() => scrollToSection('home-top')}
             >
               Home
             </button>
             <button
               type="button"
-              className="nav-link nav-link-size border-0 bg-transparent p-0"
+              className="p-0 bg-transparent border-0 nav-link nav-link-size"
               onClick={() => scrollToSection('projects-section')}
             >
               Projects
             </button>
             <button
               type="button"
-              className="nav-link nav-link-size border-0 bg-transparent p-0"
+              className="p-0 bg-transparent border-0 nav-link nav-link-size"
               onClick={() => scrollToSection('about-section')}
             >
               About Me
             </button>
             <button
               type="button"
-              className="nav-link nav-link-size border-0 bg-transparent p-0"
+              className="p-0 bg-transparent border-0 nav-link nav-link-size"
               onClick={() => scrollToSection('contact-section')}
             >
               Contact
@@ -122,31 +122,31 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
         </motion.nav>
 
         <div className={`nav-mobile flex flex-col lg:hidden ${isMenuOpen ? 'nav-open' : ''}`}>
-          <div className="nav-links flex flex-col items-start gap-4 pt-4">
+          <div className="flex flex-col items-start gap-4 pt-4 nav-links">
             <button
               type="button"
-              className="nav-link nav-link-size border-0 bg-transparent p-0"
+              className="p-0 bg-transparent border-0 nav-link nav-link-size"
               onClick={() => scrollToSection('home-top')}
             >
               Home
             </button>
             <button
               type="button"
-              className="nav-link nav-link-size border-0 bg-transparent p-0"
+              className="p-0 bg-transparent border-0 nav-link nav-link-size"
               onClick={() => scrollToSection('projects-section')}
             >
               Projects
             </button>
             <button
               type="button"
-              className="nav-link nav-link-size border-0 bg-transparent p-0"
+              className="p-0 bg-transparent border-0 nav-link nav-link-size"
               onClick={() => scrollToSection('about-section')}
             >
               About Me
             </button>
             <button
               type="button"
-              className="nav-link nav-link-size border-0 bg-transparent p-0"
+              className="p-0 bg-transparent border-0 nav-link nav-link-size"
               onClick={() => scrollToSection('contact-section')}
             >
               Contact
