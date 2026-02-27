@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useHomeIntroFlow } from './hooks/useHomeIntroFlow';
 import { Welcome } from './components/Welcome';
 import { Hero } from './components/Hero';
@@ -14,11 +14,14 @@ interface HomePageProps {
   onIntroFinishedChange: (isFinished: boolean) => void;
 }
 
+const HERO_ANIMATION_LEAD_DELAY_MS = 60;
+
 export function HomePage({
   setStarMode,
   onWelcomeFinishedChange,
   onIntroFinishedChange,
 }: HomePageProps) {
+  const [hasHeroAnimationStarted, setHasHeroAnimationStarted] = useState(false);
   const { hasWelcomeFinished, setHasWelcomeFinished, hasHeroFinished, setHasHeroFinished, hasIntroFinished } =
     useHomeIntroFlow();
 
@@ -29,6 +32,16 @@ export function HomePage({
   useEffect(() => {
     onIntroFinishedChange(hasIntroFinished);
   }, [hasIntroFinished, onIntroFinishedChange]);
+
+  useEffect(() => {
+    if (!hasWelcomeFinished) return;
+
+    const timer = window.setTimeout(() => {
+      setHasHeroAnimationStarted(true);
+    }, HERO_ANIMATION_LEAD_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [hasWelcomeFinished]);
 
   useEffect(() => {
     if (!hasWelcomeFinished) {
@@ -58,7 +71,7 @@ export function HomePage({
       <div className="homepage__content">
         <div id="hero-section">
           <Hero
-            shouldAnimate={hasWelcomeFinished}
+            shouldAnimate={hasHeroAnimationStarted}
             onAnimationsComplete={() => setHasHeroFinished(true)}
           />
         </div>
