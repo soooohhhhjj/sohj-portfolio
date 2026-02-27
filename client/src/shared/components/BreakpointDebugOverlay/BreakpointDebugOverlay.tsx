@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Palette, RotateCcw, SlidersHorizontal, Star, StarOff, X } from 'lucide-react';
 import { BREAKPOINTS, CONTENT_MAX_WIDTH } from '../../constants/breakpoints';
 
 type ActiveBreakpoint = 'mobile' | 'dinosaur' | 'xxsm' | 'xsm' | 'sm' | 'md' | 'lg' | 'xl';
@@ -11,6 +11,15 @@ interface ThresholdInfo {
 }
 
 const VISIBILITY_STORAGE_KEY = 'sohj.breakpointDebug.visible';
+const PANEL_OPEN_STORAGE_KEY = 'sohj.breakpointDebug.panelOpen';
+
+interface BreakpointDebugOverlayProps {
+  isStarfieldEnabled: boolean;
+  onToggleStarfield: () => void;
+  isPerfLiteEnabled: boolean;
+  onTogglePerfLite: () => void;
+  onReplayIntro: () => void;
+}
 
 function getActiveBreakpoint(width: number): ActiveBreakpoint {
   if (width >= BREAKPOINTS.xl) return 'xl';
@@ -94,7 +103,13 @@ function getLabelClass(threshold: number) {
   return 'breakpoint-debug__label--sm';
 }
 
-export function BreakpointDebugOverlay() {
+export function BreakpointDebugOverlay({
+  isStarfieldEnabled,
+  onToggleStarfield,
+  isPerfLiteEnabled,
+  onTogglePerfLite,
+  onReplayIntro,
+}: BreakpointDebugOverlayProps) {
   const [viewportWidth, setViewportWidth] = useState<number>(
     typeof window === 'undefined' ? BREAKPOINTS.lg : window.innerWidth,
   );
@@ -102,6 +117,11 @@ export function BreakpointDebugOverlay() {
     if (typeof window === 'undefined') return true;
     const saved = window.localStorage.getItem(VISIBILITY_STORAGE_KEY);
     return saved === null ? true : saved === 'true';
+  });
+  const [isPanelOpen, setIsPanelOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = window.localStorage.getItem(PANEL_OPEN_STORAGE_KEY);
+    return saved === null ? false : saved === 'true';
   });
 
   useEffect(() => {
@@ -117,6 +137,10 @@ export function BreakpointDebugOverlay() {
   useEffect(() => {
     window.localStorage.setItem(VISIBILITY_STORAGE_KEY, String(isVisible));
   }, [isVisible]);
+
+  useEffect(() => {
+    window.localStorage.setItem(PANEL_OPEN_STORAGE_KEY, String(isPanelOpen));
+  }, [isPanelOpen]);
 
   const thresholdInfo = getThresholdInfo(viewportWidth);
   const contentMaxWidth = getContentMaxWidth(viewportWidth);
@@ -144,14 +168,56 @@ export function BreakpointDebugOverlay() {
         </>
       ) : null}
 
-      <button
-        type="button"
-        className={`breakpoint-debug__toggle ${getLabelClass(thresholdInfo.threshold)}`}
-        onClick={() => setIsVisible((prev) => !prev)}
-        aria-label={isVisible ? 'Hide debug overlay' : 'Show debug overlay'}
-      >
-        {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-      </button>
+      <div className="breakpoint-debug__controls">
+        {isPanelOpen ? (
+          <div className={`breakpoint-debug__panel ${getLabelClass(thresholdInfo.threshold)}`}>
+            <button
+              type="button"
+              className="breakpoint-debug__panel-btn"
+              onClick={onReplayIntro}
+              aria-label="Replay intro animations"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              className="breakpoint-debug__panel-btn"
+              onClick={onToggleStarfield}
+              aria-label={isStarfieldEnabled ? 'Disable starfield background' : 'Enable starfield background'}
+            >
+              {isStarfieldEnabled ? <StarOff className="h-4 w-4" /> : <Star className="h-4 w-4" />}
+            </button>
+
+            <button
+              type="button"
+              className="breakpoint-debug__panel-btn"
+              onClick={onTogglePerfLite}
+              aria-label={isPerfLiteEnabled ? 'Disable no-glow mode' : 'Enable no-glow mode'}
+            >
+              <Palette className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              className="breakpoint-debug__panel-btn"
+              onClick={() => setIsVisible((prev) => !prev)}
+              aria-label={isVisible ? 'Hide breakpoint overlay' : 'Show breakpoint overlay'}
+            >
+              {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          className={`breakpoint-debug__toggle ${getLabelClass(thresholdInfo.threshold)}`}
+          onClick={() => setIsPanelOpen((prev) => !prev)}
+          aria-label={isPanelOpen ? 'Close debug controls' : 'Open debug controls'}
+        >
+          {isPanelOpen ? <X className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
+        </button>
+      </div>
     </div>
   );
 }
