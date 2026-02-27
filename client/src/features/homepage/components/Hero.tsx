@@ -34,7 +34,7 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
     <Section className="section-style relative z-10 mt-[20px] md:mt-[28px] lg:mt-[30px] base-text-color">
       <SectionContent className="flex flex-col cursor-default section-content responsiveness">
         <div className="flex flex-col flex-1 gap-16 mt-[0px]">
-          <div className="flex flex-col items-center justify-center gap-12 md:flex-row md:items-start md:gap-8 lg:gap-12">
+          <div className="flex flex-col items-center justify-center gap-12 md:flex-row dinosaur:gap-6 md:items-start md:gap-8 lg:gap-12">
             <motion.div
               initial={{ y: '100vh' }}
               animate={{ y: shouldAnimate ? 0 : '100vh' }}
@@ -62,8 +62,8 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 0.9, ease: easeSmooth, delay: 0.01 }}
                 className="font-jura hero-name-text 
-                text-[12px] sm:text-[17px] md:text-[15px] lg:text-[17px] 
-                tracking-[.3px] sm:tracking-[.5px] font-[700]"
+                text-[12px] xxsm:text-[14px] xsm:text-[16px] sm:text-[18px] md:text-[15px] lg:text-[17px] 
+                tracking-[.3px] xxsm:tracking-[.1px] sm:tracking-[.5px] font-[700]"
               >
                 Hi, I&apos;m <span>Carlo Joshua B. Abellera</span>, and I enjoy
               </motion.p>
@@ -73,7 +73,7 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 1, ease: easeSmooth, delay: 0.02 }}
                 className="font-anta 
-                text-[32px] xsm:text-[46.7px] sm:text-[61px] md:text-[45px] lg:text-[59.7px] 
+                text-[32px] xxsm:text-[38px] xsm:text-[46.7px] sm:text-[61px] md:text-[45px] lg:text-[59.7px] 
                 font-extrabold leading-tight tracking-tight inline-block mt-2"
               >
                 <span className="hero-big-text">Building pixel-perfect</span>
@@ -87,7 +87,7 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 1.1, ease: easeSmooth, delay: 0.03 }}
                 className="font-bruno 
-                text-[16px] xsm:text-[22px] sm:text-[24px] md:text-[20px] lg:text-[24px] 
+                text-[16px] xxsm:text-[18px] xsm:text-[22px] sm:text-[24px] md:text-[20px] lg:text-[24px] 
                 font-[500] tracking-[1px] 
                 mt-10 sm:mt-10 hero-role-text"
               >
