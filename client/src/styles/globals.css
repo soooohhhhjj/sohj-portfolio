@@ -581,6 +581,18 @@ body,
 
 
 /* #region Responsive */
+@media (min-width: 400px) {
+  .responsiveness {
+    max-width: var(--cw-xxsm);
+  }
+}
+
+@media (min-width: 480px) {
+  .responsiveness {
+    max-width: var(--cw-xsm);
+  }
+}
+
 @media (min-width: 640px) {
   .responsiveness {
     max-width: var(--cw-sm);

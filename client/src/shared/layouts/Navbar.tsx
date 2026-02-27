@@ -67,9 +67,13 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
           initial={motionProps.initial}
           animate={motionProps.animate}
           transition={{ duration: 0.6, ease: [0.12, 0.7, 0.63, 0.9] }}
-          className="w-full flex justify-between items-center lg:items-end mt-[30px] md:mt-[32px] lg:mt-[30px] relative z-0"
+          className="w-full flex justify-between
+          items-end 
+          mt-[30px] md:mt-[32px] lg:mt-[30px] relative z-0"
         >
-          <h1 className="icon-text font-bruno text-[15px] font-[500] text-white tracking-[2px] sm:text-[20px] md:text-[18px] lg:text-[20px]">
+          <h1 className="icon-text font-bruno 
+          text-[17px] xxsm:text-[20px] sm:text-[24px] md:text-[18px] lg:text-[20px] 
+          font-[500] text-white tracking-[2px] ">
             {'sohj.abe'.split('').map((char, i) => (
               <span key={i} className={`char-${i} ${runFlicker ? 'flicker-once' : ''}`}>
                 {char}
@@ -77,7 +81,7 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
             ))}
           </h1>
 
-          <div className="items-center hidden gap-6 nav-links lg:flex">
+          <div className="hidden gap-6 nav-links lg:flex">
             <button
               type="button"
               className="p-0 bg-transparent border-0 nav-link nav-link-size"

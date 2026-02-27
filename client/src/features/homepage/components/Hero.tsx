@@ -44,7 +44,9 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 width="max-w-full md:max-w-[272px] lg:max-w-[320px]"
                 corner="rounded-[7px]"
                 shadow="shadow-[0_0_30px_rgba(255,255,255,0.15)]"
-                className="overflow-hidden sm:max-h-[440px]"
+                className="overflow-hidden 
+                dinosaur:max-h-[340px] xxsm:max-h-[380px] 
+                xsm:max-h-[470px] sm:max-h-[580px]"
               >
                 <img
                   src={`${import.meta.env.BASE_URL}prof-pic.jpg`}
@@ -59,7 +61,9 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 initial={{ y: '100vh' }}
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 0.9, ease: easeSmooth, delay: 0.01 }}
-                className="font-jura hero-name-text text-[15px] sm:text-[17px] md:text-[15px] lg:text-[17px] tracking-[.3px] sm:tracking-[.5px] font-[700]"
+                className="font-jura hero-name-text 
+                text-[12px] sm:text-[17px] md:text-[15px] lg:text-[17px] 
+                tracking-[.3px] sm:tracking-[.5px] font-[700]"
               >
                 Hi, I&apos;m <span>Carlo Joshua B. Abellera</span>, and I enjoy
               </motion.p>
@@ -68,7 +72,9 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 initial={{ y: '100vh' }}
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 1, ease: easeSmooth, delay: 0.02 }}
-                className="font-anta text-[38px] sm:text-[55px] md:text-[43px] lg:text-[59.7px] font-extrabold leading-tight tracking-tight inline-block mt-2"
+                className="font-anta 
+                text-[32px] xsm:text-[46.7px] sm:text-[61px] md:text-[45px] lg:text-[59.7px] 
+                font-extrabold leading-tight tracking-tight inline-block mt-2"
               >
                 <span className="hero-big-text">Building pixel-perfect</span>
                 <br />
@@ -80,7 +86,10 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 initial={{ y: '100vh' }}
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 1.1, ease: easeSmooth, delay: 0.03 }}
-                className="font-bruno text-[18px] sm:text-[22px] md:text-[18px] lg:text-[24px] font-[500] tracking-[1px] mt-10 sm:mt-10 hero-role-text"
+                className="font-bruno 
+                text-[16px] xsm:text-[22px] sm:text-[24px] md:text-[20px] lg:text-[24px] 
+                font-[500] tracking-[1px] 
+                mt-10 sm:mt-10 hero-role-text"
               >
                 Full-Stack Developer
               </motion.p>
@@ -89,7 +98,8 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 initial={{ y: '100vh' }}
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 1.2, ease: easeSmooth, delay: 0.04 }}
-                className="mt-6 hero-icon-links sm:mt-7"
+                className="hero-icon-links mt-6 sm:mt-7 
+                [--hero-action-icon-size:21px] md:[--hero-action-icon-size:18px] lg:[--hero-action-icon-size:21px]"
               >
                 <a
                   href={resumeUrl}
