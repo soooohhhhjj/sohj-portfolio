@@ -8,10 +8,6 @@
   --btn-c3: #b4a719;
   --btn-c4: #8a8011;
   --btn-glow: rgba(102, 105, 62, 0.397);
-  --navlink-c1: #ece162;
-  --navlink-c2: #dfd24d;
-  --navlink-c3: #ecdf4b;
-  --navlink-glow: rgb(255, 255, 255);
   --color-test: #b9b84c3b;
   --color-test-2: #ffffff0c;
 }
@@ -210,47 +206,6 @@
   .btn-pair .hero-btn-outline:hover ~ .hero-btn-solid,
   .btn-pair .hero-btn-outline:hover + .hero-btn-solid {
     filter: none !important;
-  }
-
-  .nav-link {
-    position: relative;
-    padding-bottom: 2px;
-    color: white;
-    transition: opacity 0.25s ease, color 1s ease, filter 0.3s ease;
-    letter-spacing: .1px;
-  }
-
-  .nav-link::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -2px;
-    width: 100%;
-    height: 1.1px;
-    background: linear-gradient(135deg, var(--navlink-c1), var(--navlink-c2), var(--navlink-c3));
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.35s cubic-bezier(0.22, 1.15, 0.55, 1);
-  }
-
-  .nav-link:hover {
-    background: linear-gradient(135deg, var(--navlink-c1), var(--navlink-c2), var(--navlink-c3));
-    -webkit-background-clip: text;
-    color: transparent;
-    filter: drop-shadow(0 0 20px var(--navlink-glow));
-  }
-
-  .nav-link:hover::before {
-    transform: scaleX(1);
-  }
-
-  .nav-links:hover .nav-link {
-    opacity: 0.35;
-    transition: opacity 0.25s ease, filter 0.25s ease;
-  }
-
-  .nav-links .nav-link:hover {
-    opacity: 1;
   }
 
   .hamburger {
