@@ -68,7 +68,7 @@
     right: -6px;
     bottom: -2px;
     width: calc(100% + 4px);
-    height: 1.3px;
+    height: 2px;
     border-radius: 999px;
     background: var(--base-text-color);
     opacity: 0.85;
@@ -290,7 +290,7 @@
 
   .hero-card-shell__rule {
     margin-top: -2px;
-    height: 1.3px;
+    height: 2px;
     width: 90%;
     background: linear-gradient(to right, var(--base-text-color), transparent);
     opacity: 0.45;
