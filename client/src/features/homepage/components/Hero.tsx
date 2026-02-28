@@ -31,7 +31,7 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
   }, [shouldAnimate, onAnimationsComplete]);
 
   return (
-    <Section className="section-style relative z-10 mt-[20px] md:mt-[28px] lg:mt-[30px] base-text-color">
+    <Section className="section-style relative z-10 mt-[30px] md:mt-[28px] lg:mt-[30px] base-text-color">
       <SectionContent className="flex flex-col cursor-default section-content responsiveness">
         <div className="flex flex-col flex-1 gap-16 mt-[0px]">
           <div className="flex flex-col items-center justify-center gap-12 md:flex-row dinosaur:gap-6 md:items-start md:gap-8 lg:gap-12">
