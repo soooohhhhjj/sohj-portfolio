@@ -94,7 +94,7 @@
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  color: #fff;
+  color: var(--base-text-color);
   background: transparent;
   transform: translateX(7px);
 }

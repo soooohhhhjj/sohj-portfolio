@@ -73,7 +73,7 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
         >
           <h1 className="icon-text font-bruno 
           text-[17px] xxsm:text-[20px] sm:text-[24px] md:text-[18px] lg:text-[20px] 
-          font-[500] text-white tracking-[2px] ">
+          font-[500] base-text-color tracking-[2px] ">
             {'sohj.abe'.split('').map((char, i) => (
               <span key={i} className={`char-${i} ${runFlicker ? 'flicker-once' : ''}`}>
                 {char}
