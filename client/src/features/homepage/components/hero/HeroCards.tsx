@@ -89,7 +89,7 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
       }}
       className="w-full responsiveness"
     >
-      <div className="mt-10 mb-7 md:mb-5">
+      <div className="mt-10 mb-7 md:mt-0 md:mb-5">
         <p className="font-bruno 
         text-[13px] sm:text-[15px] md:text-[12px] lg:text-[13px] 
         text-center md:text-start tracking-[1.3px] uppercase hero-card-section-title">
