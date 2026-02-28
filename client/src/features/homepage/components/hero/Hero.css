@@ -140,7 +140,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem;
   }
 
   /* Mobile split layout icon wrapper (rendered below md) */
@@ -164,8 +163,6 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.72rem 0.82rem;
   }
 
   .hero-card-shell__title--split {
@@ -175,7 +172,6 @@
 
   .hero-card-shell__subtitle--split {
     line-height: 1.4;
-    font-size: 11.5px;
   }
   /* #endregion Hero Card Split Mobile */
 
@@ -346,20 +342,13 @@
     .hero-card-split__icon-card {
       width: 78px;
       min-width: 78px;
-      padding: 0.9rem;
     }
 
     .hero-card-split__content-card {
-      padding: 0.85rem 0.95rem;
-      gap: 0.48rem;
     }
 
     .hero-card-shell__title--split {
       font-size: 13px;
-    }
-
-    .hero-card-shell__subtitle--split {
-      font-size: 12px;
     }
 
     .hero-card-shell__subtitle {

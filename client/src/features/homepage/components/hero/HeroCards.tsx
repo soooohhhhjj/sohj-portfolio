@@ -27,19 +27,21 @@ function HeroCard({
   return (
     <>
       <div className={clsx('hero-card-split md:hidden', isReversedOnMobile && 'hero-card-split--reverse')}>
-        <div className="hero-card-split__icon-card">
+        <div className="p-3 hero-card-split__icon-card sm:p-4">
           {/* Mobile split layout icon wrapper (rendered below md) */}
           <div className="w-8 h-8 hero-card-split__icon-wrap sm:w-10 sm:h-10">
             <Icon className="w-5 h-5 sm:w-[18px] sm:h-[18px]" />
           </div>
         </div>
 
-        <div className="hero-card-split__content-card">
-          <h3 className="hero-card-shell__title hero-card-shell__title--split font-bruno text-[12px] hero-card-title">
+        <div className="hero-card-split__content-card gap-1.5 p-3 sm:gap-2 sm:py-2 sm:px-5">
+          <h3 className="hero-card-shell__title hero-card-shell__title--split font-bruno text-[12px] sm:text-[11px] hero-card-title">
             {title}
           </h3>
           <div className="hero-card-shell__rule hero-card-shell__rule--active" />
-          <p className="hero-card-shell__subtitle hero-card-shell__subtitle--split">{subtitle}</p>
+          <p className="hero-card-shell__subtitle hero-card-shell__subtitle--split text-[11.5px] sm:text-[10.5px]">
+            {subtitle}
+          </p>
         </div>
       </div>
 
@@ -87,8 +89,10 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
       }}
       className="w-full responsiveness"
     >
-      <div className="mb-5">
-        <p className="font-bruno text-[13px] sm:text-[15px] md:text-[12px] lg:text-[13px] text-center md:text-start tracking-[1.3px] uppercase hero-card-section-title">
+      <div className="mt-10 mb-7 md:mb-5">
+        <p className="font-bruno 
+        text-[13px] sm:text-[15px] md:text-[12px] lg:text-[13px] 
+        text-center md:text-start tracking-[1.3px] uppercase hero-card-section-title">
           Highlights
         </p>
       </div>
