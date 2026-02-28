@@ -27,19 +27,19 @@ function HeroCard({
   return (
     <>
       <div className={clsx('hero-card-split md:hidden', isReversedOnMobile && 'hero-card-split--reverse')}>
-        <div className="p-3 hero-card-split__icon-card sm:p-4">
+        <div className="hero-card-split__icon-card w-[85px] min-w-[85px] xsm:w-[74px] xsm:min-w-[74px] p-4 sm:w-[78px] sm:min-w-[78px]">
           {/* Mobile split layout icon wrapper (rendered below md) */}
-          <div className="w-8 h-8 hero-card-split__icon-wrap sm:w-10 sm:h-10">
-            <Icon className="w-5 h-5 sm:w-[18px] sm:h-[18px]" />
+          <div className="w-10 h-10 hero-card-split__icon-wrap sm:w-10 sm:h-10">
+            <Icon className="w-[22px] h-[22px] sm:w-[18px] sm:h-[18px]" />
           </div>
         </div>
 
-        <div className="hero-card-split__content-card gap-1.5 p-3 sm:gap-2 sm:py-2 sm:px-5">
-          <h3 className="hero-card-shell__title hero-card-shell__title--split font-bruno text-[12px] sm:text-[11px] hero-card-title">
+        <div className="gap-2 px-6 py-2 xsm:px-5 xsm:py-2 hero-card-split__content-card">
+          <h3 className="hero-card-shell__title hero-card-shell__title--split font-bruno text-[11px] hero-card-title">
             {title}
           </h3>
           <div className="hero-card-shell__rule hero-card-shell__rule--active" />
-          <p className="hero-card-shell__subtitle hero-card-shell__subtitle--split text-[11.5px] sm:text-[10.5px]">
+          <p className="hero-card-shell__subtitle hero-card-shell__subtitle--split text-[11px] tracking-[.5px]">
             {subtitle}
           </p>
         </div>
