@@ -1,7 +1,7 @@
 import { motion, type Easing } from 'framer-motion';
 import { BugOff, GraduationCap, LaptopMinimalCheck, Layers } from 'lucide-react';
 import clsx from 'clsx';
-import { useState, type ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
 const easeSmooth: Easing = [0.12, 0.7, 0.63, 0.9];
 
@@ -14,8 +14,6 @@ type HeroCardProps = {
   Icon: ComponentType<{ className?: string }>;
   title: string;
   subtitle: string;
-  hoveredIndex: number | null;
-  setHoveredIndex: (value: number | null) => void;
 };
 
 function HeroCard({
@@ -23,18 +21,16 @@ function HeroCard({
   Icon,
   title,
   subtitle,
-  hoveredIndex,
-  setHoveredIndex,
 }: HeroCardProps) {
-  const isHovered = hoveredIndex === index;
   const isReversedOnMobile = index % 2 === 1;
 
   return (
     <>
       <div className={clsx('hero-card-split md:hidden', isReversedOnMobile && 'hero-card-split--reverse')}>
         <div className="hero-card-split__icon-card">
-          <div className="hero-card-split__icon-wrap">
-            <Icon className="w-5 h-5" />
+          {/* Mobile split layout icon wrapper (rendered below md) */}
+          <div className="w-8 h-8 hero-card-split__icon-wrap sm:w-10 sm:h-10">
+            <Icon className="w-5 h-5 sm:w-[18px] sm:h-[18px]" />
           </div>
         </div>
 
@@ -47,49 +43,39 @@ function HeroCard({
         </div>
       </div>
 
-      <div
-        onMouseEnter={() => setHoveredIndex(index)}
-        onMouseLeave={() => setHoveredIndex(null)}
-        className={clsx('hero-card-shell hidden md:flex md:p-4 md:gap-2 lg:p-6 lg:gap-[10px]', isHovered && 'hero-card-shell--hovered')}
-      >
+      <div className="hero-card-shell hidden md:flex md:p-4 md:gap-2 lg:p-6 lg:gap-[10px]">
         <div className="hero-card-shell__border" />
         <div className="hero-card-shell__sheen" />
-        <div className={clsx('hero-card-shell__hover-gradient', isHovered && 'hero-card-shell__hover-gradient--active')} />
-        <div className={clsx('hero-card-shell__corner-glint', isHovered && 'hero-card-shell__corner-glint--active')} />
+        <div className="hero-card-shell__hover-gradient" />
+        <div className="hero-card-shell__corner-glint" />
 
         <div className="hero-card-shell__content">
           <div className="relative">
-            <div className={clsx('hero-card-shell__icon-glow', isHovered && 'hero-card-shell__icon-glow--active')} />
-            <div className={clsx('hero-card-shell__icon-wrap', isHovered && 'hero-card-shell__icon-wrap--hovered')}>
+            <div className="hero-card-shell__icon-glow" />
+            {/* Normal card layout icon wrapper (rendered from md and up) */}
+            <div className="hero-card-shell__icon-wrap w-[40px] h-[40px] lg:w-[50px] lg:h-[50px]">
               <Icon className="w-[18px] h-[18px] lg:h-6 lg:w-6" />
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <h3 className="hero-card-shell__title font-bruno text-[12px] lg:text-[14px] hero-card-title">{title}</h3>
+          <div className="flex flex-col gap-2 hero-card-shell__title-block">
+            <h3 className="hero-card-shell__title font-bruno text-[11px] lg:text-[14px] hero-card-title">{title}</h3>
 
-            <div className={clsx('hero-card-shell__rule', isHovered && 'hero-card-shell__rule--active')} />
+            <div className="hero-card-shell__rule" />
           </div>
         </div>
 
-        <p
-          className={clsx(
-            'hero-card-shell__subtitle md:text-[11px] md:leading-snug lg:text-[12px] lg:leading-relaxed',
-            isHovered && 'hero-card-shell__subtitle--hovered',
-          )}
-        >
+        <p className="hero-card-shell__subtitle md:text-[10px] md:leading-snug lg:text-[12px] lg:leading-relaxed">
           {subtitle}
         </p>
 
-        <div className={clsx('hero-card-shell__bottom-rule', isHovered && 'hero-card-shell__bottom-rule--active')} />
+        <div className="hero-card-shell__bottom-rule" />
       </div>
     </>
   );
 }
 
 export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
   return (
     <motion.div
       initial={{ y: '100vh' }}
@@ -119,8 +105,6 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
             Icon={GraduationCap}
             title="BSIT Graduate"
             subtitle="Bachelor of Science in Information Technology"
-            hoveredIndex={hoveredIndex}
-            setHoveredIndex={setHoveredIndex}
           />
         </motion.div>
 
@@ -135,8 +119,6 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
             Icon={LaptopMinimalCheck}
             title="IT Intern Exp."
             subtitle="Technical support, system deployment & reporting"
-            hoveredIndex={hoveredIndex}
-            setHoveredIndex={setHoveredIndex}
           />
         </motion.div>
 
@@ -151,8 +133,6 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
             Icon={Layers}
             title="SysArch Thesis"
             subtitle="Lead Developer - Inventory Management System"
-            hoveredIndex={hoveredIndex}
-            setHoveredIndex={setHoveredIndex}
           />
         </motion.div>
 
@@ -167,8 +147,6 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
             Icon={BugOff}
             title="Capstone Thesis"
             subtitle="Planning, debugging & feature support"
-            hoveredIndex={hoveredIndex}
-            setHoveredIndex={setHoveredIndex}
           />
         </motion.div>
       </div>
