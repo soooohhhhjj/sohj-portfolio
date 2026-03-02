@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useHomeIntroFlow } from './hooks/useHomeIntroFlow';
 import { Welcome } from './components/Welcome';
 import { Hero } from './components/Hero';
-import { JourneyTitle } from './components/JourneyTitle';
+import Journey from './components/Journey';
 import { SkillsTitle } from './components/SkillsTitle';
 import { Navbar } from '../../shared/layouts';
 
@@ -60,7 +60,7 @@ export function HomePage({
         </div>
 
         <div id="journey-section">
-          <JourneyTitle show={hasIntroFinished} />
+          <Journey shouldShow={hasIntroFinished} />
         </div>
 
         <div id="tech-stack-section">

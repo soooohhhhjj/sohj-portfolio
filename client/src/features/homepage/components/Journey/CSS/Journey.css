@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+
+  .journey-header {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.48);
+    -webkit-text-stroke: 1px;
+  }
+
+  .journey-subheader {
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.479);
+    -webkit-text-stroke: 0.1px;
+  }
+}
