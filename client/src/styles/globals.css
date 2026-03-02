@@ -497,7 +497,7 @@ body,
   width: 2px;
   height: 1.2em;
   margin-left: 4px;
-  background-color: #ffffff;
+  background-color: var(--base-text-color);
   vertical-align: bottom;
 }
 
@@ -533,7 +533,7 @@ body,
   display: inline-block;
   width: 2px;
   height: 1.35em;
-  background-color: white;
+  background-color: var(--base-text-color);
   vertical-align: bottom;
   transform: translateY(-2px);
 }

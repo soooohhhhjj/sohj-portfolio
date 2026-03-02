@@ -50,7 +50,7 @@ export function Welcome({ onAnimationComplete }: WelcomeProps) {
     <Section className="w-full h-screen flex items-center justify-center">
       <SectionContent className="section-content center-div responsiveness text-center">
         <span
-          className="font-jura text-[23px] sm:text-[24px] md:text-[28px] lg:text-[30px] tracking-[.09rem] font-[500] text-white"
+          className="font-jura text-[23px] sm:text-[24px] md:text-[28px] lg:text-[30px] tracking-[.09rem] font-[500] base-text-color"
         >
           {displayed}
           <span className={`caret ${isTypingDone ? 'blink' : ''}`} />
