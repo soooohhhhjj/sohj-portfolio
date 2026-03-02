@@ -1,7 +1,8 @@
 import { motion, type Easing } from 'framer-motion';
 import { BugOff, GraduationCap, LaptopMinimalCheck, Layers } from 'lucide-react';
 import clsx from 'clsx';
-import { type ComponentType } from 'react';
+import { type ComponentType, type ReactNode, useEffect, useState } from 'react';
+import { BREAKPOINTS } from '../../../../shared/constants/breakpoints';
 
 const easeSmooth: Easing = [0.12, 0.7, 0.63, 0.9];
 
@@ -15,6 +16,39 @@ type HeroCardProps = {
   title: string;
   subtitle: string;
 };
+
+interface CardMotionWrapperProps {
+  isSmAndBelow: boolean;
+  shouldAnimate: boolean;
+  duration: number;
+  delay: number;
+  className: string;
+  children: ReactNode;
+}
+
+function CardMotionWrapper({
+  isSmAndBelow,
+  shouldAnimate,
+  duration,
+  delay,
+  className,
+  children,
+}: CardMotionWrapperProps) {
+  if (isSmAndBelow) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
+    <motion.div
+      className={className}
+      initial={{ y: '100vh' }}
+      animate={{ y: shouldAnimate ? 0 : '100vh' }}
+      transition={{ duration, ease: easeSmooth, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 function HeroCard({
   index,
@@ -78,6 +112,23 @@ function HeroCard({
 }
 
 export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
+  const [isSmAndBelow, setIsSmAndBelow] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth <= BREAKPOINTS.sm : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmAndBelow(window.innerWidth <= BREAKPOINTS.sm);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
     <motion.div
       initial={{ y: '100vh' }}
@@ -98,11 +149,12 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
       </div>
 
       <div className="flex flex-wrap gap-4 md:flex-nowrap sm:gap-6 md:gap-3 lg:gap-4">
-        <motion.div
+        <CardMotionWrapper
+          isSmAndBelow={isSmAndBelow}
+          shouldAnimate={shouldAnimate}
+          duration={1.35}
+          delay={0.06}
           className="w-full md:w-[calc(25%-6px)] lg:w-[calc(25%-12px)]"
-          initial={{ y: '100vh' }}
-          animate={{ y: shouldAnimate ? 0 : '100vh' }}
-          transition={{ duration: 1.35, ease: easeSmooth, delay: 0.06 }}
         >
           <HeroCard
             index={0}
@@ -110,13 +162,14 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
             title="BSIT Graduate"
             subtitle="Bachelor of Science in Information Technology"
           />
-        </motion.div>
+        </CardMotionWrapper>
 
-        <motion.div
+        <CardMotionWrapper
+          isSmAndBelow={isSmAndBelow}
+          shouldAnimate={shouldAnimate}
+          duration={1.45}
+          delay={0.07}
           className="w-full md:w-[calc(25%-6px)] lg:w-[calc(25%-12px)]"
-          initial={{ y: '100vh' }}
-          animate={{ y: shouldAnimate ? 0 : '100vh' }}
-          transition={{ duration: 1.45, ease: easeSmooth, delay: 0.07 }}
         >
           <HeroCard
             index={1}
@@ -124,13 +177,14 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
             title="IT Intern Exp."
             subtitle="Technical support, system deployment & reporting"
           />
-        </motion.div>
+        </CardMotionWrapper>
 
-        <motion.div
+        <CardMotionWrapper
+          isSmAndBelow={isSmAndBelow}
+          shouldAnimate={shouldAnimate}
+          duration={1.55}
+          delay={0.08}
           className="w-full md:w-[calc(25%-6px)] lg:w-[calc(25%-12px)]"
-          initial={{ y: '100vh' }}
-          animate={{ y: shouldAnimate ? 0 : '100vh' }}
-          transition={{ duration: 1.55, ease: easeSmooth, delay: 0.08 }}
         >
           <HeroCard
             index={2}
@@ -138,13 +192,14 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
             title="SysArch Thesis"
             subtitle="Lead Developer - Inventory Management System"
           />
-        </motion.div>
+        </CardMotionWrapper>
 
-        <motion.div
+        <CardMotionWrapper
+          isSmAndBelow={isSmAndBelow}
+          shouldAnimate={shouldAnimate}
+          duration={1.65}
+          delay={0.09}
           className="w-full md:w-[calc(25%-6px)] lg:w-[calc(25%-12px)]"
-          initial={{ y: '100vh' }}
-          animate={{ y: shouldAnimate ? 0 : '100vh' }}
-          transition={{ duration: 1.65, ease: easeSmooth, delay: 0.09 }}
         >
           <HeroCard
             index={3}
@@ -152,7 +207,7 @@ export default function HeroCards({ shouldAnimate }: HeroCardsProps) {
             title="Capstone Thesis"
             subtitle="Planning, debugging & feature support"
           />
-        </motion.div>
+        </CardMotionWrapper>
       </div>
     </motion.div>
   );
