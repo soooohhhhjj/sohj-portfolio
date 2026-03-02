@@ -61,7 +61,7 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
   }
 
   return (
-    <header>
+    <header className="relative z-40">
       <div className="responsiveness">
         <motion.nav
           initial={motionProps.initial}
@@ -69,7 +69,7 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
           transition={{ duration: 0.6, ease: [0.12, 0.7, 0.63, 0.9] }}
           className="w-full flex justify-between
           items-end 
-          mt-[30px] md:mt-[32px] lg:mt-[30px] relative z-0"
+          mt-[30px] md:mt-[32px] lg:mt-[30px] relative z-40"
         >
           <h1 className="icon-text font-bruno 
           text-[17px] xxsm:text-[20px] sm:text-[24px] md:text-[18px] lg:text-[20px] 

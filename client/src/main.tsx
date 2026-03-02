@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
 import { HomePage } from './features/homepage/HomePage';
-import { Footer, Navbar } from './shared/layouts';
+import { Footer } from './shared/layouts';
 import { StarfieldBackground } from './shared/components/StarfieldBackground';
 import { BreakpointDebugOverlay } from './shared/components/BreakpointDebugOverlay';
 import { useScrollVelocity } from './shared/hooks/useScrollVelocity';
@@ -25,7 +25,6 @@ export function App() {
     const saved = window.localStorage.getItem(PERF_LITE_ENABLED_STORAGE_KEY);
     return saved === null ? false : saved === 'true';
   });
-  const [isWelcomeFinished, setIsWelcomeFinished] = useState(false);
   const [isIntroFinished, setIsIntroFinished] = useState(false);
   const [introReplayKey, setIntroReplayKey] = useState(0);
   const showDebugPanels = import.meta.env.DEV;
@@ -41,7 +40,6 @@ export function App() {
   }, [isPerfLiteEnabled]);
 
   const replayIntro = () => {
-    setIsWelcomeFinished(false);
     setIsIntroFinished(false);
     setIntroReplayKey((prev) => prev + 1);
   };
@@ -49,12 +47,10 @@ export function App() {
   return (
     <div className={`app-shell ${isPerfLiteEnabled ? 'perf-debug-lite' : ''}`}>
       {isStarfieldEnabled ? <StarfieldBackground mode={starMode} /> : null}
-      <Navbar shouldAnimate={isWelcomeFinished} />
       <main className="app-content">
         <HomePage
           key={introReplayKey}
           setStarMode={setStarMode}
-          onWelcomeFinishedChange={setIsWelcomeFinished}
           onIntroFinishedChange={setIsIntroFinished}
         />
       </main>

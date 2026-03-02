@@ -1,47 +1,29 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useHomeIntroFlow } from './hooks/useHomeIntroFlow';
 import { Welcome } from './components/Welcome';
 import { Hero } from './components/Hero';
 import { JourneyTitle } from './components/JourneyTitle';
 import { SkillsTitle } from './components/SkillsTitle';
+import { Navbar } from '../../shared/layouts';
 
 type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 'forward';
 
 interface HomePageProps {
   setStarMode: (mode: StarMode) => void;
-  onWelcomeFinishedChange: (isFinished: boolean) => void;
   onIntroFinishedChange: (isFinished: boolean) => void;
 }
 
-const HERO_ANIMATION_LEAD_DELAY_MS = 60;
-
 export function HomePage({
   setStarMode,
-  onWelcomeFinishedChange,
   onIntroFinishedChange,
 }: HomePageProps) {
-  const [hasHeroAnimationStarted, setHasHeroAnimationStarted] = useState(false);
   const { hasWelcomeFinished, setHasWelcomeFinished, hasHeroFinished, setHasHeroFinished, hasIntroFinished } =
     useHomeIntroFlow();
 
   useEffect(() => {
-    onWelcomeFinishedChange(hasWelcomeFinished);
-  }, [hasWelcomeFinished, onWelcomeFinishedChange]);
-
-  useEffect(() => {
     onIntroFinishedChange(hasIntroFinished);
   }, [hasIntroFinished, onIntroFinishedChange]);
-
-  useEffect(() => {
-    if (!hasWelcomeFinished) return;
-
-    const timer = window.setTimeout(() => {
-      setHasHeroAnimationStarted(true);
-    }, HERO_ANIMATION_LEAD_DELAY_MS);
-
-    return () => window.clearTimeout(timer);
-  }, [hasWelcomeFinished]);
 
   useEffect(() => {
     if (!hasWelcomeFinished) {
@@ -69,9 +51,10 @@ export function HomePage({
       </motion.div>
 
       <div className="homepage__content">
+        <Navbar shouldAnimate={hasWelcomeFinished} />
         <div id="hero-section">
           <Hero
-            shouldAnimate={hasHeroAnimationStarted}
+            shouldAnimate={hasWelcomeFinished}
             onAnimationsComplete={() => setHasHeroFinished(true)}
           />
         </div>
