@@ -19,11 +19,11 @@ interface StarfieldBackgroundProps {
 }
 
 const STAR_COUNTS = {
-  mobile: [28, 8, 6],
-  dinosaur: [32, 10, 7],
-  xxsm: [36, 12, 8],
-  xsm: [42, 14, 9],
-  sm: [60, 20, 15],
+  mobile: [20, 6, 4],
+  dinosaur: [24, 7, 5],
+  xxsm: [28, 9, 6],
+  xsm: [34, 11, 7],
+  sm: [46, 15, 10],
   md: [90, 30, 22],
   lg: [120, 50, 25],
   xl: [120, 50, 25],
@@ -69,6 +69,7 @@ export function StarfieldBackground({ mode = 'normal' }: StarfieldBackgroundProp
   const modeRef = useRef<StarMode>(mode);
   const layersRef = useRef<{ stars: Star[]; speed: number }[]>([]);
   const viewportRef = useRef<{ width: number; height: number } | null>(null);
+  const twinkleEnabledRef = useRef(true);
   const timeRef = useRef(0);
   const scrollInfluenceRef = useRef(0);
   const cinematicVelocityRef = useRef(0);
@@ -135,6 +136,7 @@ export function StarfieldBackground({ mode = 'normal' }: StarfieldBackgroundProp
       const nextWidth = window.innerWidth;
       const nextHeight = window.innerHeight;
       const previous = viewportRef.current;
+      twinkleEnabledRef.current = nextWidth > BREAKPOINTS.sm;
       const isMobileViewport =
         window.matchMedia('(hover: none) and (pointer: coarse)').matches ||
         nextWidth < BREAKPOINTS.lg;
@@ -196,8 +198,9 @@ export function StarfieldBackground({ mode = 'normal' }: StarfieldBackgroundProp
 
       layersRef.current.forEach(({ stars, speed }) => {
         stars.forEach((star) => {
-          const twinkle =
-            Math.sin(timeRef.current * star.twinkleSpeed + star.twinkleOffset) * 0.2 + 0.8;
+          const twinkle = twinkleEnabledRef.current
+            ? Math.sin(timeRef.current * star.twinkleSpeed + star.twinkleOffset) * 0.2 + 0.8
+            : 1;
 
           context.fillStyle = `rgba(255,255,255,${star.opacity * twinkle})`;
           context.beginPath();
