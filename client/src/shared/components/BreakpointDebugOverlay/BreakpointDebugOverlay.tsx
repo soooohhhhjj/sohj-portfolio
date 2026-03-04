@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Eye, EyeOff, Palette, RotateCcw, SlidersHorizontal, Star, StarOff, X } from 'lucide-react';
+import { Eye, EyeOff, Move, Palette, RotateCcw, SlidersHorizontal, Star, StarOff, X } from 'lucide-react';
 import { BREAKPOINTS, CONTENT_MAX_WIDTH } from '../../constants/breakpoints';
 
 type ActiveBreakpoint = 'mobile' | 'dinosaur' | 'xxsm' | 'xsm' | 'sm' | 'md' | 'lg' | 'xl';
@@ -19,6 +19,8 @@ interface BreakpointDebugOverlayProps {
   isPerfLiteEnabled: boolean;
   onTogglePerfLite: () => void;
   onReplayIntro: () => void;
+  isJourneyEditMode: boolean;
+  onToggleJourneyEditMode: () => void;
 }
 
 function getActiveBreakpoint(width: number): ActiveBreakpoint {
@@ -109,6 +111,8 @@ export function BreakpointDebugOverlay({
   isPerfLiteEnabled,
   onTogglePerfLite,
   onReplayIntro,
+  isJourneyEditMode,
+  onToggleJourneyEditMode,
 }: BreakpointDebugOverlayProps) {
   const [viewportWidth, setViewportWidth] = useState<number>(
     typeof window === 'undefined' ? BREAKPOINTS.lg : window.innerWidth,
@@ -196,6 +200,15 @@ export function BreakpointDebugOverlay({
               aria-label={isPerfLiteEnabled ? 'Disable no-glow mode' : 'Enable no-glow mode'}
             >
               <Palette className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              className="breakpoint-debug__panel-btn"
+              onClick={onToggleJourneyEditMode}
+              aria-label={isJourneyEditMode ? 'Disable journey edit mode' : 'Enable journey edit mode'}
+            >
+              <Move className={`h-4 w-4 ${isJourneyEditMode ? 'text-yellow-300' : ''}`} />
             </button>
 
             <button

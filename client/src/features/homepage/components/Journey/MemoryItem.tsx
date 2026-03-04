@@ -1,4 +1,9 @@
-import { useState, type CSSProperties, type KeyboardEvent } from "react";
+import {
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import type { JourneyItemNode as Item } from "./types/journey.types";
 import { techIconMap } from "./ui/memoryLane.techIcons";
 import { GlassCard } from "../../../../shared/components/GlassCard";
@@ -6,7 +11,13 @@ import BouncingImage from "./ui/BouncingImage";
 
 type FlickerKind = "strong" | "medium" | "light";
 type FlickerPlan = Record<number, { kind: FlickerKind; delay: number }>;
-type MemoryItemProps = Item & { onSelect?: (item: Item) => void };
+type MemoryItemProps = Item & {
+  onSelect?: (item: Item) => void;
+  renderAsStar?: boolean;
+  isEditMode?: boolean;
+  isDragging?: boolean;
+  onStarPointerDown?: (event: ReactPointerEvent<HTMLDivElement>, item: Item) => void;
+};
 
 const FLICKER_CHANCE_PER_LETTER = 0.08;
 const FLICKER_MAX_LETTERS = 7;
@@ -254,24 +265,28 @@ export default function MemoryItem(props: MemoryItemProps) {
     }
   };
 
-  // PARENT NODE (intentionally separate)
-  if (type === "parent" && props.icon) {
-    const Icon = props.icon;
-
+  // STAR NODE (parent + optional child star mode)
+  if (type === "parent" || props.renderAsStar) {
+    const isParentStar = type === "parent";
     return (
       <div
-        className="absolute flex items-center justify-center memory-node"
+        className={`absolute flex items-center justify-center memory-node ${isParentStar ? "memory-node--parent" : "memory-node--child"} ${
+          props.isEditMode ? "memory-node--editable" : ""
+        } ${props.isDragging ? "memory-node--dragging" : ""}`}
         style={{ left: x, top: y, width, height }}
         role="button"
         tabIndex={0}
         onClick={handleItemClick}
         onKeyDown={handleItemKeyDown}
+        onPointerDown={(event) => props.onStarPointerDown?.(event, props)}
         aria-label={`Open ${props.id} details`}
       >
-        <Icon
-          className="w-5 h-5 sm:w-[22px] sm:h-[22px] md:w-6 md:h-6 lg:w-7 lg:h-7"
-          strokeWidth={1.3}
-        />
+        <span className="memory-node__halo" aria-hidden="true" />
+        <span className="memory-node__glow" aria-hidden="true" />
+        <span className="memory-node__core" aria-hidden="true" />
+        {isParentStar && props.title ? (
+          <span className="memory-node__label">{props.title}</span>
+        ) : null}
       </div>
     );
   }

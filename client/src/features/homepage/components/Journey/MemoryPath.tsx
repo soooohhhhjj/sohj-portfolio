@@ -75,11 +75,9 @@ export default function MemoryPath({ edge, items }: Props) {
   x2={end.x}
   y2={end.y}
 >
-  <stop offset="0%" stopColor="rgba(0,0,0,0.9)" />
-  <stop offset="25%" stopColor="rgba(255,255,255,0.6)" />
-  <stop offset="50%" stopColor="rgba(0,0,0,0.9)" />
-  <stop offset="75%" stopColor="rgba(255,255,255,0.6)" />
-  <stop offset="100%" stopColor="rgba(0,0,0,0.9)" />
+  <stop offset="0%" stopColor="rgba(255,214,126,0.18)" />
+  <stop offset="50%" stopColor="rgba(255,238,180,0.9)" />
+  <stop offset="100%" stopColor="rgba(255,214,126,0.18)" />
 </linearGradient>
 
 
@@ -96,9 +94,10 @@ export default function MemoryPath({ edge, items }: Props) {
       {/* Glow layer */}
       <path
         d={pathD}
+        className="memory-path-glow"
         fill="none"
         stroke={`url(#${gradientId})`}
-        strokeWidth={6}
+        strokeWidth={7}
         strokeLinecap="round"
         strokeLinejoin="round"
         opacity={0.1}
@@ -108,9 +107,10 @@ export default function MemoryPath({ edge, items }: Props) {
       {/* Main line */}
       <path
         d={pathD}
+        className="memory-path-line"
         fill="none"
         stroke={`url(#${gradientId})`}
-        strokeWidth={1.5}
+        strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
       />

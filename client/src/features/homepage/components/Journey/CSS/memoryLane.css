@@ -1,93 +1,135 @@
+/* #region Constellation Lane */
+.constellation-lane {
+  position: relative;
+}
+
+.constellation-lane .memory-path-glow {
+  opacity: 0.32;
+}
+
+.constellation-lane .memory-path-line {
+  opacity: 0.94;
+}
+/* #endregion Constellation Lane */
+
+/* #region Parent Stars */
 .memory-node {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 6px;
+  position: absolute;
+  background: transparent;
+  border-radius: 999px;
   z-index: 20;
   cursor: pointer;
   transition:
-    box-shadow 260ms ease,
-    background-color 220ms ease;
+    transform 220ms ease,
+    filter 220ms ease;
 
-  box-shadow:
-    0 0 12px rgba(255, 255, 255, 0.18),
-    0 0 42px rgba(120, 220, 255, 0.14);
+  box-shadow: none;
 }
 
-.stuff {
-  background: rgba(255, 255, 255, 0.178);
+.memory-node--editable {
+  cursor: grab;
 }
 
-/* frame */
-.memory-node::before {
-  content: "";
+.memory-node--editable:active,
+.memory-node--dragging {
+  cursor: grabbing;
+}
+
+.memory-node__halo,
+.memory-node__glow,
+.memory-node__core {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  transition:
-    background 280ms ease,
-    opacity 220ms ease;
-  opacity: 0.95;
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.65),
-    rgba(255, 255, 255, 0.15) 35%,
-    rgba(255, 255, 255, 0.05) 65%,
-    rgba(255, 255, 255, 0.35)
-  );
-
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  padding: 1px;
-
+  margin: auto;
+  border-radius: 999px;
   pointer-events: none;
 }
 
-/* subtle inner echo */
-.memory-node::after {
-  content: "";
+.memory-node__halo {
+  width: 68%;
+  height: 68%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0%, rgba(160, 222, 255, 0) 72%);
+  filter: blur(6px);
+  opacity: 0.74;
+}
+
+.memory-node__glow {
+  width: 30%;
+  height: 30%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 0 10px rgba(223, 246, 255, 0.96),
+    0 0 24px rgba(165, 218, 255, 0.75),
+    0 0 38px rgba(114, 188, 255, 0.5);
+}
+
+.memory-node__core {
+  width: 11%;
+  height: 11%;
+  min-width: 4px;
+  min-height: 4px;
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.95);
+}
+
+.memory-node__label {
   position: absolute;
-  inset: 3px;
-  border-radius: 4px;
-  transition: border-color 240ms ease;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(249, 234, 175, 0.9);
+  text-shadow: 0 0 8px rgba(255, 229, 138, 0.5);
   pointer-events: none;
 }
 
-.memory-node svg {
-  color: rgb(255, 255, 255);
-  transition:
-    color 220ms ease,
-    filter 260ms ease;
+.memory-node--child .memory-node__halo {
+  width: 82%;
+  height: 82%;
+  opacity: 0.58;
+  filter: blur(4px);
+}
+
+.memory-node--child .memory-node__glow {
+  width: 26%;
+  height: 26%;
+  box-shadow:
+    0 0 8px rgba(223, 246, 255, 0.78),
+    0 0 18px rgba(165, 218, 255, 0.5),
+    0 0 30px rgba(114, 188, 255, 0.34);
+}
+
+.memory-node--child .memory-node__core {
+  width: 16%;
+  height: 16%;
+  min-width: 3px;
+  min-height: 3px;
 }
 
 .memory-node:hover {
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow:
-    0 0 16px rgba(255, 255, 255, 0.32),
-    0 0 62px rgba(120, 220, 255, 0.28);
+  transform: scale(1.08);
+  filter: brightness(1.08);
 }
 
-.memory-node:hover::before {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.72),
-    rgba(255, 255, 255, 0.2) 35%,
-    rgba(255, 255, 255, 0.06) 65%,
-    rgba(255, 255, 255, 0.42)
-  );
+.memory-node:hover .memory-node__halo {
   opacity: 1;
 }
 
-.memory-node:hover::after {
-  border-color: rgba(255, 255, 255, 0.18);
+.memory-node:hover .memory-node__glow {
+  box-shadow:
+    0 0 12px rgba(228, 248, 255, 1),
+    0 0 28px rgba(186, 228, 255, 0.86),
+    0 0 44px rgba(129, 201, 255, 0.58);
 }
 
-.memory-node:hover svg {
-  color: #ffffff;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+.memory-node:focus-visible {
+  outline: 1px solid rgba(208, 237, 255, 0.8);
+  outline-offset: 4px;
 }
+/* #endregion Parent Stars */
 
 .memory-card {
   padding: 17px;

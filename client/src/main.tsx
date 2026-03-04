@@ -12,6 +12,7 @@ import { useResponsiveTokens } from './shared/hooks/useResponsiveTokens';
 type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 'forward';
 const STARFIELD_ENABLED_STORAGE_KEY = 'sohj.debug.starfield.enabled';
 const PERF_LITE_ENABLED_STORAGE_KEY = 'sohj.debug.perfLite.enabled';
+const JOURNEY_EDIT_MODE_STORAGE_KEY = 'sohj.debug.journeyEditMode.enabled';
 
 export function App() {
   const [starMode, setStarMode] = useState<StarMode>('normal');
@@ -27,6 +28,11 @@ export function App() {
   });
   const [isIntroFinished, setIsIntroFinished] = useState(false);
   const [introReplayKey, setIntroReplayKey] = useState(0);
+  const [isJourneyEditMode, setIsJourneyEditMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = window.localStorage.getItem(JOURNEY_EDIT_MODE_STORAGE_KEY);
+    return saved === null ? false : saved === 'true';
+  });
   const showDebugPanels = import.meta.env.DEV;
   useResponsiveTokens();
   useScrollVelocity(isIntroFinished);
@@ -39,19 +45,28 @@ export function App() {
     window.localStorage.setItem(PERF_LITE_ENABLED_STORAGE_KEY, String(isPerfLiteEnabled));
   }, [isPerfLiteEnabled]);
 
+  useEffect(() => {
+    window.localStorage.setItem(JOURNEY_EDIT_MODE_STORAGE_KEY, String(isJourneyEditMode));
+  }, [isJourneyEditMode]);
+
   const replayIntro = () => {
     setIsIntroFinished(false);
     setIntroReplayKey((prev) => prev + 1);
   };
 
   return (
-    <div className={`app-shell ${isPerfLiteEnabled ? 'perf-debug-lite' : ''}`}>
+    <div
+      className={`app-shell ${isPerfLiteEnabled ? 'perf-debug-lite' : ''} ${
+        isJourneyEditMode ? 'app-shell--journey-edit' : ''
+      }`}
+    >
       {isStarfieldEnabled ? <StarfieldBackground mode={starMode} /> : null}
       <main className="app-content">
         <HomePage
           key={introReplayKey}
           setStarMode={setStarMode}
           onIntroFinishedChange={setIsIntroFinished}
+          isJourneyEditMode={isJourneyEditMode}
         />
       </main>
       <Footer />
@@ -62,6 +77,8 @@ export function App() {
           isPerfLiteEnabled={isPerfLiteEnabled}
           onTogglePerfLite={() => setIsPerfLiteEnabled((prev) => !prev)}
           onReplayIntro={replayIntro}
+          isJourneyEditMode={isJourneyEditMode}
+          onToggleJourneyEditMode={() => setIsJourneyEditMode((prev) => !prev)}
         />
       ) : null}
     </div>

@@ -82,6 +82,16 @@ body,
   padding-top: 0;
 }
 
+.app-shell--journey-edit::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: rgba(140, 146, 157, 0.16);
+  backdrop-filter: grayscale(0.42);
+}
+
 /* #region Perf Debug - Flat Effects */
 .perf-debug-lite *,
 .perf-debug-lite *::before,
