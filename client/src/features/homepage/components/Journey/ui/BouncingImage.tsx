@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 interface Props {
   src: string;
@@ -55,6 +55,7 @@ export default function BouncingImage({ src }: Props) {
         velocityRef.current.x *= -1;
         nextX = Math.min(Math.max(nextX, 0), maxX);
       }
+
       if (nextY <= 0 || nextY >= maxY) {
         velocityRef.current.y *= -1;
         nextY = Math.min(Math.max(nextY, 0), maxY);
@@ -63,55 +64,49 @@ export default function BouncingImage({ src }: Props) {
       positionRef.current.x = nextX;
       positionRef.current.y = nextY;
       applyPosition();
-
       frameId = requestAnimationFrame(animate);
     };
 
     const onImageReady = () => {
       syncBounds();
-      if (!frameId) frameId = requestAnimationFrame(animate);
+      if (!frameId) {
+        frameId = requestAnimationFrame(animate);
+      }
     };
 
     const image = imgRef.current;
     if (image) {
-      if (image.complete) onImageReady();
-      else image.addEventListener("load", onImageReady);
+      if (image.complete) {
+        onImageReady();
+      } else {
+        image.addEventListener('load', onImageReady);
+      }
     }
 
-    if (typeof ResizeObserver !== "undefined") {
+    if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => syncBounds());
       if (containerRef.current) resizeObserver.observe(containerRef.current);
       if (imgRef.current) resizeObserver.observe(imgRef.current);
     }
 
     const onWindowResize = () => syncBounds();
-    window.addEventListener("resize", onWindowResize);
+    window.addEventListener('resize', onWindowResize);
 
     return () => {
-      if (image) image.removeEventListener("load", onImageReady);
+      if (image) image.removeEventListener('load', onImageReady);
       if (resizeObserver) resizeObserver.disconnect();
-      window.removeEventListener("resize", onWindowResize);
+      window.removeEventListener('resize', onWindowResize);
       cancelAnimationFrame(frameId);
     };
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden">
+    <div ref={containerRef} className="relative h-full w-full overflow-hidden">
       <img
         ref={imgRef}
         src={src}
         draggable={false}
-        className="
-          absolute
-          w-[90px]
-          sm:w-[120px]
-          md:w-[140px]
-          lg:w-[110px]
-          pointer-events-none
-          filter
-          drop-shadow-[0_0_15px_rgba(255,255,255,0.35)]
-        "
-        style={{ left: 0, top: 0, transform: "translate3d(20px, 20px, 0)" }}
+        className="journey-bouncing-image pointer-events-none absolute left-0 top-0 w-24 sm:w-32 md:w-36 lg:w-28"
       />
     </div>
   );

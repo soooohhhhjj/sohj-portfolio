@@ -1,6 +1,9 @@
 /* #region Constellation Lane */
 .constellation-lane {
   position: relative;
+  aspect-ratio: 1 / 0.92;
+  min-height: 460px;
+  max-height: 860px;
 }
 
 .constellation-lane .memory-path-glow {
@@ -12,18 +15,58 @@
 }
 /* #endregion Constellation Lane */
 
-/* #region Parent Stars */
+/* #region Node Sizes */
+.constellation-lane--sm .memory-node--parent {
+  width: 28px;
+  height: 28px;
+}
+
+.constellation-lane--sm .memory-node--child {
+  width: 16px;
+  height: 16px;
+}
+
+.constellation-lane--md .memory-node--parent {
+  width: 36px;
+  height: 36px;
+}
+
+.constellation-lane--md .memory-node--child {
+  width: 22px;
+  height: 22px;
+}
+
+.constellation-lane--lg .memory-node--parent {
+  width: 44px;
+  height: 44px;
+}
+
+.constellation-lane--lg .memory-node--child {
+  width: 27px;
+  height: 27px;
+}
+
+.constellation-lane--xl .memory-node--parent {
+  width: 52px;
+  height: 52px;
+}
+
+.constellation-lane--xl .memory-node--child {
+  width: 30px;
+  height: 30px;
+}
+/* #endregion Node Sizes */
+
+/* #region Memory Nodes */
 .memory-node {
-  position: absolute;
-  background: transparent;
-  border-radius: 999px;
   z-index: 20;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
   transition:
     transform 220ms ease,
     filter 220ms ease;
-
-  box-shadow: none;
 }
 
 .memory-node--editable {
@@ -78,19 +121,19 @@
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
+  pointer-events: none;
+  color: rgba(249, 234, 175, 0.9);
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(249, 234, 175, 0.9);
   text-shadow: 0 0 8px rgba(255, 229, 138, 0.5);
-  pointer-events: none;
 }
 
 .memory-node--child .memory-node__halo {
   width: 82%;
   height: 82%;
-  opacity: 0.58;
   filter: blur(4px);
+  opacity: 0.58;
 }
 
 .memory-node--child .memory-node__glow {
@@ -129,210 +172,41 @@
   outline: 1px solid rgba(208, 237, 255, 0.8);
   outline-offset: 4px;
 }
-/* #endregion Parent Stars */
+/* #endregion Memory Nodes */
 
+/* #region Cards */
 .memory-card {
-  padding: 17px;
-
   background: rgba(255, 255, 255, 0.015);
-  border-radius: 7px;
-  z-index: 20;
-  cursor: pointer;
-
-  backdrop-filter: blur(8px);
-  transition:
-    box-shadow 260ms ease,
-    background-color 220ms ease;
-
   box-shadow:
     0 0 10px rgba(255, 255, 255, 0.14),
     0 0 28px rgba(120, 220, 255, 0.08);
+  backdrop-filter: blur(8px);
 }
+/* #endregion Cards */
 
-/* frame */
-.memory-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.45),
-    rgba(255, 255, 255, 0.14) 35%,
-    rgba(255, 255, 255, 0.14) 65%,
-    rgba(255, 255, 255, 0.45)
-  );
-
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  padding: 1px;
-
-  pointer-events: none;
-  transition:
-    background 280ms ease,
-    opacity 220ms ease;
-  opacity: 0.9;
-}
-
-/* inner soft line */
-.memory-card::after {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border-radius: 5px;
-
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  pointer-events: none;
-  transition: border-color 240ms ease;
-}
-
-.memory-card:hover {
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow:
-    0 0 14px rgba(255, 255, 255, 0.26),
-    0 0 40px rgba(120, 220, 255, 0.18);
-}
-
-.memory-card:hover::before {
-  background: linear-gradient(
-    315deg,
-    rgba(255, 255, 255, 0.58),
-    rgba(255, 255, 255, 0.2) 35%,
-    rgba(255, 255, 255, 0.08) 65%,
-    rgba(255, 255, 255, 0.45)
-  );
-  opacity: 1;
-}
-
-.memory-card:hover::after {
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
-.memory-card-title {
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.39);
-  -webkit-text-stroke: 0.7px #f0ecd9c4;
-}
-
-@keyframes memory-title-flicker-strong {
-  0% {
-    opacity: 1;
-  }
-  10% {
-    opacity: 0;
-  }
-  18% {
-    opacity: 0.4;
-  }
-  26% {
-    opacity: 0;
-  }
-  35% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 0.3;
-  }
-  65% {
-    opacity: 1;
-  }
-  78% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes memory-title-flicker-medium {
-  0% {
-    opacity: 1;
-  }
-  20% {
-    opacity: 0.3;
-  }
-  40% {
-    opacity: 1;
-  }
-  60% {
-    opacity: 0.5;
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes memory-title-flicker-light {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.memory-title-char {
-  display: inline-block;
-}
-
-.memory-title-char-flicker {
-  animation-delay: var(--memory-flicker-delay, 0s);
-  animation-fill-mode: both;
-}
-
-.memory-title-char-flicker-strong {
-  animation: memory-title-flicker-strong 0.55s linear;
-}
-
-.memory-title-char-flicker-medium {
-  animation: memory-title-flicker-medium 0.5s linear;
-}
-
-.memory-title-char-flicker-light {
-  animation: memory-title-flicker-light 0.4s linear;
-}
-
-/* ===========================
-   JOURNEY MODAL FRAMES
-   parent modal -> memory-node style
-   child modal  -> memory-card style
-=========================== */
-
+/* #region Modal Frames */
 .journey-modal-frame {
   z-index: 140;
 }
 
-.journey-modal-frame::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
+.journey-modal-frame::before,
 .journey-modal-frame::after {
-  content: "";
+  content: '';
   position: absolute;
   pointer-events: none;
 }
 
 .journey-modal-frame-parent {
-  background: rgba(0, 0, 0, 0.30);
   border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
   box-shadow:
     0 0 12px rgba(255, 255, 255, 0.18),
     0 0 42px rgba(120, 220, 255, 0.14);
 }
 
 .journey-modal-frame-parent::before {
+  inset: 0;
+  border-radius: inherit;
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.65),
@@ -355,15 +229,17 @@
 }
 
 .journey-modal-frame-child {
-  background: rgba(255, 255, 255, 0.015);
   border-radius: 7px;
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.015);
   box-shadow:
     0 0 10px rgba(255, 255, 255, 0.14),
     0 0 28px rgba(120, 220, 255, 0.08);
+  backdrop-filter: blur(8px);
 }
 
 .journey-modal-frame-child::before {
+  inset: 0;
+  border-radius: inherit;
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.45),
@@ -384,3 +260,28 @@
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
+/* #endregion Modal Frames */
+
+/* #region Rail Tooltip */
+.journey-rail-tooltip {
+  z-index: 40;
+}
+
+.journey-rail-tooltip--top {
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+}
+
+.journey-rail-tooltip--left {
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+/* #endregion Rail Tooltip */
+
+/* #region Bouncing Image */
+.journey-bouncing-image {
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.35));
+}
+/* #endregion Bouncing Image */
