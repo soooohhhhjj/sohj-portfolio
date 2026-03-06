@@ -3,14 +3,23 @@
 @tailwind utilities;
 
 @layer components {
-
-  .journey-header {
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.48);
-    -webkit-text-stroke: 1px;
+  /* #region Journey Placeholder */
+  .journey-section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
   }
 
-  .journey-subheader {
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.479);
-    -webkit-text-stroke: 0.1px;
+  .journey-section--hidden {
+    pointer-events: none;
   }
+
+  .journey-section--visible {
+    pointer-events: auto;
+  }
+
+  .journey-placeholder {
+    min-height: 200vh;
+  }
+  /* #endregion Journey Placeholder */
 }
