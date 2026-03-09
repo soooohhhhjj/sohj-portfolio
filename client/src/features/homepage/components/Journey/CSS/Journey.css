@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer components {
-  /* #region Journey Placeholder */
+  /* #region Journey Section */
   .journey-section {
     position: relative;
     display: flex;
@@ -18,8 +18,270 @@
     pointer-events: auto;
   }
 
-  .journey-placeholder {
-    min-height: 200vh;
+  .journey-shell {
+    position: relative;
+    width: 100%;
+    margin-top: 5rem;
+    overflow: hidden;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+      linear-gradient(135deg, rgba(155, 169, 190, 0.14), rgba(74, 83, 97, 0.06) 42%, rgba(211, 217, 228, 0.08));
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(12px);
   }
-  /* #endregion Journey Placeholder */
+
+  .journey-shell__layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .journey-shell__layer--diagonal {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03), transparent 56%);
+  }
+
+  .journey-shell__layer--vertical {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28%, rgba(255, 255, 255, 0.02) 72%, transparent);
+  }
+
+  .journey-shell__layer--inner-shadow {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 0 36px rgba(255, 255, 255, 0.05);
+  }
+
+  .journey-shell__content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .journey-map {
+    position: relative;
+    padding-top: 2.5rem;
+    padding-bottom: 6rem;
+  }
+
+  .journey-map__hero {
+    margin: 0 auto 3rem;
+    max-width: 48rem;
+    padding-right: 1.25rem;
+    padding-left: 1.25rem;
+    text-align: center;
+  }
+
+  .journey-map__title {
+    color: var(--base-text-color);
+    font-family: 'Bruno Ace SC', sans-serif;
+    font-size: clamp(2.5rem, 4vw, 4.8rem);
+    line-height: 1;
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.12);
+  }
+
+  .journey-showcase {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .journey-showcase__connector {
+    display: none;
+  }
+
+  .journey-showcase__card,
+  .journey-map-card {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--base-text-color);
+    border-radius: 0.35rem;
+    background: rgba(255, 255, 255, 0.012);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .journey-showcase__card--parent {
+    width: min(100%, 19rem);
+    padding: 1.1rem;
+    border: none;
+  }
+
+  .journey-showcase__card--child {
+    width: min(100%, 16.5rem);
+    padding: 0.75rem;
+    border: none;
+  }
+
+  .journey-showcase__card--child::before,
+  .journey-showcase__card--child::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .journey-showcase__card--child::before {
+    background:
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.15rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.15rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1.15rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1px 1.15rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1.15rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1px 1.15rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1.15rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.15rem no-repeat;
+    opacity: 0.75;
+  }
+
+  .journey-showcase__card--child::after {
+    inset: 0.35rem;
+    border: 1px solid rgba(247, 247, 217, 0.14);
+    border-radius: 0.18rem;
+    opacity: 0.45;
+  }
+
+  .journey-map-card__parent-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .journey-map-card__icon-shell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 2.55rem;
+    flex-shrink: 0;
+    border-radius: 0.2rem;
+    background: rgba(255, 255, 255, 0.02);
+    clip-path: polygon(0 0, calc(100% - 0.3rem) 0, 100% 0.3rem, 100% 100%, 0.3rem 100%, 0 calc(100% - 0.3rem));
+  }
+
+  .journey-map-card__icon-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(247, 247, 217, 0.42);
+    clip-path: inherit;
+    opacity: 0.9;
+  }
+
+  .journey-map-card__icon-shell::after {
+    content: '';
+    position: absolute;
+    left: 0.58rem;
+    right: 0.58rem;
+    bottom: 0.30rem;
+    border-top: 1px solid rgba(247, 247, 217, 0.22);
+    opacity: 0.9;
+  }
+
+  .journey-map-card__icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    color: var(--base-text-color);
+  }
+
+  .journey-map-card__title {
+    font-size: 0.94rem;
+  }
+
+  .journey-map-card__child-title {
+    font-size: 0.86rem;
+  }
+
+  .journey-map-card__details {
+    margin-top: 0.72rem;
+    color: var(--base-text-color);
+    opacity: 0.72;
+    font-family: 'Jura', sans-serif;
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+  .journey-showcase__card--parent .journey-map-card__details {
+    padding-top: 0.8rem;
+    border-top: 1px dashed rgba(247, 247, 217, 0.28);
+  }
+
+  .journey-showcase__card--parent::before,
+  .journey-showcase__card--parent::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .journey-showcase__card--parent::before {
+    background:
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.35rem no-repeat;
+    opacity: 0.75;
+  }
+
+  .journey-showcase__card--parent::after {
+    inset: 0.45rem;
+    border: 1px solid rgba(247, 247, 217, 0.12);
+    border-radius: 0.18rem;
+    opacity: 0.38;
+  }
+
+  .journey-map-card__media {
+  margin-bottom: 0.75rem;
+  aspect-ratio: 16 / 10;
+}
+
+  .journey-map-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+
+  @media (min-width: 1024px) {
+    .journey-map {
+      padding-top: 3rem;
+      padding-bottom: 8rem;
+    }
+
+    .journey-map__hero {
+      padding-right: 0;
+      padding-left: 0;
+    }
+
+    .journey-showcase {
+      flex-direction: row;
+      align-items: center;
+      gap: 1.5rem;
+      padding-right: 0;
+      padding-left: 0;
+    }
+
+    .journey-showcase__connector {
+      display: block;
+      width: 3.5rem;
+      height: 0;
+      flex: 0 0 auto;
+      border-top: 1px dashed rgba(247, 247, 217, 0.35);
+      opacity: 0.85;
+    }
+  }
+  /* #endregion Journey Section */
 }
