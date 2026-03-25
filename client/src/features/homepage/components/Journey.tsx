@@ -1,5 +1,4 @@
-import { motion } from 'framer-motion';
-import type { Easing } from 'framer-motion';
+import { motion, type Easing } from 'framer-motion';
 import type { Ref } from 'react';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import './Journey/CSS/Journey.css';
@@ -47,7 +46,7 @@ export default function Journey({ shouldShow, contentRef }: Props) {
                 </div>
                 <h3 className="journey-map-card__title font-jura">{showcaseGroup.parent.title}</h3>
               </div>
-              <p className="journey-map-card__details">
+              <p className="text-sm leading-relaxed journey-map-card__details font-jura">
                 {showcaseGroup.parent.modalDetails ?? 'Milestone summary coming soon.'}
               </p>
             </article>
@@ -58,7 +57,7 @@ export default function Journey({ shouldShow, contentRef }: Props) {
               {showcaseChild.image ? (
                 <GlassCard
                   width="w-full"
-                  corner="rounded-[4px]"
+                  corner="rounded-[2px]"
                   shadow=""
                   className="overflow-hidden journey-map-card__media"
                 >
@@ -71,7 +70,12 @@ export default function Journey({ shouldShow, contentRef }: Props) {
                 </GlassCard>
               ) : null}
               <h4 className="journey-map-card__child-title font-jura">{showcaseChild.title ?? showcaseChild.id}</h4>
-              <p className="journey-map-card__details">{showcaseChild.details ?? 'Details coming soon.'}</p>
+              <div className="flex flex-col gap-0 ml-1 text-[13px] font-jura base-text-color">
+                <div className="mt-[3px] flex items-center leading-none">
+                  <span className="mb-1 select-none opacity-55">L</span>
+                  <span className="ml-1 opacity-70">{showcaseChild.details ?? 'Details coming soon.'}</span>
+                </div>
+              </div>
             </article>
           </div>
         </div>
@@ -79,3 +83,4 @@ export default function Journey({ shouldShow, contentRef }: Props) {
     </motion.section>
   );
 }
+
