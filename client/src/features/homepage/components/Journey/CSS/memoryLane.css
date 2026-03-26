@@ -1,92 +1,51 @@
-.memory-node {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 6px;
+.memory-lane {
+  isolation: isolate;
+}
+
+.memory-lane .memory-node {
   z-index: 20;
   cursor: pointer;
-  transition:
-    box-shadow 260ms ease,
-    background-color 220ms ease;
-
-  box-shadow:
-    0 0 12px rgba(255, 255, 255, 0.18),
-    0 0 42px rgba(120, 220, 255, 0.14);
+  overflow: visible;
 }
 
-.stuff {
-  background: rgba(255, 255, 255, 0.178);
+.memory-lane .memory-node::before,
+.memory-lane .memory-node::after {
+  content: none;
 }
 
-/* frame */
-.memory-node::before {
-  content: "";
+.memory-lane .memory-node:hover {
+  background: transparent;
+}
+
+.memory-lane svg {
+  z-index: 0;
+}
+
+/* Ensure cards (and their shadows) always paint above connectors. */
+.memory-lane .journey-map-card {
+  z-index: 10;
+}
+
+/* In the map view, the layout engine controls the pixel dimensions of each node.
+   Remove the "19rem" caps so connectors align with the visible card edges. */
+.memory-lane .journey-showcase__card--child {
+  width: 100%;
+  max-width: none;
+}
+
+.memory-lane .journey-showcase__card--parent {
+  max-width: none;
+}
+
+/* Parent nodes are positioned by a small "anchor" box for connector routing,
+   but we render the full parent card inside it. */
+.memory-lane .journey-memory-parent-card {
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  transition:
-    background 280ms ease,
-    opacity 220ms ease;
-  opacity: 0.95;
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.65),
-    rgba(255, 255, 255, 0.15) 35%,
-    rgba(255, 255, 255, 0.05) 65%,
-    rgba(255, 255, 255, 0.35)
-  );
-
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  padding: 1px;
-
-  pointer-events: none;
-}
-
-/* subtle inner echo */
-.memory-node::after {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border-radius: 4px;
-  transition: border-color 240ms ease;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  pointer-events: none;
-}
-
-.memory-node svg {
-  color: rgb(255, 255, 255);
-  transition:
-    color 220ms ease,
-    filter 260ms ease;
-}
-
-.memory-node:hover {
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow:
-    0 0 16px rgba(255, 255, 255, 0.32),
-    0 0 62px rgba(120, 220, 255, 0.28);
-}
-
-.memory-node:hover::before {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.72),
-    rgba(255, 255, 255, 0.2) 35%,
-    rgba(255, 255, 255, 0.06) 65%,
-    rgba(255, 255, 255, 0.42)
-  );
-  opacity: 1;
-}
-
-.memory-node:hover::after {
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.memory-node:hover svg {
-  color: #ffffff;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 21.25rem;
+  max-width: 21.25rem;
 }
 
 .memory-card {

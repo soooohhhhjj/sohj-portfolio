@@ -93,6 +93,33 @@
     padding-left: 1rem;
   }
 
+  .journey-showcase--linear {
+    align-items: flex-start;
+  }
+
+  .journey-linear-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .journey-linear-connector {
+    position: relative;
+    width: min(100%, 19rem);
+    height: 1.35rem;
+    opacity: 0.85;
+  }
+
+  .journey-linear-connector::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 1px dashed rgba(247, 247, 217, 0.35);
+  }
+
   .journey-showcase__connector {
     display: none;
   }
@@ -129,7 +156,6 @@
     content: '';
     position: absolute;
     inset: -1px;
-    border-radius: inherit;
     pointer-events: none;
   }
 
@@ -149,6 +175,7 @@
   .journey-showcase__card--child::after {
     inset: 0.35rem;
     border: 1px solid rgba(247, 247, 217, 0.14);
+    border-radius: 0.18rem;
     opacity: 0.45;
   }
 
@@ -227,7 +254,6 @@
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: inherit;
     pointer-events: none;
   }
 
@@ -283,6 +309,16 @@
       gap: 1.5rem;
       padding-right: 0;
       padding-left: 0;
+    }
+
+    .journey-showcase--linear {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .journey-showcase--linear .journey-showcase__connector {
+      display: none;
     }
 
     .journey-showcase__connector {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import MemoryItem from "./MemoryItem";
 import MemoryPath from "./MemoryPath";
 import JourneyNodeModal from "./JourneyNodeModal";
@@ -21,6 +21,9 @@ export default function MemoryLane({ onModalOpenChange }: MemoryLaneProps) {
   const [selectedItem, setSelectedItem] = useState<JourneyItemNode | null>(
     null,
   );
+  const [parentCardSizes, setParentCardSizes] = useState<
+    Record<string, { width: number; height: number }>
+  >({});
 
   useEffect(() => {
     onModalOpenChange?.(Boolean(selectedItem));
@@ -31,6 +34,24 @@ export default function MemoryLane({ onModalOpenChange }: MemoryLaneProps) {
   const { items, itemMap, edges, height } = useMemo(
     () => computeJourneyNodes(journeyContent, layout, width),
     [layout, width],
+  );
+
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    ref.current.style.height = `${height}px`;
+  }, [height, ref]);
+
+  const handleMeasureParent = useCallback(
+    (id: string, size: { width: number; height: number }) => {
+      setParentCardSizes((prev) => {
+        const existing = prev[id];
+        if (existing && existing.width === size.width && existing.height === size.height) {
+          return prev;
+        }
+        return { ...prev, [id]: size };
+      });
+    },
+    [],
   );
 
   const parentChildrenMap = useMemo(() => {
@@ -136,15 +157,20 @@ export default function MemoryLane({ onModalOpenChange }: MemoryLaneProps) {
   };
 
   return (
-    <div ref={ref} className="memory-lane relative w-full" style={{ height }}>
-      <svg className="absolute inset-0 w-full h-full pointer-events-none">
+    <div ref={ref} className="memory-lane relative w-full">
+      <svg className="absolute inset-0 z-0 w-full h-full pointer-events-none base-text-color">
         {edges.map((edge, i) => (
-          <MemoryPath key={i} edge={edge} items={itemMap} />
+          <MemoryPath key={i} edge={edge} items={itemMap} parentCardSizes={parentCardSizes} />
         ))}
       </svg>
 
       {items.map((item) => (
-        <MemoryItem key={item.id} {...item} onSelect={setSelectedItem} />
+        <MemoryItem
+          key={item.id}
+          {...item}
+          onSelect={setSelectedItem}
+          onMeasure={handleMeasureParent}
+        />
       ))}
 
       <JourneyNodeModal

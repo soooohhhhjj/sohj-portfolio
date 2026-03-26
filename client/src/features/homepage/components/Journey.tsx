@@ -1,8 +1,7 @@
 import { motion, type Easing } from 'framer-motion';
 import type { Ref } from 'react';
-import { GlassCard } from '../../../shared/components/GlassCard';
 import './Journey/CSS/Journey.css';
-import { journeyTimelineGroups } from './Journey/journeyTimeline';
+import MemoryLane from './Journey/MemoryLane';
 
 const easeSmooth: Easing = [0.12, 0.7, 0.63, 0.9];
 
@@ -11,16 +10,7 @@ interface Props {
   contentRef?: Ref<HTMLDivElement>;
 }
 
-const showcaseGroup = journeyTimelineGroups[0];
-const showcaseChild = showcaseGroup?.children[0];
-
 export default function Journey({ shouldShow, contentRef }: Props) {
-  if (!showcaseGroup || !showcaseChild) {
-    return null;
-  }
-
-  const ParentIcon = showcaseGroup.parent.icon;
-
   return (
     <motion.section
       initial={{ y: '100vh' }}
@@ -38,46 +28,7 @@ export default function Journey({ shouldShow, contentRef }: Props) {
             <h2 className="journey-map__title">My Journey</h2>
           </div>
 
-          <div className="journey-showcase">
-            <article className="journey-map-card journey-showcase__card journey-showcase__card--parent">
-              <div className="journey-map-card__parent-header">
-                <div className="journey-map-card__icon-shell">
-                  {ParentIcon ? <ParentIcon className="journey-map-card__icon" strokeWidth={1.6} /> : null}
-                </div>
-                <h3 className="journey-map-card__title font-jura">{showcaseGroup.parent.title}</h3>
-              </div>
-              <p className="text-sm leading-relaxed journey-map-card__details font-jura">
-                {showcaseGroup.parent.modalDetails ?? 'Milestone summary coming soon.'}
-              </p>
-            </article>
-
-            <div className="journey-showcase__connector" aria-hidden="true" />
-
-            <article className="journey-map-card journey-showcase__card journey-showcase__card--child">
-              {showcaseChild.image ? (
-                <GlassCard
-                  width="w-full"
-                  corner="rounded-[2px]"
-                  shadow=""
-                  className="overflow-hidden journey-map-card__media"
-                >
-                  <img
-                    src={showcaseChild.image}
-                    alt={showcaseChild.title ?? showcaseChild.id}
-                    className="journey-map-card__image"
-                    draggable={false}
-                  />
-                </GlassCard>
-              ) : null}
-              <h4 className="journey-map-card__child-title font-jura">{showcaseChild.title ?? showcaseChild.id}</h4>
-              <div className="flex flex-col gap-0 ml-1 text-[13px] font-jura base-text-color">
-                <div className="mt-[3px] flex items-center leading-none">
-                  <span className="mb-1 select-none opacity-55">L</span>
-                  <span className="ml-1 opacity-70">{showcaseChild.details ?? 'Details coming soon.'}</span>
-                </div>
-              </div>
-            </article>
-          </div>
+          <MemoryLane />
         </div>
       </div>
     </motion.section>

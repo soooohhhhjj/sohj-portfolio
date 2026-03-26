@@ -4,9 +4,10 @@ import type { LayoutEdge } from "./layout/layout.types";
 interface Props {
   edge: LayoutEdge;
   items: Record<string, JourneyItemNode>;
+  parentCardSizes?: Record<string, { width: number; height: number }>;
 }
 
-export default function MemoryPath({ edge, items }: Props) {
+export default function MemoryPath({ edge, items, parentCardSizes }: Props) {
   const from = items[edge.from];
   const to = items[edge.to];
 
@@ -14,10 +15,21 @@ export default function MemoryPath({ edge, items }: Props) {
 
   const getAnchorPoint = (
     item: JourneyItemNode,
-    anchor: "top" | "bottom" | "left" | "right"
+    anchor: "top" | "bottom" | "left" | "right",
   ) => {
-    const { x, y, width } = item;
-    const height = item.height ?? 0;
+    const base = { x: item.x, y: item.y, width: item.width, height: item.height ?? 0 };
+
+    // Parent nodes are rendered as full cards centered on a small anchor box.
+    // For connector routing, use the measured parent-card size (when available)
+    // so anchors attach to the card edges instead of the anchor center.
+    const parentSize = item.type === "parent" ? parentCardSizes?.[item.id] : undefined;
+
+    const centerX = base.x + base.width / 2;
+    const centerY = base.y + base.height / 2;
+    const width = parentSize?.width ?? base.width;
+    const height = parentSize?.height ?? base.height;
+    const x = centerX - width / 2;
+    const y = centerY - height / 2;
 
     switch (anchor) {
       case "top":
@@ -36,84 +48,24 @@ export default function MemoryPath({ edge, items }: Props) {
 
   const points = [start, ...(edge.via ?? []), end];
 
-  const buildPath = () => {
-    if (points.length < 2) return "";
+  if (points.length < 2) return null;
 
-    let d = `M ${points[0].x} ${points[0].y}`;
-
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i - 1];
-      const curr = points[i];
-
-      const cx = (prev.x + curr.x) / 2;
-      const cy = (prev.y + curr.y) / 2;
-
-      d += ` Q ${prev.x} ${prev.y} ${cx} ${cy}`;
-    }
-
-    const last = points[points.length - 1];
-    d += ` T ${last.x} ${last.y}`;
-
-    return d;
-  };
-
-  const pathD = buildPath();
-
-  // unique ids so multiple paths don’t clash
-  const gradientId = `memory-gradient-${edge.from}-${edge.to}`;
-  const glowId = `memory-glow-${edge.from}-${edge.to}`;
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const curr = points[i];
+    d += ` L ${curr.x} ${curr.y}`;
+  }
 
   return (
-    <>
-      <defs>
-        {/* Stroke gradient following the path direction */}
-        <linearGradient
-  id={gradientId}
-  gradientUnits="userSpaceOnUse"
-  x1={start.x}
-  y1={start.y}
-  x2={end.x}
-  y2={end.y}
->
-  <stop offset="0%" stopColor="rgba(0,0,0,0.9)" />
-  <stop offset="25%" stopColor="rgba(255,255,255,0.6)" />
-  <stop offset="50%" stopColor="rgba(0,0,0,0.9)" />
-  <stop offset="75%" stopColor="rgba(255,255,255,0.6)" />
-  <stop offset="100%" stopColor="rgba(0,0,0,0.9)" />
-</linearGradient>
-
-
-        {/* Glow that inherits the gradient color */}
-        <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      {/* Glow layer */}
-      <path
-        d={pathD}
-        fill="none"
-        stroke={`url(#${gradientId})`}
-        strokeWidth={6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={0.1}
-        filter={`url(#${glowId})`}
-      />
-
-      {/* Main line */}
-      <path
-        d={pathD}
-        fill="none"
-        stroke={`url(#${gradientId})`}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </>
+    <path
+      d={d}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeDasharray="6 8"
+      strokeLinecap="butt"
+      strokeLinejoin="miter"
+      opacity={0.55}
+    />
   );
 }
