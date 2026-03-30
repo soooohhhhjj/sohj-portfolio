@@ -1,10 +1,154 @@
 .memory-lane {
   isolation: isolate;
+  /* Parent card is the source of truth; children should match it via layout sizing. */
+  --journey-parent-card-width: 315px;
+  --journey-parent-card-height: 243px;
+}
+
+.journey-editor-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  --journey-grid-size: 40px;
+  --journey-grid-half: 20px;
+  opacity: 0.26;
+  background-image:
+    linear-gradient(rgba(52, 211, 153, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 211, 153, 0.22) 1px, transparent 1px);
+  background-size: var(--journey-grid-size) var(--journey-grid-size);
+  background-repeat: repeat;
+  /* Anchor the grid to the vertical/horizontal center so lines repeat evenly around it. */
+  background-position: calc(50% - var(--journey-grid-half)) calc(50% - var(--journey-grid-half));
+}
+
+.journey-editor-grid::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-0.5px);
+  background: rgba(52, 211, 153, 0.72);
+  opacity: 0.75;
+}
+
+.journey-editor-hud {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 80;
+  width: fit-content;
+  padding: 1.25rem 0.85rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  will-change: transform;
+}
+
+.journey-editor-hud__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.journey-editor-hud__title {
+  font-family: "Jura", sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.journey-editor-hud__drag-grip {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 5px;
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.12);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.journey-editor-hud__drag-grip:active {
+  cursor: grabbing;
+}
+
+.journey-editor-hud__meta {
+  margin-top: 0.4rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-family: "Jura", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.journey-editor-hud__actions {
+  margin-top: 0.65rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.journey-editor-hud__edge {
+  margin-top: 0.55rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.journey-editor-hud__edge button {
+  font-family: "Jura", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.05);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.journey-editor-hud__edge button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.journey-editor-hud__hint {
+  flex: 1 1 100%;
+  font-family: "Jura", sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.journey-editor-hud__actions button {
+  font-family: "Jura", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(0, 0, 0, 0.18);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.journey-editor-hud__actions button:hover {
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .memory-lane .memory-node {
   z-index: 20;
-  cursor: pointer;
   overflow: visible;
 }
 
@@ -31,6 +175,17 @@
 .memory-lane .journey-showcase__card--child {
   width: 100%;
   max-width: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* With shorter standardized cards, keep media compact so title/details remain visible. */
+.memory-lane .journey-map-card__media {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 0.55rem;
+  height: auto;
 }
 
 .memory-lane .journey-showcase__card--parent {
@@ -44,8 +199,46 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 21.25rem;
-  max-width: 21.25rem;
+  width: var(--journey-parent-card-width);
+  max-width: var(--journey-parent-card-width);
+  height: var(--journey-parent-card-height);
+}
+
+.memory-lane .journey-resize-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.22);
+  border: 1px solid rgba(52, 211, 153, 0.75);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.22);
+  z-index: 30;
+  touch-action: none;
+  user-select: none;
+}
+
+.memory-lane .journey-resize-handle--nw {
+  left: -7px;
+  top: -7px;
+  cursor: nwse-resize;
+}
+
+.memory-lane .journey-resize-handle--ne {
+  right: -7px;
+  top: -7px;
+  cursor: nesw-resize;
+}
+
+.memory-lane .journey-resize-handle--sw {
+  left: -7px;
+  bottom: -7px;
+  cursor: nesw-resize;
+}
+
+.memory-lane .journey-resize-handle--se {
+  right: -7px;
+  bottom: -7px;
+  cursor: nwse-resize;
 }
 
 .memory-card {

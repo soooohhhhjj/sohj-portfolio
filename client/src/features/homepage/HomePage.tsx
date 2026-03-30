@@ -12,11 +12,13 @@ type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 
 interface HomePageProps {
   setStarMode: (mode: StarMode) => void;
   onIntroFinishedChange: (isFinished: boolean) => void;
+  isJourneyEditorEnabled?: boolean;
 }
 
 export function HomePage({
   setStarMode,
   onIntroFinishedChange,
+  isJourneyEditorEnabled,
 }: HomePageProps) {
   const { hasWelcomeFinished, setHasWelcomeFinished, hasHeroFinished, setHasHeroFinished, hasIntroFinished } =
     useHomeIntroFlow();
@@ -60,7 +62,7 @@ export function HomePage({
         </div>
 
         <div id="journey-section">
-          <Journey shouldShow={hasIntroFinished} />
+          <Journey shouldShow={hasIntroFinished} editorEnabled={Boolean(isJourneyEditorEnabled)} />
         </div>
 
         <div id="tech-stack-section">

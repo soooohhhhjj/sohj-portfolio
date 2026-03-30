@@ -1,17 +1,7 @@
 import type { LayoutConfig } from "./layout.types";
 import { layoutDesktopLg } from "./layout.desktop.lg";
 
-const items = layoutDesktopLg.items.map((item) => {
-  if (item.id === "node3-c1") {
-    return {
-      ...item,
-      width: 363,
-      height: 300,
-    };
-  }
-
-  return item;
-});
+const items = layoutDesktopLg.items.map((item) => ({ ...item }));
 
 export const layoutDesktopXl: LayoutConfig = {
   ...layoutDesktopLg,

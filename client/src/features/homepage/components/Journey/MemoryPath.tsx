@@ -1,3 +1,4 @@
+import type { PointerEvent as ReactPointerEvent } from "react";
 import type { JourneyItemNode } from "./types/journey.types";
 import type { LayoutEdge } from "./layout/layout.types";
 
@@ -5,9 +6,21 @@ interface Props {
   edge: LayoutEdge;
   items: Record<string, JourneyItemNode>;
   parentCardSizes?: Record<string, { width: number; height: number }>;
+  editorEnabled?: boolean;
+  isSelected?: boolean;
+  onSelectEdge?: (edgeKey: string, event: ReactPointerEvent<SVGPathElement>) => void;
 }
 
-export default function MemoryPath({ edge, items, parentCardSizes }: Props) {
+const edgeKeyOf = (edge: LayoutEdge) => `${edge.from}->${edge.to}`;
+
+export default function MemoryPath({
+  edge,
+  items,
+  parentCardSizes,
+  editorEnabled,
+  isSelected,
+  onSelectEdge,
+}: Props) {
   const from = items[edge.from];
   const to = items[edge.to];
 
@@ -57,15 +70,30 @@ export default function MemoryPath({ edge, items, parentCardSizes }: Props) {
   }
 
   return (
-    <path
-      d={d}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeDasharray="6 8"
-      strokeLinecap="butt"
-      strokeLinejoin="miter"
-      opacity={0.55}
-    />
+    <>
+      {editorEnabled ? (
+        <path
+          d={d}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={14}
+          strokeLinecap="butt"
+          strokeLinejoin="miter"
+          className="cursor-grab active:cursor-grabbing"
+          onPointerDown={(event) => onSelectEdge?.(edgeKeyOf(edge), event)}
+        />
+      ) : null}
+
+      <path
+        d={d}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={isSelected ? 2.2 : 1.5}
+        strokeDasharray="6 8"
+        strokeLinecap="butt"
+        strokeLinejoin="miter"
+        opacity={isSelected ? 0.75 : 0.55}
+      />
+    </>
   );
 }

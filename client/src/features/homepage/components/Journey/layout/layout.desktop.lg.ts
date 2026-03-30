@@ -1,5 +1,8 @@
 import type { LayoutConfig } from "./layout.types";
 
+const CHILD_CARD_WIDTH = 315;
+const CHILD_CARD_HEIGHT = 243;
+
 export const layoutDesktopLg: LayoutConfig = {
   id: "desktop-lg",
   minWidth: 1024,
@@ -9,34 +12,34 @@ export const layoutDesktopLg: LayoutConfig = {
   scaleWithContainer: true,
   items: [
     { id: "node1", x: 436, y: 80, width: 56, height: 56 },
-    { id: "node1-c1", x: 50, y: 230, width: 340, height: 294 },
-    { id: "node1-c2", x: 560, y: 280, width: 340, height: 294 },
-    { id: "node1-c3", x: 20, y: 580, width: 340, height: 294 },
+    { id: "node1-c1", x: 50, y: 230, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node1-c2", x: 560, y: 280, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node1-c3", x: 20, y: 580, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
 
     { id: "node2", x: 436, y: 1100, width: 56, height: 56 },
-    { id: "node2-c1", x: 530, y: 1260, width: 340, height: 294 },
-    { id: "node2-c2", x: 60, y: 1320, width: 340, height: 280 },
+    { id: "node2-c1", x: 530, y: 1260, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node2-c2", x: 60, y: 1320, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
 
     { id: "node3", x: 436, y: 1850, width: 56, height: 56 },
-    { id: "node3-c1", x: 20, y: 2030, width: 364, height: 295 },
-    { id: "node3-c2", x: 555, y: 2100, width: 359, height: 313 },
+    { id: "node3-c1", x: 20, y: 2030, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node3-c2", x: 555, y: 2100, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
 
     { id: "node4", x: 436, y: 2650, width: 56, height: 56 },
-    { id: "node4-c1", x: 540, y: 2850, width: 364, height: 323 },
-    { id: "node4-c2", x: 35, y: 2920, width: 364, height: 323 },
-    { id: "node4-c3", x: 510, y: 3260, width: 359, height: 340 },
+    { id: "node4-c1", x: 540, y: 2850, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node4-c2", x: 35, y: 2920, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node4-c3", x: 510, y: 3260, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
 
     { id: "node5", x: 436, y: 3800, width: 56, height: 56 },
-    { id: "node5-c1", x: 30, y: 3980, width: 340, height: 308 },
-    { id: "node5-c2", x: 570, y: 4100, width: 340, height: 308 },
+    { id: "node5-c1", x: 30, y: 3980, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node5-c2", x: 570, y: 4100, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
 
     { id: "node6", x: 436, y: 4550, width: 56, height: 56 },
-    { id: "node6-p1", x: 130, y: 4720, width: 250, height: 250 },
-    { id: "node6-p2", x: 560, y: 4780, width: 250, height: 250 },
-    { id: "node6-p3", x: 70, y: 5050, width: 250, height: 250 },
-    { id: "node6-p4", x: 600, y: 5090, width: 250, height: 250 },
-    { id: "node6-p5", x: 130, y: 5390, width: 270, height: 250 },
-    { id: "node6-p6", x: 490, y: 5430, width: 300, height: 250 },
+    { id: "node6-p1", x: 130, y: 4720, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node6-p2", x: 560, y: 4780, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node6-p3", x: 70, y: 5050, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node6-p4", x: 600, y: 5090, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node6-p5", x: 130, y: 5390, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
+    { id: "node6-p6", x: 490, y: 5430, width: CHILD_CARD_WIDTH, height: CHILD_CARD_HEIGHT },
   ],
   edges: [
     {

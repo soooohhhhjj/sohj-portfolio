@@ -12,11 +12,7 @@ const gapAfterCard = 28;
 const gapAfterLastChild = 80;
 const startY = 70;
 
-const getCardHeight = (item: JourneyItemContent) => {
-  if (item.type === "placeholder") return 220;
-  if (item.type === "internship") return 320;
-  return 300;
-};
+const getCardHeight = (_item: JourneyItemContent) => 320;
 
 const buildStackedItems = () => {
   let y = startY;

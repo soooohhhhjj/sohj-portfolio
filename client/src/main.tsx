@@ -25,6 +25,11 @@ export function App() {
     const saved = window.localStorage.getItem(PERF_LITE_ENABLED_STORAGE_KEY);
     return saved === null ? false : saved === 'true';
   });
+  const [isJourneyEditorEnabled, setIsJourneyEditorEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = window.localStorage.getItem('sohj.debug.journeyEditor.enabled');
+    return saved === null ? false : saved === 'true';
+  });
   const [isIntroFinished, setIsIntroFinished] = useState(false);
   const [introReplayKey, setIntroReplayKey] = useState(0);
   const showDebugPanels = import.meta.env.DEV;
@@ -39,6 +44,10 @@ export function App() {
     window.localStorage.setItem(PERF_LITE_ENABLED_STORAGE_KEY, String(isPerfLiteEnabled));
   }, [isPerfLiteEnabled]);
 
+  useEffect(() => {
+    window.localStorage.setItem('sohj.debug.journeyEditor.enabled', String(isJourneyEditorEnabled));
+  }, [isJourneyEditorEnabled]);
+
   const replayIntro = () => {
     setIsIntroFinished(false);
     setIntroReplayKey((prev) => prev + 1);
@@ -47,13 +56,14 @@ export function App() {
   return (
     <div className={`app-shell ${isPerfLiteEnabled ? 'perf-debug-lite' : ''}`}>
       {isStarfieldEnabled ? <StarfieldBackground mode={starMode} /> : null}
-      <main className="app-content">
-        <HomePage
-          key={introReplayKey}
-          setStarMode={setStarMode}
-          onIntroFinishedChange={setIsIntroFinished}
-        />
-      </main>
+        <main className="app-content">
+          <HomePage
+            key={introReplayKey}
+            setStarMode={setStarMode}
+            onIntroFinishedChange={setIsIntroFinished}
+            isJourneyEditorEnabled={isJourneyEditorEnabled}
+          />
+        </main>
       <Footer />
       {showDebugPanels ? (
         <BreakpointDebugOverlay
@@ -62,6 +72,8 @@ export function App() {
           isPerfLiteEnabled={isPerfLiteEnabled}
           onTogglePerfLite={() => setIsPerfLiteEnabled((prev) => !prev)}
           onReplayIntro={replayIntro}
+          isJourneyEditorEnabled={isJourneyEditorEnabled}
+          onToggleJourneyEditor={() => setIsJourneyEditorEnabled((prev) => !prev)}
         />
       ) : null}
     </div>

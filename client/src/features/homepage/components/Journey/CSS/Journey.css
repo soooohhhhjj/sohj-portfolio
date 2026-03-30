@@ -34,6 +34,15 @@
     backdrop-filter: blur(12px);
   }
 
+  .journey-editor-border {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    border: 2px solid rgba(52, 211, 153, 0.65);
+    box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.18);
+    z-index: 1000;
+  }
+
   .journey-shell__layer {
     position: absolute;
     inset: 0;
@@ -227,6 +236,9 @@
     font-size: 0.94rem;
     letter-spacing: .1px;
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .journey-map-card__child-title {
@@ -234,6 +246,9 @@
     font-weight: 600;
     letter-spacing: .1px;
     margin-left: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .journey-map-card__details {
@@ -243,6 +258,10 @@
     font-family: 'Jura', sans-serif;
     font-size: 0.82rem;
     line-height: 1.55;
+  }
+
+  .journey-map-card__details--truncate {
+    overflow: hidden;
   }
   .journey-showcase__card--parent .journey-map-card__details {
     padding-top: 0.8rem;

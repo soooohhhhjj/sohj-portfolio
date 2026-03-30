@@ -19,6 +19,8 @@ interface BreakpointDebugOverlayProps {
   isPerfLiteEnabled: boolean;
   onTogglePerfLite: () => void;
   onReplayIntro: () => void;
+  isJourneyEditorEnabled: boolean;
+  onToggleJourneyEditor: () => void;
 }
 
 function getActiveBreakpoint(width: number): ActiveBreakpoint {
@@ -109,6 +111,8 @@ export function BreakpointDebugOverlay({
   isPerfLiteEnabled,
   onTogglePerfLite,
   onReplayIntro,
+  isJourneyEditorEnabled,
+  onToggleJourneyEditor,
 }: BreakpointDebugOverlayProps) {
   const [viewportWidth, setViewportWidth] = useState<number>(
     typeof window === 'undefined' ? BREAKPOINTS.lg : window.innerWidth,
@@ -205,6 +209,17 @@ export function BreakpointDebugOverlay({
               aria-label={isVisible ? 'Hide breakpoint overlay' : 'Show breakpoint overlay'}
             >
               {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+
+            <button
+              type="button"
+              className="breakpoint-debug__panel-btn"
+              onClick={onToggleJourneyEditor}
+              aria-label={isJourneyEditorEnabled ? 'Disable Journey edit mode' : 'Enable Journey edit mode'}
+            >
+              <span className="text-[10px] font-jura tracking-[1px] text-white/80">
+                {isJourneyEditorEnabled ? 'JE' : 'je'}
+              </span>
             </button>
           </div>
         ) : null}
