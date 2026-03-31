@@ -11,6 +11,8 @@ import MemoryItem from "./MemoryItem";
 import MemoryPath from "./MemoryPath";
 import JourneyNodeModal from "./JourneyNodeModal";
 import { journeyContent } from "./journey.content";
+import { useJourneyEditorCardOverrides } from "./hooks/useJourneyEditorCardOverrides";
+import { useJourneyEditorDeletedCards } from "./hooks/useJourneyEditorDeletedCards";
 import { computeJourneyNodes } from "./layout/computeNodes";
 import { pickLayout } from "./layout";
 import { useContainerSize } from "./layout/useContainerSize";
@@ -37,6 +39,7 @@ const buildEdgeOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:e
 const buildParentCardSizeKey = (layoutId: string) =>
   `journey-editor:${layoutId}:parentCardSize`;
 const HUD_POS_STORAGE_KEY = "sohj.debug.journeyEditor.hudPos";
+const HUD_MINIMIZED_STORAGE_KEY = "sohj.debug.journeyEditor.hudMinimized";
 const edgeKeyOf = (edge: { from: string; to: string }) => `${edge.from}->${edge.to}`;
 
 const anchorOrder: Anchor[] = ["top", "right", "bottom", "left"];
@@ -50,11 +53,16 @@ export default function MemoryLane({
   editorEnabled,
   editorActive = true,
 }: MemoryLaneProps) {
+  const isDev = import.meta.env.DEV;
+  const editorToolsEnabled = Boolean(editorEnabled) && isDev;
   const { ref, width } = useContainerSize<HTMLDivElement>();
   const viewportWidth = useViewportWidth();
   const [selectedItem, setSelectedItem] = useState<JourneyItemNode | null>(
     null,
   );
+  const [selectedEditorCardId, setSelectedEditorCardId] = useState<string | null>(null);
+  const [restoreCardId, setRestoreCardId] = useState<string>("");
+  const [editorClickMode, setEditorClickMode] = useState<"modal" | "edit">("modal");
   const [parentCardSizes, setParentCardSizes] = useState<
     Record<string, { width: number; height: number }>
   >({});
@@ -107,6 +115,39 @@ export default function MemoryLane({
       return { x: 0, y: 0 };
     }
   });
+  const [hudMinimized, setHudMinimized] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(HUD_MINIMIZED_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const {
+    overrides: cardTextOverrides,
+    upsertOverride: upsertCardTextOverride,
+    clearOverride: clearCardTextOverride,
+    resetAllOverrides: resetAllCardTextOverrides,
+  } = useJourneyEditorCardOverrides({ enabled: isDev });
+  const {
+    deletedIds: deletedCardIds,
+    deletedSet: deletedCardIdSet,
+    deleteCard,
+    restoreCard,
+    resetDeletedCards,
+  } = useJourneyEditorDeletedCards({ enabled: isDev });
+
+  useEffect(() => {
+    if (!editorToolsEnabled) return;
+    if (deletedCardIds.length === 0) {
+      if (restoreCardId) setRestoreCardId("");
+      return;
+    }
+    if (!restoreCardId || !deletedCardIdSet.has(restoreCardId)) {
+      setRestoreCardId(deletedCardIds[0]);
+    }
+  }, [deletedCardIdSet, deletedCardIds, editorToolsEnabled, restoreCardId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -116,6 +157,15 @@ export default function MemoryLane({
       // ignore
     }
   }, [hudPos]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(HUD_MINIMIZED_STORAGE_KEY, hudMinimized ? "true" : "false");
+    } catch {
+      // ignore
+    }
+  }, [hudMinimized]);
 
   useEffect(() => {
     setNodeOverrides({});
@@ -192,42 +242,83 @@ export default function MemoryLane({
   const effectiveItems = useMemo(() => {
     return items.map((item) => {
       const override = nodeOverrides[item.id];
-      if (!override) return item;
-      return {
-        ...item,
-        x: override.x ?? item.x,
-        y: override.y ?? item.y,
-        width: override.width ?? item.width,
-        height: override.height ?? item.height,
-      };
+      const textOverride = cardTextOverrides[item.id];
+      const next = override
+        ? {
+            ...item,
+            x: override.x ?? item.x,
+            y: override.y ?? item.y,
+            width: override.width ?? item.width,
+            height: override.height ?? item.height,
+          }
+        : item;
+
+      return textOverride ? { ...next, ...textOverride } : next;
     });
-  }, [items, nodeOverrides]);
+  }, [cardTextOverrides, items, nodeOverrides]);
+
+  const visibleItems = useMemo(() => {
+    if (!isDev) return effectiveItems;
+    if (deletedCardIdSet.size === 0) return effectiveItems;
+    return effectiveItems.filter((item) => !deletedCardIdSet.has(item.id));
+  }, [deletedCardIdSet, effectiveItems, isDev]);
 
   const effectiveItemMap = useMemo(() => {
-    if (effectiveItems === items) return itemMap;
-    return Object.fromEntries(effectiveItems.map((item) => [item.id, item]));
-  }, [effectiveItems, itemMap, items]);
+    return Object.fromEntries(visibleItems.map((item) => [item.id, item]));
+  }, [visibleItems]);
+
+  const handleSelectCardInEditor = useCallback(
+    (item: JourneyItemNode) => {
+      if (!editorToolsEnabled) return;
+      if (editorClickMode === "edit") {
+        setSelectedEditorCardId(item.id);
+        return;
+      }
+      setSelectedEditorCardId(null);
+      setSelectedItem(item);
+    },
+    [editorClickMode, editorToolsEnabled],
+  );
+
+  const selectedEditorCard = useMemo(() => {
+    if (!selectedEditorCardId) return null;
+    return effectiveItemMap[selectedEditorCardId] ?? null;
+  }, [effectiveItemMap, selectedEditorCardId]);
+
+  useEffect(() => {
+    if (!selectedEditorCardId) return;
+    if (effectiveItemMap[selectedEditorCardId]) return;
+    setSelectedEditorCardId(null);
+  }, [effectiveItemMap, selectedEditorCardId]);
+
+  useEffect(() => {
+    if (!editorToolsEnabled) return;
+    if (editorClickMode !== "modal") return;
+    if (selectedEditorCardId) setSelectedEditorCardId(null);
+  }, [editorClickMode, editorToolsEnabled, selectedEditorCardId]);
 
   const renderEdges = useMemo(() => {
-    return edges.map((edge) => {
-      const key = edgeKeyOf(edge);
-      const override = edgeOverrides[key];
-      if (!override) return edge;
-      return {
-        ...edge,
-        ...override,
-        via: override.via ?? edge.via,
-      };
-    });
-  }, [edgeOverrides, edges]);
+    return edges
+      .filter((edge) => Boolean(effectiveItemMap[edge.from]) && Boolean(effectiveItemMap[edge.to]))
+      .map((edge) => {
+        const key = edgeKeyOf(edge);
+        const override = edgeOverrides[key];
+        if (!override) return edge;
+        return {
+          ...edge,
+          ...override,
+          via: override.via ?? edge.via,
+        };
+      });
+  }, [edgeOverrides, edges, effectiveItemMap]);
 
   const laneHeight = useMemo(() => {
-    const maxY = effectiveItems.reduce(
+    const maxY = visibleItems.reduce(
       (max, item) => Math.max(max, item.y + item.height),
       0,
     );
     return Math.max(height, maxY + 180);
-  }, [effectiveItems, height]);
+  }, [height, visibleItems]);
 
   useLayoutEffect(() => {
     if (!ref.current) return;
@@ -283,6 +374,37 @@ export default function MemoryLane({
     },
     [hudRef],
   );
+
+  const clampHudToViewport = useCallback(() => {
+    setHudPos((prev) => {
+      const next = clampHud(prev);
+      if (next.x === prev.x && next.y === prev.y) return prev;
+      return next;
+    });
+  }, [clampHud]);
+
+  useEffect(() => {
+    if (!editorEnabled || !editorActive) return;
+    if (typeof window === "undefined") return;
+
+    // Re-clamp when the HUD's dimensions change (e.g. minimize/expand) so it never
+    // ends up positioned off-screen.
+    const el = hudRef.current;
+    if (!el) return;
+
+    const raf = window.requestAnimationFrame(() => clampHudToViewport());
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => clampHudToViewport());
+      observer.observe(el);
+    }
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      observer?.disconnect();
+    };
+  }, [clampHudToViewport, editorActive, editorEnabled, hudMinimized, editorClickMode]);
 
   const handleHudPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
@@ -383,8 +505,8 @@ export default function MemoryLane({
 
   const modalNavigationItems = useMemo(
     () =>
-      [...effectiveItems].sort((a, b) => (a.y - b.y) || (a.x - b.x)),
-    [effectiveItems],
+      [...visibleItems].sort((a, b) => (a.y - b.y) || (a.x - b.x)),
+    [visibleItems],
   );
 
   const handleCloseModal = () => {
@@ -416,7 +538,7 @@ export default function MemoryLane({
         return itemBottom >= centerBandTop && itemTop <= centerBandBottom;
       };
 
-      const centeredItem = effectiveItems
+      const centeredItem = visibleItems
         .filter((item) => isItemInCenterBand(item))
         .sort((a, b) => {
           const aCenter = laneTop + a.y + a.height / 2;
@@ -586,6 +708,79 @@ export default function MemoryLane({
 
   const selectedVia = selectedRenderEdge?.via ?? [];
 
+  const getEdgeAnchorPoint = useCallback(
+    (itemId: string, anchor: Anchor) => {
+      const item = effectiveItemMap[itemId] ?? itemMap[itemId];
+      if (!item) return null;
+
+      const base = { x: item.x, y: item.y, width: item.width, height: item.height ?? 0 };
+      const parentSize = item.type === "parent" ? parentCardSizes[item.id] : undefined;
+
+      const centerX = base.x + base.width / 2;
+      const centerY = base.y + base.height / 2;
+      const width = parentSize?.width ?? base.width;
+      const height = parentSize?.height ?? base.height;
+      const x = centerX - width / 2;
+      const y = centerY - height / 2;
+
+      switch (anchor) {
+        case "top":
+          return { x: x + width / 2, y };
+        case "bottom":
+          return { x: x + width / 2, y: y + height };
+        case "left":
+          return { x, y: y + height / 2 };
+        case "right":
+          return { x: x + width, y: y + height / 2 };
+      }
+    },
+    [effectiveItemMap, itemMap, parentCardSizes],
+  );
+
+  const handleOrthogonalizeSelectedEdge = useCallback(() => {
+    if (!selectedRenderEdge || !selectedEdgeKey) return;
+
+    const start = getEdgeAnchorPoint(selectedRenderEdge.from, selectedRenderEdge.fromAnchor);
+    const end = getEdgeAnchorPoint(selectedRenderEdge.to, selectedRenderEdge.toAnchor);
+    if (!start || !end) return;
+
+    const via = selectedRenderEdge.via ?? [];
+    if (via.length === 0) return;
+
+    const snapped = via.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+
+    const snapTowards = (
+      point: { x: number; y: number },
+      target: { x: number; y: number },
+    ) => {
+      const dx = point.x - target.x;
+      const dy = point.y - target.y;
+      // If this segment is "mostly horizontal", snap Y; otherwise snap X.
+      return Math.abs(dx) >= Math.abs(dy)
+        ? { x: point.x, y: target.y }
+        : { x: target.x, y: point.y };
+    };
+
+    // Forward pass: make each segment from previous point axis-aligned.
+    let prev = start;
+    for (let i = 0; i < snapped.length; i++) {
+      snapped[i] = snapTowards(snapped[i], prev);
+      prev = snapped[i];
+    }
+
+    // Backward pass: also align the final segment into the end anchor cleanly.
+    let next = end;
+    for (let i = snapped.length - 1; i >= 0; i--) {
+      snapped[i] = snapTowards(snapped[i], next);
+      next = snapped[i];
+    }
+
+    setEdgeOverrides((prevOverrides) => ({
+      ...prevOverrides,
+      [selectedEdgeKey]: { ...(prevOverrides[selectedEdgeKey] ?? {}), via: snapped },
+    }));
+  }, [getEdgeAnchorPoint, selectedEdgeKey, selectedRenderEdge]);
+
   const handleResetEdits = useCallback(() => {
     setNodeOverrides({});
     setEdgeOverrides({});
@@ -671,8 +866,48 @@ export default function MemoryLane({
     }
   }, [edgeOverrides, layout.canvasWidth, layout.id, nodeOverrides, parentCardSizeOverride, scale]);
 
+  const laneClickStateRef = useMemo(
+    () =>
+      ({
+        current: null as null | {
+          pointerId: number;
+          startClientX: number;
+          startClientY: number;
+        },
+      }),
+    [],
+  );
+
   return (
-    <div ref={ref} className="memory-lane relative w-full">
+    <div
+      ref={ref}
+      className="memory-lane relative w-full"
+      onPointerDown={(event) => {
+        if (!editorToolsEnabled) return;
+        if (event.button !== 0) return;
+        if (event.currentTarget !== event.target) return;
+        laneClickStateRef.current = {
+          pointerId: event.pointerId,
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+        };
+      }}
+      onPointerUp={(event) => {
+        if (!editorToolsEnabled) return;
+        const state = laneClickStateRef.current;
+        if (!state) return;
+        if (state.pointerId !== event.pointerId) return;
+        laneClickStateRef.current = null;
+        if (event.currentTarget !== event.target) return;
+
+        const dx = Math.abs(event.clientX - state.startClientX);
+        const dy = Math.abs(event.clientY - state.startClientY);
+        if (dx > 3 || dy > 3) return;
+
+        setEditorClickMode("modal");
+        setSelectedEditorCardId(null);
+      }}
+    >
       {editorEnabled ? <div className="journey-editor-grid" /> : null}
 
       <svg
@@ -740,11 +975,11 @@ export default function MemoryLane({
           : null}
       </svg>
 
-      {effectiveItems.map((item) => (
+      {visibleItems.map((item) => (
         <MemoryItem
           key={item.id}
           {...item}
-          onSelect={editorEnabled ? undefined : setSelectedItem}
+          onSelect={editorEnabled ? handleSelectCardInEditor : setSelectedItem}
           onMeasure={handleMeasureParent}
           editorEnabled={editorEnabled}
           onEditMove={handleEditMove}
@@ -758,7 +993,7 @@ export default function MemoryLane({
               ref={(node) => {
                 hudRef.current = node;
               }}
-              className="journey-editor-hud"
+              className={`journey-editor-hud ${hudMinimized ? "journey-editor-hud--minimized" : ""}`}
             >
               <div
                 className="journey-editor-hud__drag-grip"
@@ -771,22 +1006,203 @@ export default function MemoryLane({
 
               <div className="journey-editor-hud__title-row">
                 <div className="journey-editor-hud__title">Journey Edit Mode</div>
-              </div>
-              <div className="journey-editor-hud__meta">
-                <span>layout: {layout.id}</span>
-                <span>container: {Math.round(width ?? 0)}px</span>
-                <span>scale: {scale.toFixed(3)}</span>
-                <span>
-                  template:{" "}
-                  {templateSize ? `${templateSize.width}x${templateSize.height}` : "n/a"}
-                </span>
-                <span>edge: {selectedEdgeKey ?? "none"}</span>
-              </div>
-
-              {selectedRenderEdge ? (
-                <div className="journey-editor-hud__edge">
+                <div className="journey-editor-hud__title-actions">
                   <button
                     type="button"
+                    className="journey-editor-hud__mini-toggle"
+                    onClick={() => setHudMinimized((prev) => !prev)}
+                    aria-label={hudMinimized ? "Expand editor panel" : "Minimize editor panel"}
+                  >
+                    {hudMinimized ? "Expand" : "Minimize"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="journey-editor-hud__mode-row">
+                <label className="journey-editor-hud__label" htmlFor="journey-editor-click-mode">
+                  Click
+                </label>
+                <select
+                  id="journey-editor-click-mode"
+                  className="journey-editor-hud__select"
+                  value={editorClickMode}
+                  onChange={(event) => setEditorClickMode(event.target.value as "modal" | "edit")}
+                >
+                  <option value="modal">Modal</option>
+                  <option value="edit">Edit</option>
+                </select>
+              </div>
+
+              {hudMinimized && selectedRenderEdge ? (
+                <div className="journey-editor-hud__mini-actions">
+                  <button type="button" onClick={handleOrthogonalizeSelectedEdge}>
+                    Ortho
+                  </button>
+                </div>
+              ) : null}
+
+              {!hudMinimized ? (
+                <div className="journey-editor-hud__meta">
+                  <span>layout: {layout.id}</span>
+                  <span>container: {Math.round(width ?? 0)}px</span>
+                  <span>scale: {scale.toFixed(3)}</span>
+                  <span>
+                    template:{" "}
+                    {templateSize ? `${templateSize.width}x${templateSize.height}` : "n/a"}
+                  </span>
+                  <span>edge: {selectedEdgeKey ?? "none"}</span>
+                </div>
+              ) : null}
+
+              {!hudMinimized && editorClickMode === "edit" ? (
+                <div className="journey-editor-hud__card-editor">
+                <div className="journey-editor-hud__card-row">
+                  <label className="journey-editor-hud__label" htmlFor="journey-editor-selected-card">
+                    Card
+                  </label>
+                  <select
+                    id="journey-editor-selected-card"
+                    className="journey-editor-hud__select"
+                    value={selectedEditorCardId ?? ""}
+                    onChange={(event) => setSelectedEditorCardId(event.target.value || null)}
+                  >
+                    <option value="">(click a card)</option>
+                    {visibleItems.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.id} • {item.title ?? (item.type === "parent" ? "Parent" : "Card")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedEditorCard ? (
+                  <>
+                    <div className="journey-editor-hud__field">
+                      <label className="journey-editor-hud__label" htmlFor="journey-editor-card-title">
+                        Title
+                      </label>
+                      <input
+                        id="journey-editor-card-title"
+                        className="journey-editor-hud__input"
+                        value={selectedEditorCard.title ?? ""}
+                        onChange={(event) =>
+                          upsertCardTextOverride(selectedEditorCard.id, {
+                            title: event.target.value,
+                          })
+                        }
+                        placeholder="Title…"
+                      />
+                    </div>
+
+                    {selectedEditorCard.type === "parent" ? (
+                      <div className="journey-editor-hud__field">
+                        <label
+                          className="journey-editor-hud__label"
+                          htmlFor="journey-editor-card-modal-details"
+                        >
+                          Summary
+                        </label>
+                        <textarea
+                          id="journey-editor-card-modal-details"
+                          className="journey-editor-hud__textarea"
+                          value={selectedEditorCard.modalDetails ?? ""}
+                          onChange={(event) =>
+                            upsertCardTextOverride(selectedEditorCard.id, {
+                              modalDetails: event.target.value,
+                            })
+                          }
+                          placeholder="Parent summary…"
+                          rows={3}
+                        />
+                      </div>
+                    ) : (
+                      <div className="journey-editor-hud__field">
+                        <label className="journey-editor-hud__label" htmlFor="journey-editor-card-details">
+                          Details
+                        </label>
+                        <textarea
+                          id="journey-editor-card-details"
+                          className="journey-editor-hud__textarea"
+                          value={selectedEditorCard.details ?? ""}
+                          onChange={(event) =>
+                            upsertCardTextOverride(selectedEditorCard.id, {
+                              details: event.target.value,
+                            })
+                          }
+                          placeholder="Child details…"
+                          rows={2}
+                        />
+                      </div>
+                    )}
+
+                    <div className="journey-editor-hud__card-actions">
+                      <button
+                        type="button"
+                        onClick={() => clearCardTextOverride(selectedEditorCard.id)}
+                      >
+                        Clear Text
+                      </button>
+                      <button
+                        type="button"
+                        className="journey-editor-hud__danger"
+                        onClick={() => {
+                          deleteCard(selectedEditorCard.id);
+                          setSelectedEditorCardId(null);
+                        }}
+                      >
+                        Delete Card
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="journey-editor-hud__hint">Click a card (or pick one) to edit its text.</div>
+                )}
+
+                {deletedCardIds.length > 0 ? (
+                  <div className="journey-editor-hud__restore">
+                    <div className="journey-editor-hud__card-row">
+                      <label className="journey-editor-hud__label" htmlFor="journey-editor-restore-card">
+                        Deleted
+                      </label>
+                      <select
+                        id="journey-editor-restore-card"
+                        className="journey-editor-hud__select"
+                        value={restoreCardId}
+                        onChange={(event) => setRestoreCardId(event.target.value)}
+                      >
+                        {deletedCardIds.map((id) => (
+                          <option key={id} value={id}>
+                            {id}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="journey-editor-hud__card-actions">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!restoreCardId) return;
+                          restoreCard(restoreCardId);
+                        }}
+                      >
+                        Restore
+                      </button>
+                      <button type="button" onClick={resetDeletedCards}>
+                        Restore All
+                      </button>
+                      <button type="button" onClick={resetAllCardTextOverrides}>
+                        Reset Text (All)
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              ) : null}
+
+      {!hudMinimized && selectedRenderEdge ? (
+        <div className="journey-editor-hud__edge">
+          <button
+            type="button"
                     onClick={() => {
                       const key = selectedEdgeKey;
                       if (!key) return;
@@ -810,16 +1226,20 @@ export default function MemoryLane({
                         [key]: { ...(prev[key] ?? {}), toAnchor: cycleAnchor(current) },
                       }));
                     }}
-                  >
-                    To: {selectedRenderEdge.toAnchor}
-                  </button>
-                  <div className="journey-editor-hud__hint">
-                    Shift-click a line to add a point. Alt-click a point to remove.
-                  </div>
-                </div>
-              ) : null}
+          >
+            To: {selectedRenderEdge.toAnchor}
+          </button>
+          <button type="button" onClick={handleOrthogonalizeSelectedEdge}>
+            Orthogonalize
+          </button>
+          <div className="journey-editor-hud__hint">
+            Shift-click a line to add a point. Alt-click a point to remove. Orthogonalize snaps segments to true horizontal/vertical.
+          </div>
+        </div>
+      ) : null}
 
-              <div className="journey-editor-hud__actions">
+              {!hudMinimized ? (
+                <div className="journey-editor-hud__actions">
                 <button type="button" onClick={handleCopyEdits}>
                   Copy Layout JSON
                 </button>
@@ -833,6 +1253,7 @@ export default function MemoryLane({
                   HUD Reset
                 </button>
               </div>
+              ) : null}
             </div>,
             document.body,
           )

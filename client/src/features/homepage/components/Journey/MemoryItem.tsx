@@ -138,6 +138,14 @@ export default function MemoryItem(props: MemoryItemProps) {
     const state = dragStateRef.current;
     if (!state) return;
     if (state.pointerId !== event.pointerId) return;
+
+    if (props.editorEnabled) {
+      const dx = Math.abs(event.clientX - state.startX);
+      const dy = Math.abs(event.clientY - state.startY);
+      if (dx <= 3 && dy <= 3) {
+        props.onSelect?.(props);
+      }
+    }
     dragStateRef.current = null;
   };
 

@@ -39,13 +39,22 @@
   top: 1rem;
   left: 1rem;
   z-index: 80;
-  width: fit-content;
+  box-sizing: border-box;
+  width: min(92vw, 44rem);
+  max-height: min(82vh, 46rem);
+  overflow: auto;
   padding: 1.25rem 0.85rem 0.75rem;
   border-radius: 0.5rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(10px);
   will-change: transform;
+}
+
+.journey-editor-hud--minimized {
+  padding-bottom: 0.65rem;
+  width: fit-content;
+  max-width: 92vw;
 }
 
 .journey-editor-hud__title-row {
@@ -55,12 +64,66 @@
   gap: 0.75rem;
 }
 
+.journey-editor-hud__title-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .journey-editor-hud__title {
   font-family: "Jura", sans-serif;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.82);
+}
+
+.journey-editor-hud__mini-toggle {
+  font-family: "Jura", sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.journey-editor-hud__mini-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.journey-editor-hud__mode-row {
+  margin-top: 0.55rem;
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.journey-editor-hud__mini-actions {
+  margin-top: 0.55rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.journey-editor-hud__mini-actions button {
+  font-family: "Jura", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(0, 0, 0, 0.18);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.journey-editor-hud__mini-actions button:hover {
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .journey-editor-hud__drag-grip {
@@ -92,6 +155,107 @@
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.62);
 }
+
+/* #region Journey Editor HUD - Card Editor */
+.journey-editor-hud__card-editor {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.journey-editor-hud__card-row {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.journey-editor-hud__field {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  align-items: start;
+  gap: 0.5rem;
+}
+
+.journey-editor-hud__label {
+  font-family: "Jura", sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  padding-top: 0.25rem;
+}
+
+.journey-editor-hud__select,
+.journey-editor-hud__input,
+.journey-editor-hud__textarea {
+  width: 100%;
+  min-width: 0;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.78);
+  font-family: "Jura", sans-serif;
+  font-size: 0.75rem;
+  padding: 0.45rem 0.55rem;
+  outline: none;
+}
+
+.journey-editor-hud__select,
+.journey-editor-hud__input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journey-editor-hud__textarea {
+  resize: vertical;
+  min-height: 3.2rem;
+}
+
+.journey-editor-hud__select:focus,
+.journey-editor-hud__input:focus,
+.journey-editor-hud__textarea:focus {
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+}
+
+.journey-editor-hud__card-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.journey-editor-hud__card-actions button {
+  font-family: "Jura", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(0, 0, 0, 0.18);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.journey-editor-hud__card-actions button:hover {
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.journey-editor-hud__restore {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.journey-editor-hud__danger {
+  border-color: rgba(244, 63, 94, 0.25) !important;
+}
+/* #endregion Journey Editor HUD - Card Editor */
 
 .journey-editor-hud__actions {
   margin-top: 0.65rem;
