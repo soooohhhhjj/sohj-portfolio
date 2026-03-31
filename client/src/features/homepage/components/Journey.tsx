@@ -34,10 +34,12 @@ export default function Journey({ shouldShow, contentRef, editorEnabled }: Props
             <h2 className="journey-map__title">My Journey</h2>
           </div>
 
-          <MemoryLane editorEnabled={import.meta.env.DEV && Boolean(editorEnabled)} />
+          <MemoryLane
+            editorEnabled={import.meta.env.DEV && Boolean(editorEnabled)}
+            editorActive={shouldShow}
+          />
         </div>
       </div>
     </motion.section>
   );
 }
-

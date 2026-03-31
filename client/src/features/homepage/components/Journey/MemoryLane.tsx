@@ -6,6 +6,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import MemoryItem from "./MemoryItem";
 import MemoryPath from "./MemoryPath";
 import JourneyNodeModal from "./JourneyNodeModal";
@@ -21,6 +22,7 @@ import "./CSS/memoryLane.css";
 interface MemoryLaneProps {
   onModalOpenChange?: (isOpen: boolean) => void;
   editorEnabled?: boolean;
+  editorActive?: boolean;
 }
 
 type NodeLayoutOverride = Partial<{ x: number; y: number; width: number; height: number }>;
@@ -43,7 +45,11 @@ const cycleAnchor = (value: Anchor) => {
   return anchorOrder[(idx + 1) % anchorOrder.length];
 };
 
-export default function MemoryLane({ onModalOpenChange, editorEnabled }: MemoryLaneProps) {
+export default function MemoryLane({
+  onModalOpenChange,
+  editorEnabled,
+  editorActive = true,
+}: MemoryLaneProps) {
   const { ref, width } = useContainerSize<HTMLDivElement>();
   const viewportWidth = useViewportWidth();
   const [selectedItem, setSelectedItem] = useState<JourneyItemNode | null>(
@@ -248,10 +254,10 @@ export default function MemoryLane({ onModalOpenChange, editorEnabled }: MemoryL
   }, [parentCardSizeOverride, ref]);
 
   useLayoutEffect(() => {
-    if (!editorEnabled) return;
+    if (!editorEnabled || !editorActive) return;
     if (!hudRef.current) return;
     hudRef.current.style.transform = `translate(${hudPos.x}px, ${hudPos.y}px)`;
-  }, [editorEnabled, hudPos.x, hudPos.y, hudRef]);
+  }, [editorActive, editorEnabled, hudPos.x, hudPos.y, hudRef]);
 
   const clampHud = useCallback(
     (next: { x: number; y: number }) => {
@@ -280,7 +286,7 @@ export default function MemoryLane({ onModalOpenChange, editorEnabled }: MemoryL
 
   const handleHudPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
-      if (!editorEnabled) return;
+      if (!editorEnabled || !editorActive) return;
       if (event.button !== 0) return;
       event.preventDefault();
 
@@ -294,12 +300,12 @@ export default function MemoryLane({ onModalOpenChange, editorEnabled }: MemoryL
 
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [editorEnabled, hudDragRef, hudPos.x, hudPos.y],
+    [editorActive, editorEnabled, hudDragRef, hudPos.x, hudPos.y],
   );
 
   const handleHudPointerMove = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
-      if (!editorEnabled) return;
+      if (!editorEnabled || !editorActive) return;
       const state = hudDragRef.current;
       if (!state) return;
       if (state.pointerId !== event.pointerId) return;
@@ -308,7 +314,7 @@ export default function MemoryLane({ onModalOpenChange, editorEnabled }: MemoryL
       const dy = event.clientY - state.startClientY;
       setHudPos(clampHud({ x: Math.round(state.startX + dx), y: Math.round(state.startY + dy) }));
     },
-    [clampHud, editorEnabled, hudDragRef],
+    [clampHud, editorActive, editorEnabled, hudDragRef],
   );
 
   const handleHudPointerUp = useCallback(
@@ -746,88 +752,91 @@ export default function MemoryLane({ onModalOpenChange, editorEnabled }: MemoryL
         />
       ))}
 
-      {editorEnabled ? (
-        <div
-          ref={(node) => {
-            hudRef.current = node;
-          }}
-          className="journey-editor-hud"
-        >
-          <div
-            className="journey-editor-hud__drag-grip"
-            onPointerDown={handleHudPointerDown}
-            onPointerMove={handleHudPointerMove}
-            onPointerUp={handleHudPointerUp}
-            aria-label="Drag editor panel"
-            role="presentation"
-          />
+      {editorEnabled && editorActive && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={(node) => {
+                hudRef.current = node;
+              }}
+              className="journey-editor-hud"
+            >
+              <div
+                className="journey-editor-hud__drag-grip"
+                onPointerDown={handleHudPointerDown}
+                onPointerMove={handleHudPointerMove}
+                onPointerUp={handleHudPointerUp}
+                aria-label="Drag editor panel"
+                role="presentation"
+              />
 
-          <div className="journey-editor-hud__title-row">
-            <div className="journey-editor-hud__title">Journey Edit Mode</div>
-          </div>
-          <div className="journey-editor-hud__meta">
-            <span>layout: {layout.id}</span>
-            <span>container: {Math.round(width ?? 0)}px</span>
-            <span>scale: {scale.toFixed(3)}</span>
-            <span>
-              template:{" "}
-              {templateSize ? `${templateSize.width}x${templateSize.height}` : "n/a"}
-            </span>
-            <span>edge: {selectedEdgeKey ?? "none"}</span>
-          </div>
-
-          {editorEnabled && selectedRenderEdge ? (
-            <div className="journey-editor-hud__edge">
-              <button
-                type="button"
-                onClick={() => {
-                  const key = selectedEdgeKey;
-                  if (!key) return;
-                  const current = (selectedRenderEdge.fromAnchor as Anchor) ?? "bottom";
-                  setEdgeOverrides((prev) => ({
-                    ...prev,
-                    [key]: { ...(prev[key] ?? {}), fromAnchor: cycleAnchor(current) },
-                  }));
-                }}
-              >
-                From: {selectedRenderEdge.fromAnchor}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const key = selectedEdgeKey;
-                  if (!key) return;
-                  const current = (selectedRenderEdge.toAnchor as Anchor) ?? "top";
-                  setEdgeOverrides((prev) => ({
-                    ...prev,
-                    [key]: { ...(prev[key] ?? {}), toAnchor: cycleAnchor(current) },
-                  }));
-                }}
-              >
-                To: {selectedRenderEdge.toAnchor}
-              </button>
-              <div className="journey-editor-hud__hint">
-                Shift-click a line to add a point. Alt-click a point to remove.
+              <div className="journey-editor-hud__title-row">
+                <div className="journey-editor-hud__title">Journey Edit Mode</div>
               </div>
-            </div>
-          ) : null}
+              <div className="journey-editor-hud__meta">
+                <span>layout: {layout.id}</span>
+                <span>container: {Math.round(width ?? 0)}px</span>
+                <span>scale: {scale.toFixed(3)}</span>
+                <span>
+                  template:{" "}
+                  {templateSize ? `${templateSize.width}x${templateSize.height}` : "n/a"}
+                </span>
+                <span>edge: {selectedEdgeKey ?? "none"}</span>
+              </div>
 
-          <div className="journey-editor-hud__actions">
-            <button type="button" onClick={handleCopyEdits}>
-              Copy Layout JSON
-            </button>
-            <button type="button" onClick={handleMatchAllToTemplate}>
-              Match All to node1-c1
-            </button>
-            <button type="button" onClick={handleResetEdits}>
-              Reset
-            </button>
-            <button type="button" onClick={() => setHudPos({ x: 0, y: 0 })}>
-              HUD Reset
-            </button>
-          </div>
-        </div>
-      ) : null}
+              {selectedRenderEdge ? (
+                <div className="journey-editor-hud__edge">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const key = selectedEdgeKey;
+                      if (!key) return;
+                      const current = (selectedRenderEdge.fromAnchor as Anchor) ?? "bottom";
+                      setEdgeOverrides((prev) => ({
+                        ...prev,
+                        [key]: { ...(prev[key] ?? {}), fromAnchor: cycleAnchor(current) },
+                      }));
+                    }}
+                  >
+                    From: {selectedRenderEdge.fromAnchor}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const key = selectedEdgeKey;
+                      if (!key) return;
+                      const current = (selectedRenderEdge.toAnchor as Anchor) ?? "top";
+                      setEdgeOverrides((prev) => ({
+                        ...prev,
+                        [key]: { ...(prev[key] ?? {}), toAnchor: cycleAnchor(current) },
+                      }));
+                    }}
+                  >
+                    To: {selectedRenderEdge.toAnchor}
+                  </button>
+                  <div className="journey-editor-hud__hint">
+                    Shift-click a line to add a point. Alt-click a point to remove.
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="journey-editor-hud__actions">
+                <button type="button" onClick={handleCopyEdits}>
+                  Copy Layout JSON
+                </button>
+                <button type="button" onClick={handleMatchAllToTemplate}>
+                  Match All to node1-c1
+                </button>
+                <button type="button" onClick={handleResetEdits}>
+                  Reset
+                </button>
+                <button type="button" onClick={() => setHudPos({ x: 0, y: 0 })}>
+                  HUD Reset
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <JourneyNodeModal
         item={selectedItem}
