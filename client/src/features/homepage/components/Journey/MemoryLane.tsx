@@ -76,7 +76,7 @@ export default function MemoryLane({
   }, [onModalOpenChange, selectedItem]);
 
   const layout = useMemo(() => pickLayout(viewportWidth), [viewportWidth]);
-  const { items, itemMap, edges, height } = useMemo(
+  const { items, itemMap, edges } = useMemo(
     () => computeJourneyNodes(journeyContent, layout, width),
     [layout, width],
   );
@@ -327,12 +327,14 @@ export default function MemoryLane({
   }, [edgeOverrides, edges, effectiveItemMap]);
 
   const laneHeight = useMemo(() => {
-    const maxY = visibleItems.reduce(
-      (max, item) => Math.max(max, item.y + item.height),
-      0,
-    );
-    return Math.max(height, maxY + 180);
-  }, [height, visibleItems]);
+    const maxItemY = visibleItems.reduce((max, item) => Math.max(max, item.y + item.height), 0);
+    const maxViaY = renderEdges.reduce((max, edge) => {
+      if (!edge.via || edge.via.length === 0) return max;
+      return Math.max(max, ...edge.via.map((point) => point.y));
+    }, 0);
+
+    return Math.ceil(Math.max(0, maxItemY, maxViaY));
+  }, [renderEdges, visibleItems]);
 
   useLayoutEffect(() => {
     if (!ref.current) return;
@@ -592,8 +594,6 @@ export default function MemoryLane({
       Math.min(max, Math.max(min, value));
 
     const containerW = width;
-    const containerH = laneHeight;
-
     const anchorW = base.width;
     const anchorH = base.height;
 
@@ -612,10 +612,7 @@ export default function MemoryLane({
 
     const minY =
       base.type === "parent" ? Math.ceil(cardH / 2 - anchorH / 2) : 0;
-    const maxY =
-      base.type === "parent"
-        ? Math.floor(containerH - cardH / 2 - anchorH / 2)
-        : Math.floor(containerH - anchorH);
+    const maxY = Number.POSITIVE_INFINITY;
 
     setNodeOverrides((prev) => ({
       ...prev,
@@ -625,7 +622,7 @@ export default function MemoryLane({
         y: clamp(next.y, minY, Math.max(minY, maxY)),
       },
     }));
-  }, [effectiveItemMap, itemMap, laneHeight, parentCardSizes, ref, width]);
+  }, [effectiveItemMap, itemMap, parentCardSizes, ref, width]);
 
   const handleEditResize = useCallback(
     (id: string, next: { x: number; y: number; width: number; height: number }) => {
@@ -637,26 +634,24 @@ export default function MemoryLane({
         Math.min(max, Math.max(min, value));
 
       const containerW = width;
-      const containerH = laneHeight;
-
       const minWidth = 220;
       const minHeight = 160;
 
       const clampedWidth = clamp(next.width, minWidth, Math.floor(containerW - next.x));
-      const clampedHeight = clamp(next.height, minHeight, Math.floor(containerH - next.y));
+      const clampedHeight = clamp(next.height, minHeight, Number.POSITIVE_INFINITY);
 
       setNodeOverrides((prev) => ({
         ...prev,
         [id]: {
           ...(prev[id] ?? {}),
           x: clamp(next.x, 0, containerW - clampedWidth),
-          y: clamp(next.y, 0, containerH - clampedHeight),
+          y: clamp(next.y, 0, Number.POSITIVE_INFINITY),
           width: clampedWidth,
           height: clampedHeight,
         },
       }));
     },
-    [effectiveItemMap, itemMap, laneHeight, ref, width],
+    [effectiveItemMap, itemMap, ref, width],
   );
 
   const handleSelectEdge = useCallback(
@@ -972,7 +967,7 @@ export default function MemoryLane({
                     const y = Math.round(start.y + (moveEvent.clientY - startY));
                     handleMoveViaPoint(selectedEdgeKey, index, {
                       x: Math.max(0, Math.min(rect.width, x)),
-                      y: Math.max(0, Math.min(rect.height, y)),
+                      y: Math.max(0, y),
                     });
                   };
 

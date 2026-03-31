@@ -26,21 +26,18 @@
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     background:
-      /* Dark "metal" base + subtle brushed highlights (no light-to-dark wash). */
-      linear-gradient(180deg, rgba(10, 12, 16, 0.92), rgba(6, 7, 10, 0.96)),
-      radial-gradient(1200px 680px at 18% 0%, rgba(255, 255, 255, 0.055), transparent 62%),
-      radial-gradient(900px 520px at 82% 100%, rgba(255, 255, 255, 0.04), transparent 64%),
-      repeating-linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.025) 0px,
-        rgba(255, 255, 255, 0.016) 1px,
-        rgba(0, 0, 0, 0) 3px,
-        rgba(0, 0, 0, 0) 7px
+      /* Single-layer "metal" gradient (avoid multi-layer repaints on scroll). */
+      linear-gradient(
+        180deg,
+        rgba(8, 10, 14, 0.98) 0%,
+        rgba(14, 17, 23, 0.96) 18%,
+        rgba(6, 7, 10, 0.99) 52%,
+        rgba(13, 16, 22, 0.96) 78%,
+        rgba(7, 9, 12, 0.99) 100%
       );
     box-shadow:
       0 24px 60px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    backdrop-filter: blur(12px);
   }
 
   .journey-editor-border {
@@ -59,22 +56,11 @@
   }
 
   .journey-shell__layer--diagonal {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.035),
-      rgba(255, 255, 255, 0.012),
-      transparent 56%
-    );
+    display: none;
   }
 
   .journey-shell__layer--vertical {
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.018),
-      transparent 28%,
-      rgba(255, 255, 255, 0.01) 72%,
-      transparent
-    );
+    display: none;
   }
 
   .journey-shell__layer--inner-shadow {

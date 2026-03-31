@@ -8,7 +8,6 @@ export const layoutDesktopLg: LayoutConfig = {
   minWidth: 1024,
   maxWidth: 1279,
   canvasWidth: 930,
-  extraHeight: 200,
   scaleWithContainer: true,
   items: [
     { id: "node1", x: 436, y: 80, width: 56, height: 56 },

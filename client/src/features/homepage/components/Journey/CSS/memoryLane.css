@@ -34,6 +34,36 @@
   opacity: 0.75;
 }
 
+/* #region Memory Lane - Low GPU/Phone Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .journey-editor-grid {
+    display: none;
+  }
+
+  .memory-card {
+    box-shadow: none;
+    transition: none;
+  }
+
+  .memory-card::before,
+  .memory-card::after {
+    display: none;
+  }
+
+  .journey-modal-frame-parent,
+  .journey-modal-frame-child {
+    box-shadow: none;
+  }
+
+  .journey-modal-frame-parent::before,
+  .journey-modal-frame-parent::after,
+  .journey-modal-frame-child::before,
+  .journey-modal-frame-child::after {
+    display: none;
+  }
+}
+/* #endregion Memory Lane - Low GPU/Phone Optimizations */
+
 .journey-editor-hud {
   position: fixed;
   top: 1rem;
@@ -46,8 +76,7 @@
   padding: 1.25rem 0.85rem 0.75rem;
   border-radius: 0.5rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.6);
   will-change: transform;
 }
 
@@ -408,12 +437,11 @@
 .memory-card {
   padding: 17px;
 
-  background: rgba(255, 255, 255, 0.015);
+  background: rgba(255, 255, 255, 0.035);
   border-radius: 7px;
   z-index: 20;
   cursor: pointer;
 
-  backdrop-filter: blur(8px);
   transition:
     box-shadow 260ms ease,
     background-color 220ms ease;
@@ -629,9 +657,8 @@
 }
 
 .journey-modal-frame-child {
-  background: rgba(255, 255, 255, 0.015);
+  background: rgba(255, 255, 255, 0.035);
   border-radius: 7px;
-  backdrop-filter: blur(8px);
   box-shadow:
     0 0 10px rgba(255, 255, 255, 0.14),
     0 0 28px rgba(120, 220, 255, 0.08);

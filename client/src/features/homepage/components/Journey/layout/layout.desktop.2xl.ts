@@ -10,7 +10,6 @@ export const layoutDesktop2xl: LayoutConfig = {
   minWidth: 1536,
   maxWidth: undefined,
   canvasWidth,
-  extraHeight: 200,
   items: layoutDesktopXl.items.map((item) => ({ ...item, x: item.x + offsetX })),
   edges: layoutDesktopXl.edges.map((edge) => ({
     ...edge,

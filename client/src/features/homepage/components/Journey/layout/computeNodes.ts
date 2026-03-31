@@ -61,7 +61,7 @@ export const computeJourneyNodes = (
 
   const computedHeight =
     scalePoint(layout.height ?? maxContentHeight, scale) +
-    scalePoint(layout.extraHeight ?? 120, scale);
+    scalePoint(layout.extraHeight ?? 0, scale);
 
   return {
     items,

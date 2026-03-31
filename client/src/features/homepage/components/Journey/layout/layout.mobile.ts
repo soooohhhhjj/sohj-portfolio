@@ -20,7 +20,10 @@ const buildStackedItems = () => {
 
   let lastWasChild = false;
 
-  for (const item of journeyContent) {
+  for (let index = 0; index < journeyContent.length; index++) {
+    const item = journeyContent[index];
+    const isLast = index === journeyContent.length - 1;
+
     if (item.type === "parent") {
       if (lastWasChild) {
         y += gapAfterLastChild;
@@ -33,7 +36,8 @@ const buildStackedItems = () => {
         width: parentSize,
         height: parentSize,
       });
-      y += parentSize + gapAfterParent;
+      y += parentSize;
+      if (!isLast) y += gapAfterParent;
       lastWasChild = false;
       continue;
     }
@@ -46,11 +50,12 @@ const buildStackedItems = () => {
       width: cardWidth,
       height,
     });
-    y += height + gapAfterCard;
+    y += height;
+    if (!isLast) y += gapAfterCard;
     lastWasChild = true;
   }
 
-  return { items, height: y + 40 };
+  return { items, height: y };
 };
 
 const stacked = buildStackedItems();
@@ -60,7 +65,6 @@ export const layoutMobile: LayoutConfig = {
   minWidth: 0,
   maxWidth: 639,
   canvasWidth,
-  extraHeight: 200,
   scaleWithContainer: true,
   items: stacked.items,
   edges: baseEdges,
