@@ -298,7 +298,7 @@ export default function MemoryLane({
   }, [editorClickMode, editorToolsEnabled, selectedEditorCardId]);
 
   const renderEdges = useMemo(() => {
-    return edges
+    const rendered = edges
       .filter((edge) => Boolean(effectiveItemMap[edge.from]) && Boolean(effectiveItemMap[edge.to]))
       .map((edge) => {
         const key = edgeKeyOf(edge);
@@ -310,6 +310,20 @@ export default function MemoryLane({
           via: override.via ?? edge.via,
         };
       });
+
+    // Render parent->parent connectors first so they sit visually behind
+    // parent->child connectors in the SVG stacking order.
+    return rendered.sort((a, b) => {
+      const aFrom = effectiveItemMap[a.from];
+      const aTo = effectiveItemMap[a.to];
+      const bFrom = effectiveItemMap[b.from];
+      const bTo = effectiveItemMap[b.to];
+
+      const aIsParentParent = aFrom?.type === "parent" && aTo?.type === "parent";
+      const bIsParentParent = bFrom?.type === "parent" && bTo?.type === "parent";
+      // Parent->parent should render last (on top).
+      return Number(bIsParentParent) - Number(aIsParentParent);
+    });
   }, [edgeOverrides, edges, effectiveItemMap]);
 
   const laneHeight = useMemo(() => {
@@ -915,9 +929,9 @@ export default function MemoryLane({
           editorEnabled ? "pointer-events-auto" : "pointer-events-none"
         }`}
       >
-        {renderEdges.map((edge, i) => (
+        {renderEdges.map((edge) => (
           <MemoryPath
-            key={i}
+            key={edgeKeyOf(edge)}
             edge={edge}
             items={effectiveItemMap}
             parentCardSizes={parentCardSizes}

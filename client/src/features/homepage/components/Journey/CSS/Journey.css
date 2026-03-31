@@ -26,8 +26,17 @@
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
-      linear-gradient(135deg, rgba(155, 169, 190, 0.14), rgba(74, 83, 97, 0.06) 42%, rgba(211, 217, 228, 0.08));
+      /* Dark "metal" base + subtle brushed highlights (no light-to-dark wash). */
+      linear-gradient(180deg, rgba(10, 12, 16, 0.92), rgba(6, 7, 10, 0.96)),
+      radial-gradient(1200px 680px at 18% 0%, rgba(255, 255, 255, 0.055), transparent 62%),
+      radial-gradient(900px 520px at 82% 100%, rgba(255, 255, 255, 0.04), transparent 64%),
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.016) 1px,
+        rgba(0, 0, 0, 0) 3px,
+        rgba(0, 0, 0, 0) 7px
+      );
     box-shadow:
       0 24px 60px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.16);
@@ -50,11 +59,22 @@
   }
 
   .journey-shell__layer--diagonal {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03), transparent 56%);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.035),
+      rgba(255, 255, 255, 0.012),
+      transparent 56%
+    );
   }
 
   .journey-shell__layer--vertical {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28%, rgba(255, 255, 255, 0.02) 72%, transparent);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.018),
+      transparent 28%,
+      rgba(255, 255, 255, 0.01) 72%,
+      transparent
+    );
   }
 
   .journey-shell__layer--inner-shadow {

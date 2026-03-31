@@ -26,6 +26,12 @@ export default function MemoryPath({
 
   if (!from || !to) return null;
 
+  const isParentToParent = from.type === "parent" && to.type === "parent";
+  const baseOpacity = isParentToParent ? 1 : 0.55;
+  const selectedOpacity = isParentToParent ? 1 : 0.75;
+  const baseStrokeWidth = isParentToParent ? 1.7 : 1.5;
+  const selectedStrokeWidth = isParentToParent ? 2.4 : 2.2;
+
   const getAnchorPoint = (
     item: JourneyItemNode,
     anchor: "top" | "bottom" | "left" | "right",
@@ -88,11 +94,11 @@ export default function MemoryPath({
         d={d}
         fill="none"
         stroke="currentColor"
-        strokeWidth={isSelected ? 2.2 : 1.5}
+        strokeWidth={isSelected ? selectedStrokeWidth : baseStrokeWidth}
         strokeDasharray="6 8"
         strokeLinecap="butt"
         strokeLinejoin="miter"
-        opacity={isSelected ? 0.75 : 0.55}
+        opacity={isSelected ? selectedOpacity : baseOpacity}
       />
     </>
   );
