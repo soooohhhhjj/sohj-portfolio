@@ -132,6 +132,36 @@
   gap: 0.5rem;
 }
 
+.journey-editor-hud__mini-meta {
+  margin-top: 0.55rem;
+  display: grid;
+  gap: 0.25rem;
+  font-family: "Jura", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.journey-editor-hud__mini-meta-row {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.journey-editor-hud__mini-meta-key {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.journey-editor-hud__mini-meta-value {
+  color: rgba(255, 255, 255, 0.82);
+  max-width: min(72vw, 16rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .journey-editor-hud__mini-actions {
   margin-top: 0.55rem;
   display: flex;

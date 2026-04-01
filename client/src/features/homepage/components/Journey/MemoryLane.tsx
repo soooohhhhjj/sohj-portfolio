@@ -89,6 +89,7 @@ export default function MemoryLane({
   const [nodeOverrides, setNodeOverrides] = useState<Record<string, NodeLayoutOverride>>({});
   const [edgeOverrides, setEdgeOverrides] = useState<Record<string, EdgeOverride>>({});
   const [selectedEdgeKey, setSelectedEdgeKey] = useState<string | null>(null);
+  const [selectedViaIndex, setSelectedViaIndex] = useState<number | null>(null);
   const hudRef = useMemo(() => ({ current: null as HTMLDivElement | null }), []);
   const hudDragRef = useMemo(
     () =>
@@ -654,11 +655,212 @@ export default function MemoryLane({
     [effectiveItemMap, itemMap, ref, width],
   );
 
+  const handleNudgeSelectedChildSize = useCallback(
+    (deltaWidth: number, deltaHeight: number) => {
+      if (!editorToolsEnabled) return;
+      if (!selectedEditorCardId) return;
+      const base = effectiveItemMap[selectedEditorCardId] ?? itemMap[selectedEditorCardId];
+      if (!base) return;
+      if (base.type === "parent") return;
+
+      const minWidth = 220;
+      const minHeight = 160;
+      const maxWidth = width ? Math.floor(width - base.x) : Number.POSITIVE_INFINITY;
+
+      const clamp = (value: number, min: number, max: number) =>
+        Math.min(max, Math.max(min, value));
+
+      setNodeOverrides((prev) => {
+        const current = prev[selectedEditorCardId] ?? {};
+        const currentWidth = current.width ?? base.width;
+        const currentHeight = current.height ?? base.height;
+
+        const nextWidth = clamp(currentWidth + deltaWidth, minWidth, maxWidth);
+        const nextHeight = Math.max(minHeight, currentHeight + deltaHeight);
+
+        if (nextWidth === currentWidth && nextHeight === currentHeight) return prev;
+
+        return {
+          ...prev,
+          [selectedEditorCardId]: {
+            ...current,
+            width: nextWidth,
+            height: nextHeight,
+          },
+        };
+      });
+    },
+    [editorToolsEnabled, effectiveItemMap, itemMap, selectedEditorCardId, width],
+  );
+
+  const handleNudgeSelectedCardPosition = useCallback(
+    (deltaX: number, deltaY: number) => {
+      if (!editorToolsEnabled) return;
+      if (editorClickMode !== "edit") return;
+      if (!selectedEditorCardId) return;
+
+      const base = effectiveItemMap[selectedEditorCardId] ?? itemMap[selectedEditorCardId];
+      if (!base) return;
+
+      const override = nodeOverrides[selectedEditorCardId] ?? {};
+      const currentX = override.x ?? base.x;
+      const currentY = override.y ?? base.y;
+
+      handleEditMove(selectedEditorCardId, { x: currentX + deltaX, y: currentY + deltaY });
+    },
+    [
+      editorClickMode,
+      editorToolsEnabled,
+      effectiveItemMap,
+      handleEditMove,
+      itemMap,
+      nodeOverrides,
+      selectedEditorCardId,
+    ],
+  );
+
+  const handleNudgeSelectedEdgeViaPoints = useCallback(
+    (deltaX: number, deltaY: number) => {
+      if (!editorToolsEnabled) return;
+      if (editorClickMode !== "edit") return;
+      if (!selectedEdgeKey) return;
+      if (selectedViaIndex == null) return;
+
+      const baseEdge = renderEdges.find((edge) => edgeKeyOf(edge) === selectedEdgeKey);
+      if (!baseEdge) return;
+
+      const baseVia = edgeOverrides[selectedEdgeKey]?.via ?? baseEdge.via ?? [];
+      if (baseVia.length === 0) return;
+      if (selectedViaIndex >= baseVia.length) return;
+
+      const maxX = width ? Math.floor(width) : Number.POSITIVE_INFINITY;
+
+      const clamp = (value: number, min: number, max: number) =>
+        Math.min(max, Math.max(min, value));
+
+      const nextVia = baseVia.map((point, index) => {
+        if (index !== selectedViaIndex) return point;
+        return {
+          x: clamp(Math.round(point.x + deltaX), 0, maxX),
+          y: Math.max(0, Math.round(point.y + deltaY)),
+        };
+      });
+
+      setEdgeOverrides((prev) => ({
+        ...prev,
+        [selectedEdgeKey]: {
+          ...(prev[selectedEdgeKey] ?? {}),
+          via: nextVia,
+        },
+      }));
+    },
+    [
+      editorClickMode,
+      editorToolsEnabled,
+      edgeOverrides,
+      renderEdges,
+      selectedEdgeKey,
+      selectedViaIndex,
+      width,
+    ],
+  );
+
+  useEffect(() => {
+    if (!editorToolsEnabled) return;
+    if (!editorActive) return;
+    if (editorClickMode !== "edit") return;
+
+    const shouldIgnoreTarget = (target: EventTarget | null) => {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName?.toLowerCase();
+      return tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable;
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (shouldIgnoreTarget(event.target)) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      switch (event.key) {
+        case "ArrowRight":
+          event.preventDefault();
+          handleNudgeSelectedChildSize(1, 0);
+          break;
+        case "ArrowLeft":
+          event.preventDefault();
+          handleNudgeSelectedChildSize(-1, 0);
+          break;
+        case "ArrowDown":
+          event.preventDefault();
+          handleNudgeSelectedChildSize(0, 1);
+          break;
+        case "ArrowUp":
+          event.preventDefault();
+          handleNudgeSelectedChildSize(0, -1);
+          break;
+        case "w":
+        case "W":
+          event.preventDefault();
+          if (selectedEditorCardId) {
+            handleNudgeSelectedCardPosition(0, -1);
+          } else {
+            handleNudgeSelectedEdgeViaPoints(0, -1);
+          }
+          break;
+        case "a":
+        case "A":
+          event.preventDefault();
+          if (selectedEditorCardId) {
+            handleNudgeSelectedCardPosition(-1, 0);
+          } else {
+            handleNudgeSelectedEdgeViaPoints(-1, 0);
+          }
+          break;
+        case "s":
+        case "S":
+          event.preventDefault();
+          if (selectedEditorCardId) {
+            handleNudgeSelectedCardPosition(0, 1);
+          } else {
+            handleNudgeSelectedEdgeViaPoints(0, 1);
+          }
+          break;
+        case "d":
+        case "D":
+          event.preventDefault();
+          if (selectedEditorCardId) {
+            handleNudgeSelectedCardPosition(1, 0);
+          } else {
+            handleNudgeSelectedEdgeViaPoints(1, 0);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown, { passive: false });
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    editorActive,
+    editorClickMode,
+    editorToolsEnabled,
+    handleNudgeSelectedChildSize,
+    handleNudgeSelectedCardPosition,
+    handleNudgeSelectedEdgeViaPoints,
+    selectedEditorCardId,
+  ]);
+
   const handleSelectEdge = useCallback(
     (edgeKey: string, event: ReactPointerEvent<SVGPathElement>) => {
       if (!editorEnabled) return;
 
+      // Shift "focus" to edge editing so keyboard nudges affect the edge/points,
+      // not the previously selected card.
+      if (selectedEditorCardId) setSelectedEditorCardId(null);
       setSelectedEdgeKey(edgeKey);
+      setSelectedViaIndex(null);
 
       // Seed overrides with base via points so they become draggable immediately.
       setEdgeOverrides((prev) => {
@@ -685,7 +887,7 @@ export default function MemoryLane({
         return { ...prev, [edgeKey]: { ...base, via: nextVia } };
       });
     },
-    [editorEnabled, edges, ref],
+    [editorEnabled, edges, ref, selectedEditorCardId],
   );
 
   const handleMoveViaPoint = useCallback(
@@ -716,6 +918,16 @@ export default function MemoryLane({
   }, [renderEdges, selectedEdgeKey]);
 
   const selectedVia = selectedRenderEdge?.via ?? [];
+
+  useEffect(() => {
+    if (!selectedEdgeKey) {
+      if (selectedViaIndex !== null) setSelectedViaIndex(null);
+      return;
+    }
+
+    if (selectedViaIndex == null) return;
+    if (selectedViaIndex >= selectedVia.length) setSelectedViaIndex(null);
+  }, [selectedEdgeKey, selectedVia.length, selectedViaIndex]);
 
   const getEdgeAnchorPoint = useCallback(
     (itemId: string, anchor: Anchor) => {
@@ -809,6 +1021,24 @@ export default function MemoryLane({
     if (!template) return null;
     return { width: template.width, height: template.height };
   }, [effectiveItemMap, itemMap]);
+
+  const selectedEditorCardSize = useMemo(() => {
+    if (!selectedEditorCard) return null;
+
+    if (selectedEditorCard.type === "parent") {
+      const size =
+        parentCardSizes[selectedEditorCard.id] ??
+        parentCardSizeOverride ??
+        templateSize ??
+        { width: 315, height: 243 };
+      return { width: Math.round(size.width), height: Math.round(size.height) };
+    }
+
+    return {
+      width: Math.round(selectedEditorCard.width),
+      height: Math.round(selectedEditorCard.height),
+    };
+  }, [parentCardSizeOverride, parentCardSizes, selectedEditorCard, templateSize]);
 
   const handleMatchAllToTemplate = useCallback(() => {
     if (!templateSize) return;
@@ -942,14 +1172,20 @@ export default function MemoryLane({
                 key={`${selectedEdgeKey}-via-${index}`}
                 cx={point.x}
                 cy={point.y}
-                r={6}
-                fill="rgba(52, 211, 153, 0.35)"
+                r={index === selectedViaIndex ? 7 : 6}
+                fill={
+                  index === selectedViaIndex
+                    ? "rgba(52, 211, 153, 0.5)"
+                    : "rgba(52, 211, 153, 0.35)"
+                }
                 stroke="rgba(52, 211, 153, 0.9)"
-                strokeWidth={1.2}
+                strokeWidth={index === selectedViaIndex ? 1.6 : 1.2}
                 className="cursor-grab active:cursor-grabbing"
                 onPointerDown={(event) => {
                   event.stopPropagation();
                   event.preventDefault();
+                  if (selectedEditorCardId) setSelectedEditorCardId(null);
+                  setSelectedViaIndex(index);
                   if (event.altKey) {
                     handleRemoveViaPoint(selectedEdgeKey, index);
                     return;
@@ -1041,6 +1277,25 @@ export default function MemoryLane({
                   <option value="edit">Edit</option>
                 </select>
               </div>
+
+              {hudMinimized ? (
+                <div className="journey-editor-hud__mini-meta" aria-label="Selection summary">
+                  <div className="journey-editor-hud__mini-meta-row">
+                    <span className="journey-editor-hud__mini-meta-key">Card</span>
+                    <span className="journey-editor-hud__mini-meta-value">
+                      {selectedEditorCard?.id ?? "none"}
+                    </span>
+                  </div>
+                  <div className="journey-editor-hud__mini-meta-row">
+                    <span className="journey-editor-hud__mini-meta-key">Size</span>
+                    <span className="journey-editor-hud__mini-meta-value">
+                      {selectedEditorCardSize
+                        ? `${selectedEditorCardSize.width}x${selectedEditorCardSize.height}`
+                        : "n/a"}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
 
               {hudMinimized && selectedRenderEdge ? (
                 <div className="journey-editor-hud__mini-actions">
