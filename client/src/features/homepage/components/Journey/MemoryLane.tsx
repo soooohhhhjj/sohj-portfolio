@@ -12,7 +12,6 @@ import MemoryPath from "./MemoryPath";
 import JourneyNodeModal from "./JourneyNodeModal";
 import { journeyContent } from "./journey.content";
 import { useJourneyEditorCardOverrides } from "./hooks/useJourneyEditorCardOverrides";
-import { useJourneyEditorDeletedCards } from "./hooks/useJourneyEditorDeletedCards";
 import { computeJourneyNodes } from "./layout/computeNodes";
 import { pickLayout } from "./layout";
 import { useContainerSize } from "./layout/useContainerSize";
@@ -61,7 +60,6 @@ export default function MemoryLane({
     null,
   );
   const [selectedEditorCardId, setSelectedEditorCardId] = useState<string | null>(null);
-  const [restoreCardId, setRestoreCardId] = useState<string>("");
   const [editorClickMode, setEditorClickMode] = useState<"modal" | "edit">("modal");
   const [parentCardSizes, setParentCardSizes] = useState<
     Record<string, { width: number; height: number }>
@@ -131,24 +129,6 @@ export default function MemoryLane({
     clearOverride: clearCardTextOverride,
     resetAllOverrides: resetAllCardTextOverrides,
   } = useJourneyEditorCardOverrides({ enabled: isDev });
-  const {
-    deletedIds: deletedCardIds,
-    deletedSet: deletedCardIdSet,
-    deleteCard,
-    restoreCard,
-    resetDeletedCards,
-  } = useJourneyEditorDeletedCards({ enabled: isDev });
-
-  useEffect(() => {
-    if (!editorToolsEnabled) return;
-    if (deletedCardIds.length === 0) {
-      if (restoreCardId) setRestoreCardId("");
-      return;
-    }
-    if (!restoreCardId || !deletedCardIdSet.has(restoreCardId)) {
-      setRestoreCardId(deletedCardIds[0]);
-    }
-  }, [deletedCardIdSet, deletedCardIds, editorToolsEnabled, restoreCardId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -259,10 +239,8 @@ export default function MemoryLane({
   }, [cardTextOverrides, items, nodeOverrides]);
 
   const visibleItems = useMemo(() => {
-    if (!isDev) return effectiveItems;
-    if (deletedCardIdSet.size === 0) return effectiveItems;
-    return effectiveItems.filter((item) => !deletedCardIdSet.has(item.id));
-  }, [deletedCardIdSet, effectiveItems, isDev]);
+    return effectiveItems;
+  }, [effectiveItems]);
 
   const effectiveItemMap = useMemo(() => {
     return Object.fromEntries(visibleItems.map((item) => [item.id, item]));
@@ -1406,60 +1384,14 @@ export default function MemoryLane({
                       >
                         Clear Text
                       </button>
-                      <button
-                        type="button"
-                        className="journey-editor-hud__danger"
-                        onClick={() => {
-                          deleteCard(selectedEditorCard.id);
-                          setSelectedEditorCardId(null);
-                        }}
-                      >
-                        Delete Card
+                      <button type="button" onClick={resetAllCardTextOverrides}>
+                        Reset Text (All)
                       </button>
                     </div>
                   </>
                 ) : (
                   <div className="journey-editor-hud__hint">Click a card (or pick one) to edit its text.</div>
                 )}
-
-                {deletedCardIds.length > 0 ? (
-                  <div className="journey-editor-hud__restore">
-                    <div className="journey-editor-hud__card-row">
-                      <label className="journey-editor-hud__label" htmlFor="journey-editor-restore-card">
-                        Deleted
-                      </label>
-                      <select
-                        id="journey-editor-restore-card"
-                        className="journey-editor-hud__select"
-                        value={restoreCardId}
-                        onChange={(event) => setRestoreCardId(event.target.value)}
-                      >
-                        {deletedCardIds.map((id) => (
-                          <option key={id} value={id}>
-                            {id}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="journey-editor-hud__card-actions">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!restoreCardId) return;
-                          restoreCard(restoreCardId);
-                        }}
-                      >
-                        Restore
-                      </button>
-                      <button type="button" onClick={resetDeletedCards}>
-                        Restore All
-                      </button>
-                      <button type="button" onClick={resetAllCardTextOverrides}>
-                        Reset Text (All)
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
               </div>
               ) : null}
 
