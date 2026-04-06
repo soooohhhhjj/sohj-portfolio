@@ -531,6 +531,8 @@ When generating code:
 - Avoid unnecessary abstractions.
 - Avoid premature optimization.
 - Do not introduce new libraries without justification.
+- Ask clarifying questions when requirements are ambiguous or multiple interpretations are likely.
+- Only create commits when the user explicitly requests a commit (e.g. "commit", "let's commit").
 
 If uncertain, default to simpler modular design.
 
