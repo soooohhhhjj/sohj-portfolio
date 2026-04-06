@@ -3,6 +3,7 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -52,10 +53,60 @@ export default function MemoryLane({
   editorEnabled,
   editorActive = true,
 }: MemoryLaneProps) {
+  const viewportWidth = useViewportWidth();
+  const layout = useMemo(() => pickLayout(viewportWidth), [viewportWidth]);
+
+  return (
+    <MemoryLaneImpl
+      key={layout.id}
+      layout={layout}
+      onModalOpenChange={onModalOpenChange}
+      editorEnabled={editorEnabled}
+      editorActive={editorActive}
+    />
+  );
+}
+
+function readLocalStorageJson<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return fallback;
+    if (Array.isArray(parsed)) return fallback;
+    return parsed as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function readLocalStorageParentCardSizeOverride(
+  layoutId: string,
+): { width: number; height: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(buildParentCardSizeKey(layoutId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { width?: unknown; height?: unknown } | null;
+    const nextW = Number(parsed?.width);
+    const nextH = Number(parsed?.height);
+    if (!Number.isFinite(nextW) || !Number.isFinite(nextH)) return null;
+    return { width: nextW, height: nextH };
+  } catch {
+    return null;
+  }
+}
+
+function MemoryLaneImpl({
+  onModalOpenChange,
+  editorEnabled,
+  editorActive = true,
+  layout,
+}: MemoryLaneProps & { layout: ReturnType<typeof pickLayout> }) {
   const isDev = import.meta.env.DEV;
   const editorToolsEnabled = Boolean(editorEnabled) && isDev;
   const { ref, width } = useContainerSize<HTMLDivElement>();
-  const viewportWidth = useViewportWidth();
   const [selectedItem, setSelectedItem] = useState<JourneyItemNode | null>(
     null,
   );
@@ -66,14 +117,13 @@ export default function MemoryLane({
   >({});
   const [parentCardSizeOverride, setParentCardSizeOverride] = useState<
     { width: number; height: number } | null
-  >(null);
+  >(() => readLocalStorageParentCardSizeOverride(layout.id));
 
   useEffect(() => {
     onModalOpenChange?.(Boolean(selectedItem));
     return () => onModalOpenChange?.(false);
   }, [onModalOpenChange, selectedItem]);
 
-  const layout = useMemo(() => pickLayout(viewportWidth), [viewportWidth]);
   const { items, itemMap, edges } = useMemo(
     () => computeJourneyNodes(journeyContent, layout, width),
     [layout, width],
@@ -84,24 +134,22 @@ export default function MemoryLane({
     return width / layout.canvasWidth;
   }, [layout.canvasWidth, layout.scaleWithContainer, width]);
 
-  const [nodeOverrides, setNodeOverrides] = useState<Record<string, NodeLayoutOverride>>({});
-  const [edgeOverrides, setEdgeOverrides] = useState<Record<string, EdgeOverride>>({});
+  const [nodeOverrides, setNodeOverrides] = useState<Record<string, NodeLayoutOverride>>(() =>
+    readLocalStorageJson<Record<string, NodeLayoutOverride>>(buildNodeOverrideKey(layout.id), {}),
+  );
+  const [edgeOverrides, setEdgeOverrides] = useState<Record<string, EdgeOverride>>(() =>
+    readLocalStorageJson<Record<string, EdgeOverride>>(buildEdgeOverrideKey(layout.id), {}),
+  );
   const [selectedEdgeKey, setSelectedEdgeKey] = useState<string | null>(null);
   const [selectedViaIndex, setSelectedViaIndex] = useState<number | null>(null);
-  const hudRef = useMemo(() => ({ current: null as HTMLDivElement | null }), []);
-  const hudDragRef = useMemo(
-    () =>
-      ({
-        current: null as null | {
-          pointerId: number;
-          startClientX: number;
-          startClientY: number;
-          startX: number;
-          startY: number;
-        },
-      }),
-    [],
-  );
+  const hudRef = useRef<HTMLDivElement | null>(null);
+  const hudDragRef = useRef<null | {
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    startX: number;
+    startY: number;
+  }>(null);
   const [hudPos, setHudPos] = useState<{ x: number; y: number }>(() => {
     if (typeof window === "undefined") return { x: 0, y: 0 };
     try {
@@ -148,19 +196,8 @@ export default function MemoryLane({
     }
   }, [hudMinimized]);
 
-  useEffect(() => {
-    setNodeOverrides({});
-    try {
-      const raw = window.localStorage.getItem(buildNodeOverrideKey(layout.id));
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, NodeLayoutOverride>;
-      if (parsed && typeof parsed === "object") {
-        setNodeOverrides(parsed);
-      }
-    } catch {
-      // ignore bad localStorage
-    }
-  }, [layout.id]);
+  // state is initialized from localStorage via useState initializers (and the component
+  // is keyed by layout.id to ensure a clean re-init whenever the layout switches)
 
   useEffect(() => {
     try {
@@ -170,35 +207,14 @@ export default function MemoryLane({
     }
   }, [layout.id, nodeOverrides]);
 
-  useEffect(() => {
-    setEdgeOverrides({});
-    setSelectedEdgeKey(null);
-    try {
-      const raw = window.localStorage.getItem(buildEdgeOverrideKey(layout.id));
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, EdgeOverride>;
-      if (parsed && typeof parsed === "object") {
-        setEdgeOverrides(parsed);
-      }
-    } catch {
-      // ignore bad localStorage
+  const handleEditorClickModeChange = useCallback((next: "modal" | "edit") => {
+    setEditorClickMode(next);
+    if (next === "modal") {
+      setSelectedEditorCardId(null);
+      setSelectedEdgeKey(null);
+      setSelectedViaIndex(null);
     }
-  }, [layout.id]);
-
-  useEffect(() => {
-    setParentCardSizeOverride(null);
-    try {
-      const raw = window.localStorage.getItem(buildParentCardSizeKey(layout.id));
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { width?: number; height?: number };
-      const nextW = Number(parsed?.width);
-      const nextH = Number(parsed?.height);
-      if (!Number.isFinite(nextW) || !Number.isFinite(nextH)) return;
-      setParentCardSizeOverride({ width: nextW, height: nextH });
-    } catch {
-      // ignore bad localStorage
-    }
-  }, [layout.id]);
+  }, []);
 
   useEffect(() => {
     try {
@@ -263,18 +279,6 @@ export default function MemoryLane({
     if (!selectedEditorCardId) return null;
     return effectiveItemMap[selectedEditorCardId] ?? null;
   }, [effectiveItemMap, selectedEditorCardId]);
-
-  useEffect(() => {
-    if (!selectedEditorCardId) return;
-    if (effectiveItemMap[selectedEditorCardId]) return;
-    setSelectedEditorCardId(null);
-  }, [effectiveItemMap, selectedEditorCardId]);
-
-  useEffect(() => {
-    if (!editorToolsEnabled) return;
-    if (editorClickMode !== "modal") return;
-    if (selectedEditorCardId) setSelectedEditorCardId(null);
-  }, [editorClickMode, editorToolsEnabled, selectedEditorCardId]);
 
   const renderEdges = useMemo(() => {
     const rendered = edges
@@ -343,7 +347,7 @@ export default function MemoryLane({
     if (!editorEnabled || !editorActive) return;
     if (!hudRef.current) return;
     hudRef.current.style.transform = `translate(${hudPos.x}px, ${hudPos.y}px)`;
-  }, [editorActive, editorEnabled, hudPos.x, hudPos.y, hudRef]);
+  }, [editorActive, editorEnabled, hudPos.x, hudPos.y]);
 
   const clampHud = useCallback(
     (next: { x: number; y: number }) => {
@@ -367,7 +371,7 @@ export default function MemoryLane({
         y: Math.min(maxY, Math.max(minY, next.y)),
       };
     },
-    [hudRef],
+    [],
   );
 
   const clampHudToViewport = useCallback(() => {
@@ -417,7 +421,7 @@ export default function MemoryLane({
 
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [editorActive, editorEnabled, hudDragRef, hudPos.x, hudPos.y],
+    [editorActive, editorEnabled, hudPos.x, hudPos.y],
   );
 
   const handleHudPointerMove = useCallback(
@@ -431,7 +435,7 @@ export default function MemoryLane({
       const dy = event.clientY - state.startClientY;
       setHudPos(clampHud({ x: Math.round(state.startX + dx), y: Math.round(state.startY + dy) }));
     },
-    [clampHud, editorActive, editorEnabled, hudDragRef],
+    [clampHud, editorActive, editorEnabled],
   );
 
   const handleHudPointerUp = useCallback(
@@ -441,7 +445,7 @@ export default function MemoryLane({
       if (state.pointerId !== event.pointerId) return;
       hudDragRef.current = null;
     },
-    [hudDragRef],
+    [],
   );
 
   const handleMeasureParent = useCallback(
@@ -897,16 +901,6 @@ export default function MemoryLane({
 
   const selectedVia = selectedRenderEdge?.via ?? [];
 
-  useEffect(() => {
-    if (!selectedEdgeKey) {
-      if (selectedViaIndex !== null) setSelectedViaIndex(null);
-      return;
-    }
-
-    if (selectedViaIndex == null) return;
-    if (selectedViaIndex >= selectedVia.length) setSelectedViaIndex(null);
-  }, [selectedEdgeKey, selectedVia.length, selectedViaIndex]);
-
   const getEdgeAnchorPoint = useCallback(
     (itemId: string, anchor: Anchor) => {
       const item = effectiveItemMap[itemId] ?? itemMap[itemId];
@@ -1083,17 +1077,11 @@ export default function MemoryLane({
     }
   }, [edgeOverrides, layout.canvasWidth, layout.id, nodeOverrides, parentCardSizeOverride, scale]);
 
-  const laneClickStateRef = useMemo(
-    () =>
-      ({
-        current: null as null | {
-          pointerId: number;
-          startClientX: number;
-          startClientY: number;
-        },
-      }),
-    [],
-  );
+  const laneClickStateRef = useRef<null | {
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+  }>(null);
 
   return (
     <div
@@ -1121,8 +1109,7 @@ export default function MemoryLane({
         const dy = Math.abs(event.clientY - state.startClientY);
         if (dx > 3 || dy > 3) return;
 
-        setEditorClickMode("modal");
-        setSelectedEditorCardId(null);
+        handleEditorClickModeChange("modal");
       }}
     >
       {editorEnabled ? <div className="journey-editor-grid" /> : null}
@@ -1249,7 +1236,9 @@ export default function MemoryLane({
                   id="journey-editor-click-mode"
                   className="journey-editor-hud__select"
                   value={editorClickMode}
-                  onChange={(event) => setEditorClickMode(event.target.value as "modal" | "edit")}
+                  onChange={(event) =>
+                    handleEditorClickModeChange(event.target.value as "modal" | "edit")
+                  }
                 >
                   <option value="modal">Modal</option>
                   <option value="edit">Edit</option>
