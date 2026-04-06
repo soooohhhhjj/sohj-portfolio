@@ -814,13 +814,38 @@ function MemoryLaneImpl({
     [effectiveItemMap, itemMap, ref, width],
   );
 
-  const handleNudgeSelectedChildSize = useCallback(
+  const handleNudgeSelectedCardSize = useCallback(
     (deltaWidth: number, deltaHeight: number) => {
       if (!editorToolsEnabled) return;
       if (!selectedEditorCardId) return;
       const base = effectiveItemMap[selectedEditorCardId] ?? itemMap[selectedEditorCardId];
       if (!base) return;
-      if (base.type === "parent") return;
+
+      if (base.type === "parent") {
+        const clamp = (value: number, min: number, max: number) =>
+          Math.min(max, Math.max(min, value));
+
+        const current =
+          parentCardSizeOverride ??
+          templateSize ??
+          parentCardSizes[base.id] ?? { width: 315, height: 243 };
+
+        const minWidth = 240;
+        const minHeight = 180;
+        const maxWidth =
+          typeof window === "undefined"
+            ? Number.POSITIVE_INFINITY
+            : Math.floor(Math.min(width ?? Number.POSITIVE_INFINITY, window.innerWidth * 0.98));
+        const maxHeight =
+          typeof window === "undefined" ? Number.POSITIVE_INFINITY : Math.floor(window.innerHeight * 0.9);
+
+        const nextWidth = clamp(Math.round(current.width + deltaWidth), minWidth, maxWidth);
+        const nextHeight = clamp(Math.round(current.height + deltaHeight), minHeight, maxHeight);
+
+        if (nextWidth === current.width && nextHeight === current.height) return;
+        setParentCardSizeOverride({ width: nextWidth, height: nextHeight });
+        return;
+      }
 
       const minWidth = 220;
       const minHeight = 160;
@@ -849,7 +874,16 @@ function MemoryLaneImpl({
         };
       });
     },
-    [editorToolsEnabled, effectiveItemMap, itemMap, selectedEditorCardId, width],
+    [
+      editorToolsEnabled,
+      effectiveItemMap,
+      itemMap,
+      parentCardSizeOverride,
+      parentCardSizes,
+      selectedEditorCardId,
+      templateSize,
+      width,
+    ],
   );
 
   const handleNudgeSelectedCardPosition = useCallback(
@@ -944,55 +978,43 @@ function MemoryLaneImpl({
       switch (event.key) {
         case "ArrowRight":
           event.preventDefault();
-          handleNudgeSelectedChildSize(1, 0);
+          handleNudgeSelectedCardPosition(1, 0);
           break;
         case "ArrowLeft":
           event.preventDefault();
-          handleNudgeSelectedChildSize(-1, 0);
+          handleNudgeSelectedCardPosition(-1, 0);
           break;
         case "ArrowDown":
           event.preventDefault();
-          handleNudgeSelectedChildSize(0, 1);
+          handleNudgeSelectedCardPosition(0, 1);
           break;
         case "ArrowUp":
           event.preventDefault();
-          handleNudgeSelectedChildSize(0, -1);
+          handleNudgeSelectedCardPosition(0, -1);
           break;
         case "w":
         case "W":
           event.preventDefault();
-          if (selectedEditorCardId) {
-            handleNudgeSelectedCardPosition(0, -1);
-          } else {
-            handleNudgeSelectedEdgeViaPoints(0, -1);
-          }
+          if (selectedViaIndex != null) handleNudgeSelectedEdgeViaPoints(0, -1);
+          else handleNudgeSelectedCardSize(0, -1);
           break;
         case "a":
         case "A":
           event.preventDefault();
-          if (selectedEditorCardId) {
-            handleNudgeSelectedCardPosition(-1, 0);
-          } else {
-            handleNudgeSelectedEdgeViaPoints(-1, 0);
-          }
+          if (selectedViaIndex != null) handleNudgeSelectedEdgeViaPoints(-1, 0);
+          else handleNudgeSelectedCardSize(-1, 0);
           break;
         case "s":
         case "S":
           event.preventDefault();
-          if (selectedEditorCardId) {
-            handleNudgeSelectedCardPosition(0, 1);
-          } else {
-            handleNudgeSelectedEdgeViaPoints(0, 1);
-          }
+          if (selectedViaIndex != null) handleNudgeSelectedEdgeViaPoints(0, 1);
+          else handleNudgeSelectedCardSize(0, 1);
           break;
         case "d":
         case "D":
           event.preventDefault();
-          if (selectedEditorCardId) {
-            handleNudgeSelectedCardPosition(1, 0);
-          } else {
-            handleNudgeSelectedEdgeViaPoints(1, 0);
-          }
+          if (selectedViaIndex != null) handleNudgeSelectedEdgeViaPoints(1, 0);
+          else handleNudgeSelectedCardSize(1, 0);
           break;
         default:
           break;
@@ -1005,10 +1027,10 @@ function MemoryLaneImpl({
     editorActive,
     editorClickMode,
     editorToolsEnabled,
-    handleNudgeSelectedChildSize,
     handleNudgeSelectedCardPosition,
+    handleNudgeSelectedCardSize,
     handleNudgeSelectedEdgeViaPoints,
-    selectedEditorCardId,
+    selectedViaIndex,
   ]);
 
   const handleSelectEdge = useCallback(
