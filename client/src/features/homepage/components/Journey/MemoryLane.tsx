@@ -121,6 +121,7 @@ function MemoryLaneImpl({
   const isDev = import.meta.env.DEV;
   const editorToolsEnabled = Boolean(editorEnabled) && isDev;
   const { ref, width } = useContainerSize<HTMLDivElement>();
+  const isStackedMobileLayout = layout.id === "mobile" || layout.id === "mobile-sm";
   const [selectedItem, setSelectedItem] = useState<JourneyItemNode | null>(
     null,
   );
@@ -131,7 +132,7 @@ function MemoryLaneImpl({
   >({});
   const [parentCardSizeOverride, setParentCardSizeOverride] = useState<
     { width: number; height: number } | null
-  >(() => readLocalStorageParentCardSizeOverride(layout.id));
+  >(() => (isStackedMobileLayout ? null : readLocalStorageParentCardSizeOverride(layout.id)));
   const [deletedIds, setDeletedIds] = useState<string[]>(() =>
     readLocalStorageStringArray(DELETED_IDS_STORAGE_KEY),
   );
@@ -152,9 +153,52 @@ function MemoryLaneImpl({
     return width / layout.canvasWidth;
   }, [layout.canvasWidth, layout.scaleWithContainer, width]);
 
-  const [nodeOverrides, setNodeOverrides] = useState<Record<string, NodeLayoutOverride>>(() =>
-    readLocalStorageJson<Record<string, NodeLayoutOverride>>(buildNodeOverrideKey(layout.id), {}),
-  );
+  const [nodeOverrides, setNodeOverrides] = useState<Record<string, NodeLayoutOverride>>(() => {
+    const raw = readLocalStorageJson<Record<string, NodeLayoutOverride>>(
+      buildNodeOverrideKey(layout.id),
+      {},
+    );
+
+    if (!isStackedMobileLayout) return raw;
+
+    const parentIds = new Set(journeyContent.filter((item) => item.type === "parent").map((item) => item.id));
+    const next: Record<string, NodeLayoutOverride> = {};
+    for (const [key, value] of Object.entries(raw)) {
+      if (parentIds.has(key)) continue;
+      next[key] = value;
+    }
+    return next;
+  });
+
+  useEffect(() => {
+    if (!isStackedMobileLayout) return;
+    if (typeof window === "undefined") return;
+
+    const key = buildNodeOverrideKey(layout.id);
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return;
+
+      const parentIds = new Set(
+        journeyContent.filter((item) => item.type === "parent").map((item) => item.id),
+      );
+
+      let changed = false;
+      const record = { ...(parsed as Record<string, unknown>) };
+      for (const id of parentIds) {
+        if (!(id in record)) continue;
+        delete record[id];
+        changed = true;
+      }
+
+      if (!changed) return;
+      window.localStorage.setItem(key, JSON.stringify(record));
+    } catch {
+      // ignore bad localStorage
+    }
+  }, [isStackedMobileLayout, layout.id]);
   const [edgeOverrides, setEdgeOverrides] = useState<Record<string, EdgeOverride>>(() =>
     readLocalStorageJson<Record<string, EdgeOverride>>(buildEdgeOverrideKey(layout.id), {}),
   );
@@ -228,11 +272,24 @@ function MemoryLaneImpl({
 
   useEffect(() => {
     try {
+      if (isStackedMobileLayout) {
+        const parentIds = new Set(
+          journeyContent.filter((item) => item.type === "parent").map((item) => item.id),
+        );
+        const next: Record<string, NodeLayoutOverride> = {};
+        for (const [key, value] of Object.entries(nodeOverrides)) {
+          if (parentIds.has(key)) continue;
+          next[key] = value;
+        }
+        window.localStorage.setItem(buildNodeOverrideKey(layout.id), JSON.stringify(next));
+        return;
+      }
+
       window.localStorage.setItem(buildNodeOverrideKey(layout.id), JSON.stringify(nodeOverrides));
     } catch {
       // ignore write failures
     }
-  }, [layout.id, nodeOverrides]);
+  }, [isStackedMobileLayout, layout.id, nodeOverrides]);
 
   const handleEditorClickModeChange = useCallback((next: "modal" | "edit") => {
     setEditorClickMode(next);
@@ -312,6 +369,7 @@ function MemoryLaneImpl({
   useEffect(() => {
     if (!parentCardSizeOverride) return;
     try {
+      if (isStackedMobileLayout) return;
       window.localStorage.setItem(
         buildParentCardSizeKey(layout.id),
         JSON.stringify(parentCardSizeOverride),
@@ -319,13 +377,14 @@ function MemoryLaneImpl({
     } catch {
       // ignore write failures
     }
-  }, [layout.id, parentCardSizeOverride]);
+  }, [isStackedMobileLayout, layout.id, parentCardSizeOverride]);
 
   const effectiveItems = useMemo(() => {
     return items.map((item) => {
       const override = nodeOverrides[item.id];
       const textOverride = cardTextOverrides[item.id];
-      const next = override
+
+      const base = override
         ? {
             ...item,
             x: override.x ?? item.x,
@@ -335,16 +394,58 @@ function MemoryLaneImpl({
           }
         : item;
 
-      return textOverride ? { ...next, ...textOverride } : next;
+      const merged = textOverride ? { ...base, ...textOverride } : base;
+      return merged;
     });
   }, [cardTextOverrides, items, nodeOverrides]);
 
   const deletedIdSet = useMemo(() => new Set(deletedIds), [deletedIds]);
 
-  const visibleItems = useMemo(() => {
+  const visibleItemsBase = useMemo(() => {
     if (deletedIdSet.size === 0) return effectiveItems;
     return effectiveItems.filter((item) => !deletedIdSet.has(item.id));
   }, [deletedIdSet, effectiveItems]);
+
+  const visibleItems = useMemo(() => {
+    if (!isStackedMobileLayout) return visibleItemsBase;
+    if (editorClickMode !== "modal") return visibleItemsBase;
+    if (visibleItemsBase.length === 0) return visibleItemsBase;
+
+    const sorted = [...visibleItemsBase].sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    const byId = new Map(sorted.map((item) => [item.id, item]));
+
+    const baseGapAfter: Record<string, number> = {};
+    for (let idx = 1; idx < sorted.length; idx++) {
+      const prev = sorted[idx - 1];
+      const next = sorted[idx];
+      baseGapAfter[prev.id] = next.y - (prev.y + prev.height);
+    }
+
+    const computed = new Map<string, JourneyItemNode>();
+    let cursorY = sorted[0].y;
+    for (let idx = 0; idx < sorted.length; idx++) {
+      const item = sorted[idx];
+      if (idx === 0) cursorY = item.y;
+      else {
+        const prev = sorted[idx - 1];
+        const prevComputed = computed.get(prev.id) ?? prev;
+        const gap = baseGapAfter[prev.id] ?? 0;
+        cursorY = prevComputed.y + prevComputed.height + gap;
+      }
+
+      let nextHeight = item.height;
+      if (item.type === "parent") {
+        const measured = parentCardSizes[item.id]?.height;
+        if (Number.isFinite(measured) && measured) {
+          nextHeight = Math.max(0, Math.round(measured));
+        }
+      }
+
+      computed.set(item.id, { ...item, y: cursorY, height: nextHeight });
+    }
+
+    return visibleItemsBase.map((item) => computed.get(item.id) ?? item);
+  }, [editorClickMode, isStackedMobileLayout, parentCardSizes, visibleItemsBase]);
 
   const effectiveItemMap = useMemo(() => {
     return Object.fromEntries(visibleItems.map((item) => [item.id, item]));
@@ -422,6 +523,12 @@ function MemoryLaneImpl({
     const lane = ref.current;
     if (!lane) return;
 
+    if (isStackedMobileLayout) {
+      lane.style.removeProperty("--journey-parent-card-width");
+      lane.style.removeProperty("--journey-parent-card-height");
+      return;
+    }
+
     if (parentCardSizeOverride) {
       lane.style.setProperty(
         "--journey-parent-card-width",
@@ -435,7 +542,7 @@ function MemoryLaneImpl({
       lane.style.removeProperty("--journey-parent-card-width");
       lane.style.removeProperty("--journey-parent-card-height");
     }
-  }, [parentCardSizeOverride, ref]);
+  }, [isStackedMobileLayout, parentCardSizeOverride, ref]);
 
   useLayoutEffect(() => {
     if (!editorEnabled || !editorActive) return;
@@ -755,6 +862,7 @@ function MemoryLaneImpl({
       setNodeOverrides((prev) => ({ ...prev, [id]: { ...(prev[id] ?? {}), ...next } }));
       return;
     }
+    if (isStackedMobileLayout && base.type === "parent") return;
 
     const clamp = (value: number, min: number, max: number) =>
       Math.min(max, Math.max(min, value));
@@ -788,13 +896,14 @@ function MemoryLaneImpl({
         y: clamp(next.y, minY, Math.max(minY, maxY)),
       },
     }));
-  }, [effectiveItemMap, itemMap, parentCardSizes, ref, width]);
+  }, [effectiveItemMap, isStackedMobileLayout, itemMap, parentCardSizes, ref, width]);
 
   const handleEditResize = useCallback(
     (id: string, next: { x: number; y: number; width: number; height: number }) => {
       if (!ref.current || !width) return;
       const base = effectiveItemMap[id] ?? itemMap[id];
       if (!base) return;
+      if (isStackedMobileLayout && base.type === "parent") return;
 
       const clamp = (value: number, min: number, max: number) =>
         Math.min(max, Math.max(min, value));
@@ -817,7 +926,7 @@ function MemoryLaneImpl({
         },
       }));
     },
-    [effectiveItemMap, itemMap, ref, width],
+    [effectiveItemMap, isStackedMobileLayout, itemMap, ref, width],
   );
 
   const handleNudgeSelectedCardSize = useCallback(
@@ -828,6 +937,7 @@ function MemoryLaneImpl({
       if (!base) return;
 
       if (base.type === "parent") {
+        if (isStackedMobileLayout) return;
         const clamp = (value: number, min: number, max: number) =>
           Math.min(max, Math.max(min, value));
 
@@ -883,6 +993,7 @@ function MemoryLaneImpl({
     [
       editorToolsEnabled,
       effectiveItemMap,
+      isStackedMobileLayout,
       itemMap,
       parentCardSizeOverride,
       parentCardSizes,
@@ -900,6 +1011,7 @@ function MemoryLaneImpl({
 
       const base = effectiveItemMap[selectedEditorCardId] ?? itemMap[selectedEditorCardId];
       if (!base) return;
+      if (isStackedMobileLayout && base.type === "parent") return;
 
       const override = nodeOverrides[selectedEditorCardId] ?? {};
       const currentX = override.x ?? base.x;
@@ -912,6 +1024,7 @@ function MemoryLaneImpl({
       editorToolsEnabled,
       effectiveItemMap,
       handleEditMove,
+      isStackedMobileLayout,
       itemMap,
       nodeOverrides,
       selectedEditorCardId,
@@ -1212,6 +1325,7 @@ function MemoryLaneImpl({
   }, [parentCardSizeOverride, parentCardSizes, selectedEditorCard, templateSize]);
 
   const handleMatchAllToTemplate = useCallback(() => {
+    if (isStackedMobileLayout) return;
     if (!templateSize) return;
 
     setParentCardSizeOverride(templateSize);
@@ -1229,7 +1343,7 @@ function MemoryLaneImpl({
       }
       return next;
     });
-  }, [items, templateSize]);
+  }, [isStackedMobileLayout, items, templateSize]);
 
   const handleCopyEdits = useCallback(async () => {
     const unscaled = Object.fromEntries(
@@ -1286,6 +1400,7 @@ function MemoryLaneImpl({
     <div
       ref={ref}
       className="memory-lane relative w-full"
+      data-journey-layout={layout.id}
       onPointerDown={(event) => {
         if (!editorToolsEnabled) return;
         if (event.button !== 0) return;
@@ -1388,6 +1503,7 @@ function MemoryLaneImpl({
         <MemoryItem
           key={item.id}
           {...item}
+          layoutId={layout.id}
           onSelect={editorEnabled ? handleSelectCardInEditor : setSelectedItem}
           onMeasure={handleMeasureParent}
           editorEnabled={editorEnabled}

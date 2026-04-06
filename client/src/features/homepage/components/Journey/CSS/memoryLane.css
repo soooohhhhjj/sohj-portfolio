@@ -415,6 +415,17 @@
   height: var(--journey-parent-card-height);
 }
 
+.memory-lane[data-journey-layout="mobile"] .journey-memory-parent-card,
+.memory-lane[data-journey-layout="mobile-sm"] .journey-memory-parent-card {
+  position: static;
+  left: auto;
+  top: auto;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+
 .memory-lane .journey-resize-handle {
   position: absolute;
   width: 14px;

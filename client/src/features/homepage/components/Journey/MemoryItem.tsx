@@ -14,6 +14,7 @@ type MemoryItemProps = Item & {
   onSelect?: (item: Item) => void;
   onMeasure?: (id: string, size: MeasureSize) => void;
   editorEnabled?: boolean;
+  layoutId?: string;
   onEditMove?: (id: string, next: { x: number; y: number }) => void;
   onEditResize?: (id: string, next: { x: number; y: number; width: number; height: number }) => void;
 };
@@ -78,11 +79,13 @@ export default function MemoryItem(props: MemoryItemProps) {
     const el = cardRef.current;
     if (!el) return;
 
-    const next = { width: el.offsetWidth, height: el.offsetHeight };
+    const isMobileLayout = props.layoutId === "mobile" || props.layoutId === "mobile-sm";
+    const measuredHeight = isMobileLayout ? el.scrollHeight : el.offsetHeight;
+    const next = { width: el.offsetWidth, height: measuredHeight };
     if (!next.width || !next.height) return;
 
     props.onMeasure?.(props.id, next);
-  }, [props.id, props.onMeasure, type]);
+  }, [props.id, props.layoutId, props.onMeasure, type]);
 
   useLayoutEffect(() => {
     if (type !== "parent") return;
@@ -231,6 +234,35 @@ export default function MemoryItem(props: MemoryItemProps) {
         onPointerUp={handlePointerUp}
         aria-label={`Open ${props.id} details`}
       >
+        {props.editorEnabled && props.layoutId !== "mobile" && props.layoutId !== "mobile-sm" ? (
+          <>
+            <span
+              className="journey-resize-handle journey-resize-handle--nw"
+              onPointerDown={(e) => handleResizePointerDown("nw", e)}
+              onPointerMove={handleResizePointerMove}
+              onPointerUp={handleResizePointerUp}
+            />
+            <span
+              className="journey-resize-handle journey-resize-handle--ne"
+              onPointerDown={(e) => handleResizePointerDown("ne", e)}
+              onPointerMove={handleResizePointerMove}
+              onPointerUp={handleResizePointerUp}
+            />
+            <span
+              className="journey-resize-handle journey-resize-handle--sw"
+              onPointerDown={(e) => handleResizePointerDown("sw", e)}
+              onPointerMove={handleResizePointerMove}
+              onPointerUp={handleResizePointerUp}
+            />
+            <span
+              className="journey-resize-handle journey-resize-handle--se"
+              onPointerDown={(e) => handleResizePointerDown("se", e)}
+              onPointerMove={handleResizePointerMove}
+              onPointerUp={handleResizePointerUp}
+            />
+          </>
+        ) : null}
+
         <article
           ref={cardRef}
           className="journey-memory-parent-card journey-map-card journey-showcase__card journey-showcase__card--parent"
