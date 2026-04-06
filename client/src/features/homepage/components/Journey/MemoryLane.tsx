@@ -350,6 +350,12 @@ function MemoryLaneImpl({
     return Object.fromEntries(visibleItems.map((item) => [item.id, item]));
   }, [visibleItems]);
 
+  const templateSize = useMemo(() => {
+    const template = effectiveItemMap["node1-c1"] ?? itemMap["node1-c1"];
+    if (!template) return null;
+    return { width: template.width, height: template.height };
+  }, [effectiveItemMap, itemMap]);
+
   const handleSelectCardInEditor = useCallback(
     (item: JourneyItemNode) => {
       if (!editorToolsEnabled) return;
@@ -1186,12 +1192,6 @@ function MemoryLaneImpl({
       // ignore
     }
   }, [layout.id]);
-
-  const templateSize = useMemo(() => {
-    const template = effectiveItemMap["node1-c1"] ?? itemMap["node1-c1"];
-    if (!template) return null;
-    return { width: template.width, height: template.height };
-  }, [effectiveItemMap, itemMap]);
 
   const selectedEditorCardSize = useMemo(() => {
     if (!selectedEditorCard) return null;
