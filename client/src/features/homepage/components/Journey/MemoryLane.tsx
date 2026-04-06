@@ -40,6 +40,7 @@ const buildParentCardSizeKey = (layoutId: string) =>
   `journey-editor:${layoutId}:parentCardSize`;
 const HUD_POS_STORAGE_KEY = "sohj.debug.journeyEditor.hudPos";
 const HUD_MINIMIZED_STORAGE_KEY = "sohj.debug.journeyEditor.hudMinimized";
+const DELETED_IDS_STORAGE_KEY = "journey-editor:deletedIds.v1";
 const edgeKeyOf = (edge: { from: string; to: string }) => `${edge.from}->${edge.to}`;
 
 const anchorOrder: Anchor[] = ["top", "right", "bottom", "left"];
@@ -81,6 +82,19 @@ function readLocalStorageJson<T>(key: string, fallback: T): T {
   }
 }
 
+function readLocalStorageStringArray(key: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((value): value is string => typeof value === "string");
+  } catch {
+    return [];
+  }
+}
+
 function readLocalStorageParentCardSizeOverride(
   layoutId: string,
 ): { width: number; height: number } | null {
@@ -118,6 +132,10 @@ function MemoryLaneImpl({
   const [parentCardSizeOverride, setParentCardSizeOverride] = useState<
     { width: number; height: number } | null
   >(() => readLocalStorageParentCardSizeOverride(layout.id));
+  const [deletedIds, setDeletedIds] = useState<string[]>(() =>
+    readLocalStorageStringArray(DELETED_IDS_STORAGE_KEY),
+  );
+  const [selectedDeletedId, setSelectedDeletedId] = useState<string>("");
 
   useEffect(() => {
     onModalOpenChange?.(Boolean(selectedItem));
@@ -196,6 +214,15 @@ function MemoryLaneImpl({
     }
   }, [hudMinimized]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(DELETED_IDS_STORAGE_KEY, JSON.stringify(deletedIds));
+    } catch {
+      // ignore
+    }
+  }, [deletedIds]);
+
   // state is initialized from localStorage via useState initializers (and the component
   // is keyed by layout.id to ensure a clean re-init whenever the layout switches)
 
@@ -213,6 +240,64 @@ function MemoryLaneImpl({
       setSelectedEditorCardId(null);
       setSelectedEdgeKey(null);
       setSelectedViaIndex(null);
+    }
+  }, []);
+
+  const scrubLayoutOverridesForDeletedIds = useCallback((ids: string[]) => {
+    if (typeof window === "undefined") return;
+    if (ids.length === 0) return;
+
+    const idSet = new Set(ids);
+    const storage = window.localStorage;
+
+    const nodeKeys = Object.keys(storage).filter(
+      (key) => key.startsWith("journey-editor:") && key.endsWith(":nodes"),
+    );
+
+    for (const key of nodeKeys) {
+      try {
+        const raw = storage.getItem(key);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw) as unknown;
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+        const record = { ...(parsed as Record<string, unknown>) };
+        let changed = false;
+        for (const id of ids) {
+          if (!(id in record)) continue;
+          delete record[id];
+          changed = true;
+        }
+        if (changed) storage.setItem(key, JSON.stringify(record));
+      } catch {
+        // ignore bad localStorage
+      }
+    }
+
+    const edgeKeys = Object.keys(storage).filter(
+      (key) => key.startsWith("journey-editor:") && key.endsWith(":edges"),
+    );
+
+    for (const key of edgeKeys) {
+      try {
+        const raw = storage.getItem(key);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw) as unknown;
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+        const record = { ...(parsed as Record<string, unknown>) };
+        let changed = false;
+
+        for (const edgeKey of Object.keys(record)) {
+          const [from, to] = edgeKey.split("->");
+          if (!from || !to) continue;
+          if (!idSet.has(from) && !idSet.has(to)) continue;
+          delete record[edgeKey];
+          changed = true;
+        }
+
+        if (changed) storage.setItem(key, JSON.stringify(record));
+      } catch {
+        // ignore bad localStorage
+      }
     }
   }, []);
 
@@ -254,9 +339,12 @@ function MemoryLaneImpl({
     });
   }, [cardTextOverrides, items, nodeOverrides]);
 
+  const deletedIdSet = useMemo(() => new Set(deletedIds), [deletedIds]);
+
   const visibleItems = useMemo(() => {
-    return effectiveItems;
-  }, [effectiveItems]);
+    if (deletedIdSet.size === 0) return effectiveItems;
+    return effectiveItems.filter((item) => !deletedIdSet.has(item.id));
+  }, [deletedIdSet, effectiveItems]);
 
   const effectiveItemMap = useMemo(() => {
     return Object.fromEntries(visibleItems.map((item) => [item.id, item]));
@@ -479,6 +567,95 @@ function MemoryLaneImpl({
 
     return map;
   }, [effectiveItemMap, renderEdges]);
+
+  const handleDeleteCard = useCallback(
+    (id: string) => {
+      if (!editorToolsEnabled) return;
+      const base = effectiveItemMap[id] ?? itemMap[id];
+      if (!base) return;
+
+      const ids: string[] = [id];
+      if (base.type === "parent") {
+        const children = parentChildrenMap.get(id) ?? [];
+        for (const child of children) ids.push(child.id);
+      }
+
+      const uniqueIds = Array.from(new Set(ids));
+      if (typeof window !== "undefined") {
+        const ok = window.confirm(
+          uniqueIds.length === 1
+            ? `Delete ${id}? This removes it across all layouts until restored.`
+            : `Delete ${uniqueIds.length} cards (parent + children)? This removes them across all layouts until restored.`,
+        );
+        if (!ok) return;
+      }
+
+      setDeletedIds((prev) => {
+        const next = new Set(prev);
+        for (const nextId of uniqueIds) next.add(nextId);
+        return Array.from(next).sort();
+      });
+
+      for (const nextId of uniqueIds) clearCardTextOverride(nextId);
+
+      if (selectedEditorCardId && uniqueIds.includes(selectedEditorCardId)) setSelectedEditorCardId(null);
+      if (selectedItem && uniqueIds.includes(selectedItem.id)) setSelectedItem(null);
+      if (selectedEdgeKey) {
+        const [from, to] = selectedEdgeKey.split("->");
+        if (from && to && (uniqueIds.includes(from) || uniqueIds.includes(to))) {
+          setSelectedEdgeKey(null);
+          setSelectedViaIndex(null);
+        }
+      }
+
+      setNodeOverrides((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        for (const nextId of uniqueIds) {
+          if (!next[nextId]) continue;
+          delete next[nextId];
+          changed = true;
+        }
+        return changed ? next : prev;
+      });
+
+      setEdgeOverrides((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        for (const edgeKey of Object.keys(next)) {
+          const [from, to] = edgeKey.split("->");
+          if (!from || !to) continue;
+          if (!uniqueIds.includes(from) && !uniqueIds.includes(to)) continue;
+          delete next[edgeKey];
+          changed = true;
+        }
+        return changed ? next : prev;
+      });
+
+      scrubLayoutOverridesForDeletedIds(uniqueIds);
+    },
+    [
+      clearCardTextOverride,
+      editorToolsEnabled,
+      effectiveItemMap,
+      itemMap,
+      parentChildrenMap,
+      scrubLayoutOverridesForDeletedIds,
+      selectedEditorCardId,
+      selectedEdgeKey,
+      selectedItem,
+    ],
+  );
+
+  const handleRestoreDeleted = useCallback((id: string) => {
+    setDeletedIds((prev) => prev.filter((value) => value !== id));
+    setSelectedDeletedId("");
+  }, []);
+
+  const handleRestoreAllDeleted = useCallback(() => {
+    setDeletedIds([]);
+    setSelectedDeletedId("");
+  }, []);
 
   const selectedParentChildren = useMemo(() => {
     if (!selectedItem || selectedItem.type !== "parent") return [];
@@ -1376,12 +1553,54 @@ function MemoryLaneImpl({
                       <button type="button" onClick={resetAllCardTextOverrides}>
                         Reset Text (All)
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCard(selectedEditorCard.id)}
+                      >
+                        Delete Card
+                      </button>
                     </div>
                   </>
                 ) : (
                   <div className="journey-editor-hud__hint">Click a card (or pick one) to edit its text.</div>
                 )}
               </div>
+              ) : null}
+
+              {!hudMinimized && editorClickMode === "edit" && deletedIds.length > 0 ? (
+                <div className="journey-editor-hud__deleted">
+                  <div className="journey-editor-hud__card-row">
+                    <label className="journey-editor-hud__label" htmlFor="journey-editor-deleted-card">
+                      Deleted
+                    </label>
+                    <select
+                      id="journey-editor-deleted-card"
+                      className="journey-editor-hud__select"
+                      value={selectedDeletedId}
+                      onChange={(event) => setSelectedDeletedId(event.target.value)}
+                    >
+                      <option value="">(select)</option>
+                      {deletedIds.map((id) => (
+                        <option key={id} value={id}>
+                          {id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="journey-editor-hud__card-actions">
+                    <button
+                      type="button"
+                      disabled={!selectedDeletedId}
+                      onClick={() => selectedDeletedId && handleRestoreDeleted(selectedDeletedId)}
+                    >
+                      Restore
+                    </button>
+                    <button type="button" onClick={handleRestoreAllDeleted}>
+                      Restore All
+                    </button>
+                  </div>
+                </div>
               ) : null}
 
       {!hudMinimized && selectedRenderEdge ? (
