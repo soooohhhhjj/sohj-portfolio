@@ -298,7 +298,11 @@ export default function MemoryItem(props: MemoryItemProps) {
           journey-map-card journey-showcase__card journey-showcase__card--parent`}
         >
           <div className="flex items-center gap-[0.85rem]">
-            <div className="journey-map-card__icon-shell">
+            <div className="journey-map-card__icon-shell relative inline-flex
+            items-center justify-center
+            w-12 h-[2.55rem] shrink-0
+            rounded-[0.2rem]
+            bg-white/[0.02]">
               <Icon className="size-[1.4rem] text-[var(--base-text-color)]" strokeWidth={1.3} />
             </div>
             <h3 className="font-jura 
