@@ -15,6 +15,16 @@ import { journeyContent } from "./journey.content";
 import { useJourneyEditorCardOverrides } from "./hooks/useJourneyEditorCardOverrides";
 import { computeJourneyNodes } from "./layout/computeNodes";
 import { pickLayout } from "./layout";
+import {
+  DEFAULT_MOBILE_GAPS,
+  createLayoutMobile,
+  type JourneyStackedGapOverrides,
+} from "./layout/layout.mobile";
+import {
+  DEFAULT_MOBILE_SM_GAPS,
+  createLayoutMobileSm,
+  type JourneyStackedGapOverridesSm,
+} from "./layout/layout.mobile.sm";
 import { useContainerSize } from "./layout/useContainerSize";
 import { useViewportWidth } from "./layout/useViewportWidth";
 import type { Anchor, JourneyItemNode } from "./types/journey.types";
@@ -38,6 +48,7 @@ const buildNodeOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:n
 const buildEdgeOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:edges`;
 const buildParentCardSizeKey = (layoutId: string) =>
   `journey-editor:${layoutId}:parentCardSize`;
+const buildGapOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:gaps`;
 const HUD_POS_STORAGE_KEY = "sohj.debug.journeyEditor.hudPos";
 const HUD_MINIMIZED_STORAGE_KEY = "sohj.debug.journeyEditor.hudMinimized";
 const DELETED_IDS_STORAGE_KEY = "journey-editor:deletedIds.v1";
@@ -122,6 +133,131 @@ function MemoryLaneImpl({
   const editorToolsEnabled = Boolean(editorEnabled) && isDev;
   const { ref, width } = useContainerSize<HTMLDivElement>();
   const isStackedMobileLayout = layout.id === "mobile" || layout.id === "mobile-sm";
+
+  const parentIdSet = useMemo(() => {
+    return new Set(journeyContent.filter((item) => item.type === "parent").map((item) => item.id));
+  }, []);
+
+  const [deletedIds, setDeletedIds] = useState<string[]>(() =>
+    readLocalStorageStringArray(DELETED_IDS_STORAGE_KEY),
+  );
+
+  const deletedIdSet = useMemo(() => {
+    if (deletedIds.length === 0) return new Set<string>();
+
+    const expanded = new Set(deletedIds);
+
+    for (const id of deletedIds) {
+      if (!parentIdSet.has(id)) continue;
+      const prefix = `${id}-`;
+      for (const item of journeyContent) {
+        if (item.type === "parent") continue;
+        if (!item.id.startsWith(prefix)) continue;
+        expanded.add(item.id);
+      }
+    }
+
+    return expanded;
+  }, [deletedIds, parentIdSet]);
+
+  const gapDefaults = useMemo(() => {
+    if (layout.id === "mobile") return DEFAULT_MOBILE_GAPS;
+    if (layout.id === "mobile-sm") return DEFAULT_MOBILE_SM_GAPS;
+    return null;
+  }, [layout.id]);
+
+  const [gapOverrides, setGapOverrides] = useState<
+    Partial<Pick<JourneyStackedGapOverrides, "parentToChildGap" | "parentToParentGap">>
+  >(() => {
+    if (!isStackedMobileLayout) return {};
+
+    const raw = readLocalStorageJson<Record<string, unknown>>(
+      buildGapOverrideKey(layout.id),
+      {},
+    );
+
+    const normalize = (value: unknown) => {
+      const next = Number(value);
+      if (!Number.isFinite(next) || next < 0) return undefined;
+      return Math.round(next);
+    };
+
+    const next: Partial<Pick<JourneyStackedGapOverrides, "parentToChildGap" | "parentToParentGap">> =
+      {};
+
+    const parentToChildGap = normalize(raw.parentToChildGap);
+    const parentToParentGap = normalize(raw.parentToParentGap);
+
+    if (parentToChildGap !== undefined) next.parentToChildGap = parentToChildGap;
+    if (parentToParentGap !== undefined) next.parentToParentGap = parentToParentGap;
+
+    return next;
+  });
+
+  useEffect(() => {
+    if (!isStackedMobileLayout) return;
+    if (typeof window === "undefined") return;
+
+    const key = buildGapOverrideKey(layout.id);
+    const payload: Record<string, number> = {};
+
+    if (gapOverrides.parentToChildGap !== undefined) {
+      payload.parentToChildGap = gapOverrides.parentToChildGap;
+    }
+    if (gapOverrides.parentToParentGap !== undefined) {
+      payload.parentToParentGap = gapOverrides.parentToParentGap;
+    }
+
+    try {
+      if (Object.keys(payload).length === 0) {
+        window.localStorage.removeItem(key);
+        return;
+      }
+      window.localStorage.setItem(key, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }, [gapOverrides.parentToChildGap, gapOverrides.parentToParentGap, isStackedMobileLayout, layout.id]);
+
+  const resolvedLayout = useMemo(() => {
+    if (layout.id === "mobile") {
+      const parentToChildGap =
+        gapOverrides.parentToChildGap ?? (editorToolsEnabled ? 0 : undefined);
+      const parentToParentGap =
+        gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
+      return createLayoutMobile({
+        parentToChildGap,
+        childToChildGap: parentToChildGap,
+        parentToParentGap,
+      }, { excludedIds: deletedIdSet });
+    }
+
+    if (layout.id === "mobile-sm") {
+      const parentToChildGap =
+        gapOverrides.parentToChildGap ?? (editorToolsEnabled ? 0 : undefined);
+      const parentToParentGap =
+        gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
+      return createLayoutMobileSm({
+        parentToChildGap,
+        childToChildGap: parentToChildGap,
+        parentToParentGap,
+      } satisfies JourneyStackedGapOverridesSm, { excludedIds: deletedIdSet });
+    }
+
+    return layout;
+  }, [deletedIdSet, editorToolsEnabled, gapOverrides.parentToChildGap, gapOverrides.parentToParentGap, layout]);
+
+  const effectiveParentToChildGap = useMemo(() => {
+    if (!gapDefaults) return null;
+    if (gapOverrides.parentToChildGap !== undefined) return gapOverrides.parentToChildGap;
+    return editorToolsEnabled ? 0 : gapDefaults.parentToChildGap;
+  }, [editorToolsEnabled, gapDefaults, gapOverrides.parentToChildGap]);
+
+  const effectiveParentToParentGap = useMemo(() => {
+    if (!gapDefaults) return null;
+    if (gapOverrides.parentToParentGap !== undefined) return gapOverrides.parentToParentGap;
+    return editorToolsEnabled ? 0 : gapDefaults.parentToParentGap;
+  }, [editorToolsEnabled, gapDefaults, gapOverrides.parentToParentGap]);
   const [selectedItem, setSelectedItem] = useState<JourneyItemNode | null>(
     null,
   );
@@ -133,9 +269,6 @@ function MemoryLaneImpl({
   const [parentCardSizeOverride, setParentCardSizeOverride] = useState<
     { width: number; height: number } | null
   >(() => (isStackedMobileLayout ? null : readLocalStorageParentCardSizeOverride(layout.id)));
-  const [deletedIds, setDeletedIds] = useState<string[]>(() =>
-    readLocalStorageStringArray(DELETED_IDS_STORAGE_KEY),
-  );
   const [selectedDeletedId, setSelectedDeletedId] = useState<string>("");
 
   useEffect(() => {
@@ -144,14 +277,14 @@ function MemoryLaneImpl({
   }, [onModalOpenChange, selectedItem]);
 
   const { items, itemMap, edges } = useMemo(
-    () => computeJourneyNodes(journeyContent, layout, width),
-    [layout, width],
+    () => computeJourneyNodes(journeyContent, resolvedLayout, width),
+    [resolvedLayout, width],
   );
   const scale = useMemo(() => {
-    if (!layout.scaleWithContainer) return 1;
+    if (!resolvedLayout.scaleWithContainer) return 1;
     if (!width) return 1;
-    return width / layout.canvasWidth;
-  }, [layout.canvasWidth, layout.scaleWithContainer, width]);
+    return width / resolvedLayout.canvasWidth;
+  }, [resolvedLayout.canvasWidth, resolvedLayout.scaleWithContainer, width]);
 
   const [nodeOverrides, setNodeOverrides] = useState<Record<string, NodeLayoutOverride>>(() => {
     const raw = readLocalStorageJson<Record<string, NodeLayoutOverride>>(
@@ -398,8 +531,6 @@ function MemoryLaneImpl({
       return merged;
     });
   }, [cardTextOverrides, items, nodeOverrides]);
-
-  const deletedIdSet = useMemo(() => new Set(deletedIds), [deletedIds]);
 
   const visibleItemsBase = useMemo(() => {
     if (deletedIdSet.size === 0) return effectiveItems;
@@ -660,24 +791,35 @@ function MemoryLaneImpl({
     [],
   );
 
+  const childParentMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of Object.values(effectiveItemMap)) {
+      if (item.type === "parent") continue;
+      const parentId = item.id.split("-")[0];
+      if (!parentId || !parentIdSet.has(parentId)) continue;
+      map.set(item.id, parentId);
+    }
+    return map;
+  }, [effectiveItemMap, parentIdSet]);
+
   const parentChildrenMap = useMemo(() => {
     const map = new Map<string, JourneyItemNode[]>();
 
-    renderEdges.forEach((edge) => {
-      const source = effectiveItemMap[edge.from];
-      const target = effectiveItemMap[edge.to];
+    for (const item of Object.values(effectiveItemMap)) {
+      if (item.type === "parent") continue;
+      const parentId = childParentMap.get(item.id);
+      if (!parentId) continue;
+      const existing = map.get(parentId) ?? [];
+      existing.push(item);
+      map.set(parentId, existing);
+    }
 
-      if (!source || !target) return;
-      if (source.type !== "parent") return;
-      if (target.type === "parent") return;
-
-      const existing = map.get(source.id) ?? [];
-      existing.push(target);
-      map.set(source.id, existing);
-    });
+    for (const [key, children] of map.entries()) {
+      map.set(key, [...children].sort((a, b) => (a.y - b.y) || (a.x - b.x)));
+    }
 
     return map;
-  }, [effectiveItemMap, renderEdges]);
+  }, [childParentMap, effectiveItemMap]);
 
   const handleDeleteCard = useCallback(
     (id: string) => {
@@ -687,8 +829,12 @@ function MemoryLaneImpl({
 
       const ids: string[] = [id];
       if (base.type === "parent") {
-        const children = parentChildrenMap.get(id) ?? [];
-        for (const child of children) ids.push(child.id);
+        const prefix = `${id}-`;
+        for (const item of journeyContent) {
+          if (item.type === "parent") continue;
+          if (!item.id.startsWith(prefix)) continue;
+          ids.push(item.id);
+        }
       }
 
       const uniqueIds = Array.from(new Set(ids));
@@ -750,7 +896,6 @@ function MemoryLaneImpl({
       editorToolsEnabled,
       effectiveItemMap,
       itemMap,
-      parentChildrenMap,
       scrubLayoutOverridesForDeletedIds,
       selectedEditorCardId,
       selectedEdgeKey,
@@ -772,23 +917,6 @@ function MemoryLaneImpl({
     if (!selectedItem || selectedItem.type !== "parent") return [];
     return parentChildrenMap.get(selectedItem.id) ?? [];
   }, [selectedItem, parentChildrenMap]);
-
-  const childParentMap = useMemo(() => {
-    const map = new Map<string, string>();
-
-    renderEdges.forEach((edge) => {
-      const source = effectiveItemMap[edge.from];
-      const target = effectiveItemMap[edge.to];
-
-      if (!source || !target) return;
-      if (source.type !== "parent") return;
-      if (target.type === "parent") return;
-
-      map.set(target.id, source.id);
-    });
-
-    return map;
-  }, [effectiveItemMap, renderEdges]);
 
   const modalNavigationItems = useMemo(
     () =>
@@ -1595,6 +1723,90 @@ function MemoryLaneImpl({
                     {templateSize ? `${templateSize.width}x${templateSize.height}` : "n/a"}
                   </span>
                   <span>edge: {selectedEdgeKey ?? "none"}</span>
+                  {isStackedMobileLayout ? (
+                    <>
+                      <span>P→C gap: {effectiveParentToChildGap ?? "n/a"}</span>
+                      <span>P→P gap: {effectiveParentToParentGap ?? "n/a"}</span>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {!hudMinimized && isStackedMobileLayout ? (
+                <div className="journey-editor-hud__card-editor" aria-label="Mobile stacked gap settings">
+                  <div className="journey-editor-hud__field">
+                    <label className="journey-editor-hud__label" htmlFor="journey-editor-gap-parent-child">
+                      P→C gap
+                    </label>
+                    <input
+                      id="journey-editor-gap-parent-child"
+                      type="number"
+                      min={0}
+                      step={1}
+                      className="journey-editor-hud__input"
+                      value={gapOverrides.parentToChildGap ?? ""}
+                      placeholder={String(editorToolsEnabled ? 0 : (gapDefaults?.parentToChildGap ?? ""))}
+                      onChange={(event) => {
+                        const raw = event.target.value;
+                        setGapOverrides((prev) => {
+                          const next = { ...prev };
+                          if (!raw) {
+                            delete next.parentToChildGap;
+                            return next;
+                          }
+                          const value = Math.max(0, Math.round(Number(raw)));
+                          if (!Number.isFinite(value)) {
+                            delete next.parentToChildGap;
+                            return next;
+                          }
+                          next.parentToChildGap = value;
+                          return next;
+                        });
+                      }}
+                    />
+                  </div>
+
+                  <div className="journey-editor-hud__field">
+                    <label className="journey-editor-hud__label" htmlFor="journey-editor-gap-parent-parent">
+                      P→P gap
+                    </label>
+                    <input
+                      id="journey-editor-gap-parent-parent"
+                      type="number"
+                      min={0}
+                      step={1}
+                      className="journey-editor-hud__input"
+                      value={gapOverrides.parentToParentGap ?? ""}
+                      placeholder={String(editorToolsEnabled ? 0 : (gapDefaults?.parentToParentGap ?? ""))}
+                      onChange={(event) => {
+                        const raw = event.target.value;
+                        setGapOverrides((prev) => {
+                          const next = { ...prev };
+                          if (!raw) {
+                            delete next.parentToParentGap;
+                            return next;
+                          }
+                          const value = Math.max(0, Math.round(Number(raw)));
+                          if (!Number.isFinite(value)) {
+                            delete next.parentToParentGap;
+                            return next;
+                          }
+                          next.parentToParentGap = value;
+                          return next;
+                        });
+                      }}
+                    />
+                  </div>
+
+                  <div className="journey-editor-hud__card-actions">
+                    <button type="button" onClick={() => setGapOverrides({})}>
+                      Reset Gaps
+                    </button>
+                  </div>
+
+                  <div className="journey-editor-hud__hint">
+                    P→C controls spacing inside a parent group (parent→child and child→child). P→P is the last child → next parent gap.
+                  </div>
                 </div>
               ) : null}
 
