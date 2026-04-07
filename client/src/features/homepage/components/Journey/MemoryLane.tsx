@@ -7,7 +7,6 @@
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import MemoryItem from "./MemoryItem";
 import JourneyNodeModal from "./JourneyNodeModal";
 import { journeyContent } from "./journey.content";
 import { useJourneyEditorCardOverrides } from "./hooks/useJourneyEditorCardOverrides";
@@ -28,6 +27,7 @@ import { useViewportWidth } from "./layout/useViewportWidth";
 import type { Anchor, JourneyItemNode } from "./types/journey.types";
 import { JourneyEdgeLayer } from "./ui/JourneyEdgeLayer";
 import { JourneyEditorHudPortal } from "./ui/JourneyEditorHudPortal";
+import { JourneyItemsLayer } from "./ui/JourneyItemsLayer";
 import {
   buildEdgeOverrideKey,
   buildGapOverrideKey,
@@ -558,6 +558,17 @@ function MemoryLaneImpl({
     if (!selectedEditorCardId) return null;
     return effectiveItemMap[selectedEditorCardId] ?? null;
   }, [effectiveItemMap, selectedEditorCardId]);
+
+  const handleItemSelect = useCallback(
+    (item: JourneyItemNode) => {
+      if (editorEnabled) {
+        handleSelectCardInEditor(item);
+        return;
+      }
+      setSelectedItem(item);
+    },
+    [editorEnabled, handleSelectCardInEditor],
+  );
 
   const renderEdges = useMemo(() => {
     const rendered = edges
@@ -1526,18 +1537,15 @@ function MemoryLaneImpl({
         handleMoveViaPoint={handleMoveViaPoint}
       />
 
-      {visibleItems.map((item) => (
-        <MemoryItem
-          key={item.id}
-          {...item}
-          layoutId={layout.id}
-          onSelect={editorEnabled ? handleSelectCardInEditor : setSelectedItem}
-          onMeasure={handleMeasureParent}
-          editorEnabled={editorEnabled}
-          onEditMove={handleEditMove}
-          onEditResize={handleEditResize}
-        />
-      ))}
+      <JourneyItemsLayer
+        visibleItems={visibleItems}
+        layoutId={layout.id}
+        editorEnabled={editorEnabled}
+        onSelect={handleItemSelect}
+        onMeasure={handleMeasureParent}
+        onEditMove={handleEditMove}
+        onEditResize={handleEditResize}
+      />
 
       <JourneyEditorHudPortal
         editorEnabled={Boolean(editorEnabled)}
