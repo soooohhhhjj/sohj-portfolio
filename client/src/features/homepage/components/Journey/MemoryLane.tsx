@@ -1,4 +1,4 @@
-import {
+﻿import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -7,7 +7,6 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { createPortal } from "react-dom";
 import MemoryItem from "./MemoryItem";
 import MemoryPath from "./MemoryPath";
 import JourneyNodeModal from "./JourneyNodeModal";
@@ -28,6 +27,7 @@ import {
 import { useContainerSize } from "./layout/useContainerSize";
 import { useViewportWidth } from "./layout/useViewportWidth";
 import type { Anchor, JourneyItemNode } from "./types/journey.types";
+import { JourneyEditorHudPortal } from "./ui/JourneyEditorHudPortal";
 import {
   buildEdgeOverrideKey,
   buildGapOverrideKey,
@@ -1593,378 +1593,55 @@ function MemoryLaneImpl({
         />
       ))}
 
-      {editorEnabled && editorActive && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              ref={(node) => {
-                hudRef.current = node;
-              }}
-              className={`journey-editor-hud ${hudMinimized ? "journey-editor-hud--minimized" : ""}`}
-            >
-              <div
-                className="journey-editor-hud__drag-grip"
-                onPointerDown={handleHudPointerDown}
-                onPointerMove={handleHudPointerMove}
-                onPointerUp={handleHudPointerUp}
-                aria-label="Drag editor panel"
-                role="presentation"
-              />
+      <JourneyEditorHudPortal
+        editorEnabled={Boolean(editorEnabled)}
+        editorActive={editorActive}
+        editorToolsEnabled={editorToolsEnabled}
+        hudMinimized={hudMinimized}
+        setHudMinimized={setHudMinimized}
+        hudRefCallback={(node) => {
+          hudRef.current = node;
+        }}
+        onHudPointerDown={handleHudPointerDown}
+        onHudPointerMove={handleHudPointerMove}
+        onHudPointerUp={handleHudPointerUp}
+        editorClickMode={editorClickMode}
+        onEditorClickModeChange={handleEditorClickModeChange}
+        layoutId={layout.id}
+        containerWidth={width ?? null}
+        scale={scale}
+        templateSize={templateSize}
+        selectedEdgeKey={selectedEdgeKey}
+        selectedRenderEdge={selectedRenderEdge}
+        isStackedMobileLayout={isStackedMobileLayout}
+        effectiveParentToChildGap={effectiveParentToChildGap}
+        effectiveParentToParentGap={effectiveParentToParentGap}
+        gapDefaults={gapDefaults}
+        gapOverrides={gapOverrides}
+        setGapOverrides={setGapOverrides}
+        visibleItems={visibleItems}
+        selectedEditorCardId={selectedEditorCardId}
+        setSelectedEditorCardId={setSelectedEditorCardId}
+        selectedEditorCard={selectedEditorCard}
+        selectedEditorCardSize={selectedEditorCardSize}
+        upsertCardTextOverride={upsertCardTextOverride}
+        clearCardTextOverride={clearCardTextOverride}
+        resetAllCardTextOverrides={resetAllCardTextOverrides}
+        handleDeleteCard={handleDeleteCard}
+        deletedIds={deletedIds}
+        selectedDeletedId={selectedDeletedId}
+        setSelectedDeletedId={setSelectedDeletedId}
+        handleRestoreDeleted={handleRestoreDeleted}
+        handleRestoreAllDeleted={handleRestoreAllDeleted}
+        setEdgeOverrides={setEdgeOverrides}
+        cycleAnchor={cycleAnchor}
+        handleOrthogonalizeSelectedEdge={handleOrthogonalizeSelectedEdge}
+        handleCopyEdits={handleCopyEdits}
+        handleMatchAllToTemplate={handleMatchAllToTemplate}
+        handleResetEdits={handleResetEdits}
+        setHudPos={setHudPos}
+      />
 
-              <div className="journey-editor-hud__title-row">
-                <div className="journey-editor-hud__title">Journey Edit Mode</div>
-                <div className="journey-editor-hud__title-actions">
-                  <button
-                    type="button"
-                    className="journey-editor-hud__mini-toggle"
-                    onClick={() => setHudMinimized((prev) => !prev)}
-                    aria-label={hudMinimized ? "Expand editor panel" : "Minimize editor panel"}
-                  >
-                    {hudMinimized ? "Expand" : "Minimize"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="journey-editor-hud__mode-row">
-                <label className="journey-editor-hud__label" htmlFor="journey-editor-click-mode">
-                  Click
-                </label>
-                <select
-                  id="journey-editor-click-mode"
-                  className="journey-editor-hud__select"
-                  value={editorClickMode}
-                  onChange={(event) =>
-                    handleEditorClickModeChange(event.target.value as "modal" | "edit")
-                  }
-                >
-                  <option value="modal">Modal</option>
-                  <option value="edit">Edit</option>
-                </select>
-              </div>
-
-              {hudMinimized ? (
-                <div className="journey-editor-hud__mini-meta" aria-label="Selection summary">
-                  <div className="journey-editor-hud__mini-meta-row">
-                    <span className="journey-editor-hud__mini-meta-key">Card</span>
-                    <span className="journey-editor-hud__mini-meta-value">
-                      {selectedEditorCard?.id ?? "none"}
-                    </span>
-                  </div>
-                  <div className="journey-editor-hud__mini-meta-row">
-                    <span className="journey-editor-hud__mini-meta-key">Size</span>
-                    <span className="journey-editor-hud__mini-meta-value">
-                      {selectedEditorCardSize
-                        ? `${selectedEditorCardSize.width}x${selectedEditorCardSize.height}`
-                        : "n/a"}
-                    </span>
-                  </div>
-                </div>
-              ) : null}
-
-              {hudMinimized && selectedRenderEdge ? (
-                <div className="journey-editor-hud__mini-actions">
-                  <button type="button" onClick={handleOrthogonalizeSelectedEdge}>
-                    Ortho
-                  </button>
-                </div>
-              ) : null}
-
-              {!hudMinimized ? (
-                <div className="journey-editor-hud__meta">
-                  <span>layout: {layout.id}</span>
-                  <span>container: {Math.round(width ?? 0)}px</span>
-                  <span>scale: {scale.toFixed(3)}</span>
-                  <span>
-                    template:{" "}
-                    {templateSize ? `${templateSize.width}x${templateSize.height}` : "n/a"}
-                  </span>
-                  <span>edge: {selectedEdgeKey ?? "none"}</span>
-                  {isStackedMobileLayout ? (
-                    <>
-                      <span>P→C gap: {effectiveParentToChildGap ?? "n/a"}</span>
-                      <span>P→P gap: {effectiveParentToParentGap ?? "n/a"}</span>
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {!hudMinimized && isStackedMobileLayout ? (
-                <div className="journey-editor-hud__card-editor" aria-label="Mobile stacked gap settings">
-                  <div className="journey-editor-hud__field">
-                    <label className="journey-editor-hud__label" htmlFor="journey-editor-gap-parent-child">
-                      P→C gap
-                    </label>
-                    <input
-                      id="journey-editor-gap-parent-child"
-                      type="number"
-                      min={0}
-                      step={1}
-                      className="journey-editor-hud__input"
-                      value={gapOverrides.parentToChildGap ?? ""}
-                      placeholder={String(editorToolsEnabled ? 0 : (gapDefaults?.parentToChildGap ?? ""))}
-                      onChange={(event) => {
-                        const raw = event.target.value;
-                        setGapOverrides((prev) => {
-                          const next = { ...prev };
-                          if (!raw) {
-                            delete next.parentToChildGap;
-                            return next;
-                          }
-                          const value = Math.max(0, Math.round(Number(raw)));
-                          if (!Number.isFinite(value)) {
-                            delete next.parentToChildGap;
-                            return next;
-                          }
-                          next.parentToChildGap = value;
-                          return next;
-                        });
-                      }}
-                    />
-                  </div>
-
-                  <div className="journey-editor-hud__field">
-                    <label className="journey-editor-hud__label" htmlFor="journey-editor-gap-parent-parent">
-                      P→P gap
-                    </label>
-                    <input
-                      id="journey-editor-gap-parent-parent"
-                      type="number"
-                      min={0}
-                      step={1}
-                      className="journey-editor-hud__input"
-                      value={gapOverrides.parentToParentGap ?? ""}
-                      placeholder={String(editorToolsEnabled ? 0 : (gapDefaults?.parentToParentGap ?? ""))}
-                      onChange={(event) => {
-                        const raw = event.target.value;
-                        setGapOverrides((prev) => {
-                          const next = { ...prev };
-                          if (!raw) {
-                            delete next.parentToParentGap;
-                            return next;
-                          }
-                          const value = Math.max(0, Math.round(Number(raw)));
-                          if (!Number.isFinite(value)) {
-                            delete next.parentToParentGap;
-                            return next;
-                          }
-                          next.parentToParentGap = value;
-                          return next;
-                        });
-                      }}
-                    />
-                  </div>
-
-                  <div className="journey-editor-hud__card-actions">
-                    <button type="button" onClick={() => setGapOverrides({})}>
-                      Reset Gaps
-                    </button>
-                  </div>
-
-                  <div className="journey-editor-hud__hint">
-                    P→C controls spacing inside a parent group (parent→child and child→child). P→P is the last child → next parent gap.
-                  </div>
-                </div>
-              ) : null}
-
-              {!hudMinimized && editorClickMode === "edit" ? (
-                <div className="journey-editor-hud__card-editor">
-                <div className="journey-editor-hud__card-row">
-                  <label className="journey-editor-hud__label" htmlFor="journey-editor-selected-card">
-                    Card
-                  </label>
-                  <select
-                    id="journey-editor-selected-card"
-                    className="journey-editor-hud__select"
-                    value={selectedEditorCardId ?? ""}
-                    onChange={(event) => setSelectedEditorCardId(event.target.value || null)}
-                  >
-                    <option value="">(click a card)</option>
-                    {visibleItems.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.id} • {item.title ?? (item.type === "parent" ? "Parent" : "Card")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {selectedEditorCard ? (
-                  <>
-                    <div className="journey-editor-hud__field">
-                      <label className="journey-editor-hud__label" htmlFor="journey-editor-card-title">
-                        Title
-                      </label>
-                      <input
-                        id="journey-editor-card-title"
-                        className="journey-editor-hud__input"
-                        value={selectedEditorCard.title ?? ""}
-                        onChange={(event) =>
-                          upsertCardTextOverride(selectedEditorCard.id, {
-                            title: event.target.value,
-                          })
-                        }
-                        placeholder="Title…"
-                      />
-                    </div>
-
-                    {selectedEditorCard.type === "parent" ? (
-                      <div className="journey-editor-hud__field">
-                        <label
-                          className="journey-editor-hud__label"
-                          htmlFor="journey-editor-card-modal-details"
-                        >
-                          Summary
-                        </label>
-                        <textarea
-                          id="journey-editor-card-modal-details"
-                          className="journey-editor-hud__textarea"
-                          value={selectedEditorCard.modalDetails ?? ""}
-                          onChange={(event) =>
-                            upsertCardTextOverride(selectedEditorCard.id, {
-                              modalDetails: event.target.value,
-                            })
-                          }
-                          placeholder="Parent summary…"
-                          rows={3}
-                        />
-                      </div>
-                    ) : (
-                      <div className="journey-editor-hud__field">
-                        <label className="journey-editor-hud__label" htmlFor="journey-editor-card-details">
-                          Details
-                        </label>
-                        <textarea
-                          id="journey-editor-card-details"
-                          className="journey-editor-hud__textarea"
-                          value={selectedEditorCard.details ?? ""}
-                          onChange={(event) =>
-                            upsertCardTextOverride(selectedEditorCard.id, {
-                              details: event.target.value,
-                            })
-                          }
-                          placeholder="Child details…"
-                          rows={2}
-                        />
-                      </div>
-                    )}
-
-                    <div className="journey-editor-hud__card-actions">
-                      <button
-                        type="button"
-                        onClick={() => clearCardTextOverride(selectedEditorCard.id)}
-                      >
-                        Clear Text
-                      </button>
-                      <button type="button" onClick={resetAllCardTextOverrides}>
-                        Reset Text (All)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCard(selectedEditorCard.id)}
-                      >
-                        Delete Card
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="journey-editor-hud__hint">Click a card (or pick one) to edit its text.</div>
-                )}
-              </div>
-              ) : null}
-
-              {!hudMinimized && editorClickMode === "edit" && deletedIds.length > 0 ? (
-                <div className="journey-editor-hud__deleted">
-                  <div className="journey-editor-hud__card-row">
-                    <label className="journey-editor-hud__label" htmlFor="journey-editor-deleted-card">
-                      Deleted
-                    </label>
-                    <select
-                      id="journey-editor-deleted-card"
-                      className="journey-editor-hud__select"
-                      value={selectedDeletedId}
-                      onChange={(event) => setSelectedDeletedId(event.target.value)}
-                    >
-                      <option value="">(select)</option>
-                      {deletedIds.map((id) => (
-                        <option key={id} value={id}>
-                          {id}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="journey-editor-hud__card-actions">
-                    <button
-                      type="button"
-                      disabled={!selectedDeletedId}
-                      onClick={() => selectedDeletedId && handleRestoreDeleted(selectedDeletedId)}
-                    >
-                      Restore
-                    </button>
-                    <button type="button" onClick={handleRestoreAllDeleted}>
-                      Restore All
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
-      {!hudMinimized && selectedRenderEdge ? (
-        <div className="journey-editor-hud__edge">
-          <button
-            type="button"
-                    onClick={() => {
-                      const key = selectedEdgeKey;
-                      if (!key) return;
-                      const current = (selectedRenderEdge.fromAnchor as Anchor) ?? "bottom";
-                      setEdgeOverrides((prev) => ({
-                        ...prev,
-                        [key]: { ...(prev[key] ?? {}), fromAnchor: cycleAnchor(current) },
-                      }));
-                    }}
-                  >
-                    From: {selectedRenderEdge.fromAnchor}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const key = selectedEdgeKey;
-                      if (!key) return;
-                      const current = (selectedRenderEdge.toAnchor as Anchor) ?? "top";
-                      setEdgeOverrides((prev) => ({
-                        ...prev,
-                        [key]: { ...(prev[key] ?? {}), toAnchor: cycleAnchor(current) },
-                      }));
-                    }}
-          >
-            To: {selectedRenderEdge.toAnchor}
-          </button>
-          <button type="button" onClick={handleOrthogonalizeSelectedEdge}>
-            Orthogonalize
-          </button>
-          <div className="journey-editor-hud__hint">
-            Shift-click a line to add a point. Alt-click a point to remove. Orthogonalize snaps segments to true horizontal/vertical.
-          </div>
-        </div>
-      ) : null}
-
-              {!hudMinimized ? (
-                <div className="journey-editor-hud__actions">
-                <button type="button" onClick={handleCopyEdits}>
-                  Copy Layout JSON
-                </button>
-                <button type="button" onClick={handleMatchAllToTemplate}>
-                  Match All to node1-c1
-                </button>
-                <button type="button" onClick={handleResetEdits}>
-                  Reset
-                </button>
-                <button type="button" onClick={() => setHudPos({ x: 0, y: 0 })}>
-                  HUD Reset
-                </button>
-              </div>
-              ) : null}
-            </div>,
-            document.body,
-          )
-        : null}
 
       <JourneyNodeModal
         item={selectedItem}
@@ -1976,3 +1653,4 @@ function MemoryLaneImpl({
     </div>
   );
 }
+
