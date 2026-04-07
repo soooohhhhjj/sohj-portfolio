@@ -5,13 +5,8 @@
 }
 
 .journey-editor-grid {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
   --journey-grid-size: 40px;
   --journey-grid-half: 20px;
-  opacity: 0.26;
   background-image:
     linear-gradient(rgba(52, 211, 153, 0.22) 1px, transparent 1px),
     linear-gradient(90deg, rgba(52, 211, 153, 0.22) 1px, transparent 1px);

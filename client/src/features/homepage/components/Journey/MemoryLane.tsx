@@ -1528,7 +1528,12 @@ function MemoryLaneImpl({
       onPointerDown={handleLanePointerDown}
       onPointerUp={handleLanePointerUp}
     >
-      {editorEnabled ? <div className="journey-editor-grid" /> : null}
+      {editorEnabled ? (
+        <div
+          className="journey-editor-grid absolute inset-0 z-0
+          pointer-events-none opacity-[0.26]"
+        />
+      ) : null}
 
       <JourneyEdgeLayer
         laneRef={ref}
