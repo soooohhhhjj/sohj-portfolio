@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import type { HTMLAttributes } from 'react';
+import './GlassCard.css';
 
 type GlassCardProps = HTMLAttributes<HTMLDivElement> & {
   width?: string;

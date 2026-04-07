@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Section, SectionContent } from '../../../shared/components/Container';
+import './SkillsTitle.css';
 
 interface SkillsTitleProps {
   show: boolean;

@@ -1,0 +1,17 @@
+/* Skills Title Section (extracted from globals.css) */
+.skills-section {
+  min-height: 100vh;
+  padding-top: 72px;
+}
+
+.skills-content {
+  max-width: var(--cw-lg);
+}
+
+.skills-title {
+  margin: 0;
+  font-family: 'Bruno Ace SC', sans-serif;
+  font-size: 48px;
+  letter-spacing: 2px;
+}
+
