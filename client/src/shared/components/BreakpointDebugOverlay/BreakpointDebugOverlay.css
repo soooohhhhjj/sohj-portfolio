@@ -1,0 +1,245 @@
+/* Breakpoint Debug Overlay (extracted from globals.css) */
+.breakpoint-debug {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+/* #region Debug Overlay - Frame */
+.breakpoint-debug__frame {
+  height: 100%;
+  border-left: 1px dashed rgba(255, 255, 255, 0.85);
+  border-right: 1px dashed rgba(255, 255, 255, 0.85);
+}
+
+.breakpoint-debug__frame--xl {
+  width: var(--bp-xl);
+  border-left-color: rgba(59, 130, 246, 0.95);
+  border-right-color: rgba(59, 130, 246, 0.95);
+}
+
+.breakpoint-debug__frame--lg {
+  width: var(--bp-lg);
+  border-left-color: rgba(16, 185, 129, 0.95);
+  border-right-color: rgba(16, 185, 129, 0.95);
+}
+
+.breakpoint-debug__frame--md {
+  width: var(--bp-md);
+  border-left-color: rgba(234, 179, 8, 0.95);
+  border-right-color: rgba(234, 179, 8, 0.95);
+}
+
+.breakpoint-debug__frame--sm {
+  width: var(--bp-sm);
+  border-left-color: rgba(249, 115, 22, 0.95);
+  border-right-color: rgba(249, 115, 22, 0.95);
+}
+
+.breakpoint-debug__frame--xsm {
+  width: var(--bp-xsm);
+  border-left-color: rgba(168, 85, 247, 0.95);
+  border-right-color: rgba(168, 85, 247, 0.95);
+}
+
+.breakpoint-debug__frame--xxsm {
+  width: var(--bp-xxsm);
+  border-left-color: rgba(236, 72, 153, 0.95);
+  border-right-color: rgba(236, 72, 153, 0.95);
+}
+
+.breakpoint-debug__frame--dinosaur {
+  width: var(--bp-dinosaur);
+  border-left-color: rgba(239, 68, 68, 0.95);
+  border-right-color: rgba(239, 68, 68, 0.95);
+}
+/* #endregion */
+
+/* #region Debug Overlay - Content Frame */
+.breakpoint-debug__content-frame {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 1px dotted rgba(255, 255, 255, 0.9);
+  border-right: 1px dotted rgba(255, 255, 255, 0.9);
+  background: transparent;
+}
+
+.breakpoint-debug__content-width--xl {
+  width: var(--cw-xl);
+}
+.breakpoint-debug__content-width--lg {
+  width: var(--cw-lg);
+}
+.breakpoint-debug__content-width--md {
+  width: var(--cw-md);
+}
+.breakpoint-debug__content-width--sm {
+  width: var(--cw-sm);
+}
+.breakpoint-debug__content-width--xsm {
+  width: var(--cw-xsm);
+}
+.breakpoint-debug__content-width--xxsm {
+  width: var(--cw-xxsm);
+}
+.breakpoint-debug__content-width--dinosaur {
+  width: var(--cw-dinosaur);
+}
+.breakpoint-debug__content-width--mobile {
+  width: var(--cw-mobile);
+}
+
+.breakpoint-debug__content-frame--xl {
+  border-left-color: rgba(147, 197, 253, 0.95);
+  border-right-color: rgba(147, 197, 253, 0.95);
+}
+
+.breakpoint-debug__content-frame--lg {
+  border-left-color: rgba(52, 211, 153, 0.95);
+  border-right-color: rgba(52, 211, 153, 0.95);
+}
+
+.breakpoint-debug__content-frame--md {
+  border-left-color: rgba(253, 224, 71, 0.95);
+  border-right-color: rgba(253, 224, 71, 0.95);
+}
+
+.breakpoint-debug__content-frame--sm {
+  border-left-color: rgba(251, 146, 60, 0.95);
+  border-right-color: rgba(251, 146, 60, 0.95);
+}
+
+.breakpoint-debug__content-frame--xsm {
+  border-left-color: rgba(196, 181, 253, 0.95);
+  border-right-color: rgba(196, 181, 253, 0.95);
+}
+
+.breakpoint-debug__content-frame--xxsm {
+  border-left-color: rgba(244, 114, 182, 0.95);
+  border-right-color: rgba(244, 114, 182, 0.95);
+}
+
+.breakpoint-debug__content-frame--dinosaur {
+  border-left-color: rgba(252, 165, 165, 0.95);
+  border-right-color: rgba(252, 165, 165, 0.95);
+}
+/* #endregion */
+
+/* #region Debug Overlay - Label */
+.breakpoint-debug__label {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px dashed rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.breakpoint-debug__label--xl {
+  border-color: rgba(59, 130, 246, 0.95);
+  color: rgba(147, 197, 253, 1);
+}
+
+.breakpoint-debug__label--lg {
+  border-color: rgba(16, 185, 129, 0.95);
+  color: rgba(110, 231, 183, 1);
+}
+
+.breakpoint-debug__label--md {
+  border-color: rgba(234, 179, 8, 0.95);
+  color: rgba(253, 224, 71, 1);
+}
+
+.breakpoint-debug__label--sm {
+  border-color: rgba(249, 115, 22, 0.95);
+  color: rgba(251, 191, 36, 1);
+}
+
+.breakpoint-debug__label--xsm {
+  border-color: rgba(168, 85, 247, 0.95);
+  color: rgba(216, 180, 254, 1);
+}
+
+.breakpoint-debug__label--xxsm {
+  border-color: rgba(236, 72, 153, 0.95);
+  color: rgba(249, 168, 212, 1);
+}
+
+.breakpoint-debug__label--dinosaur {
+  border-color: rgba(239, 68, 68, 0.95);
+  color: rgba(252, 165, 165, 1);
+}
+
+.breakpoint-debug__toggle {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.8);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.breakpoint-debug__controls {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.breakpoint-debug__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.85);
+  pointer-events: auto;
+}
+
+.breakpoint-debug__panel-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.breakpoint-debug__toggle:hover,
+.breakpoint-debug__panel-btn:hover {
+  transform: scale(1.05);
+}
+/* #endregion */
+

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Palette, RotateCcw, SlidersHorizontal, Star, StarOff, X } from 'lucide-react';
 import { BREAKPOINTS, CONTENT_MAX_WIDTH } from '../../constants/breakpoints';
+import './BreakpointDebugOverlay.css';
 
 type ActiveBreakpoint = 'mobile' | 'dinosaur' | 'xxsm' | 'xsm' | 'sm' | 'md' | 'lg' | 'xl';
 
