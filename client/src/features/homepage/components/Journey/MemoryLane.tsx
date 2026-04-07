@@ -253,10 +253,8 @@ function MemoryLaneImpl({
 
   const resolvedLayout = useMemo(() => {
     if (layout.id === "mobile") {
-      const parentToChildGap =
-        gapOverrides.parentToChildGap ?? (editorToolsEnabled ? 0 : undefined);
-      const parentToParentGap =
-        gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
+      const parentToChildGap = gapOverrides.parentToChildGap;
+      const parentToParentGap = gapOverrides.parentToParentGap;
       return createLayoutMobile({
         parentToChildGap,
         childToChildGap: parentToChildGap,
@@ -265,10 +263,8 @@ function MemoryLaneImpl({
     }
 
     if (layout.id === "mobile-dinosaur") {
-      const parentToChildGap =
-        gapOverrides.parentToChildGap ?? (editorToolsEnabled ? 0 : undefined);
-      const parentToParentGap =
-        gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
+      const parentToChildGap = gapOverrides.parentToChildGap;
+      const parentToParentGap = gapOverrides.parentToParentGap;
       return createLayoutMobileDinosaur({
         parentToChildGap,
         childToChildGap: parentToChildGap,
@@ -277,10 +273,8 @@ function MemoryLaneImpl({
     }
 
     if (layout.id === "mobile-xxsm") {
-      const parentToChildGap =
-        gapOverrides.parentToChildGap ?? (editorToolsEnabled ? 0 : undefined);
-      const parentToParentGap =
-        gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
+      const parentToChildGap = gapOverrides.parentToChildGap;
+      const parentToParentGap = gapOverrides.parentToParentGap;
       return createLayoutMobileXxsm({
         parentToChildGap,
         childToChildGap: parentToChildGap,
@@ -289,10 +283,8 @@ function MemoryLaneImpl({
     }
 
     if (layout.id === "mobile-sm") {
-      const parentToChildGap =
-        gapOverrides.parentToChildGap ?? (editorToolsEnabled ? 0 : undefined);
-      const parentToParentGap =
-        gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
+      const parentToChildGap = gapOverrides.parentToChildGap;
+      const parentToParentGap = gapOverrides.parentToParentGap;
       return createLayoutMobileSm({
         parentToChildGap,
         childToChildGap: parentToChildGap,
@@ -306,13 +298,13 @@ function MemoryLaneImpl({
   const effectiveParentToChildGap = useMemo(() => {
     if (!gapDefaults) return null;
     if (gapOverrides.parentToChildGap !== undefined) return gapOverrides.parentToChildGap;
-    return editorToolsEnabled ? 0 : gapDefaults.parentToChildGap;
+    return gapDefaults.parentToChildGap;
   }, [editorToolsEnabled, gapDefaults, gapOverrides.parentToChildGap]);
 
   const effectiveParentToParentGap = useMemo(() => {
     if (!gapDefaults) return null;
     if (gapOverrides.parentToParentGap !== undefined) return gapOverrides.parentToParentGap;
-    return editorToolsEnabled ? 0 : gapDefaults.parentToParentGap;
+    return gapDefaults.parentToParentGap;
   }, [editorToolsEnabled, gapDefaults, gapOverrides.parentToParentGap]);
   const [selectedItem, setSelectedItem] = useState<JourneyItemNode | null>(
     null,
