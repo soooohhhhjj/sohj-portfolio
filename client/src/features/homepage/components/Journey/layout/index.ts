@@ -2,12 +2,14 @@ import type { LayoutConfig } from "./layout.types";
 import { layoutDesktopLg } from "./layout.desktop.lg";
 import { layoutDesktopXl } from "./layout.desktop.xl";
 import { layoutDesktop2xl } from "./layout.desktop.2xl";
+import { layoutMobileDinosaur } from "./layout.mobile.dinosaur";
 import { layoutMobile } from "./layout.mobile";
 import { layoutMobileXxsm } from "./layout.mobile.xxsm";
 import { layoutMobileSm } from "./layout.mobile.sm";
 import { layoutTablet } from "./layout.tablet";
 
 export const journeyLayouts: LayoutConfig[] = [
+  layoutMobileDinosaur,
   layoutMobileXxsm,
   layoutMobile,
   layoutMobileSm,

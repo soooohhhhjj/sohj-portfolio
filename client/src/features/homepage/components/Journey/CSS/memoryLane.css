@@ -416,6 +416,7 @@
 }
 
 .memory-lane[data-journey-layout="mobile"] .journey-memory-parent-card,
+.memory-lane[data-journey-layout="mobile-dinosaur"] .journey-memory-parent-card,
 .memory-lane[data-journey-layout="mobile-xxsm"] .journey-memory-parent-card,
 .memory-lane[data-journey-layout="mobile-sm"] .journey-memory-parent-card {
   position: static;

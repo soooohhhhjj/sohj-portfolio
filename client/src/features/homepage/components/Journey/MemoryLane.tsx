@@ -16,6 +16,10 @@ import { useJourneyEditorCardOverrides } from "./hooks/useJourneyEditorCardOverr
 import { computeJourneyNodes } from "./layout/computeNodes";
 import { pickLayout } from "./layout";
 import {
+  DEFAULT_MOBILE_DINOSAUR_GAPS,
+  createLayoutMobileDinosaur,
+} from "./layout/layout.mobile.dinosaur";
+import {
   DEFAULT_MOBILE_GAPS,
   createLayoutMobile,
   type JourneyStackedGapOverrides,
@@ -155,7 +159,10 @@ function MemoryLaneImpl({
   const editorToolsEnabled = Boolean(editorEnabled) && isDev;
   const { ref, width } = useContainerSize<HTMLDivElement>();
   const isStackedMobileLayout =
-    layout.id === "mobile" || layout.id === "mobile-xxsm" || layout.id === "mobile-sm";
+    layout.id === "mobile" ||
+    layout.id === "mobile-dinosaur" ||
+    layout.id === "mobile-xxsm" ||
+    layout.id === "mobile-sm";
 
   const parentIdSet = useMemo(() => {
     return new Set(journeyContent.filter((item) => item.type === "parent").map((item) => item.id));
@@ -185,6 +192,7 @@ function MemoryLaneImpl({
 
   const gapDefaults = useMemo(() => {
     if (layout.id === "mobile") return DEFAULT_MOBILE_GAPS;
+    if (layout.id === "mobile-dinosaur") return DEFAULT_MOBILE_DINOSAUR_GAPS;
     if (layout.id === "mobile-xxsm") return DEFAULT_MOBILE_XXSM_GAPS;
     if (layout.id === "mobile-sm") return DEFAULT_MOBILE_SM_GAPS;
     return null;
@@ -250,6 +258,18 @@ function MemoryLaneImpl({
       const parentToParentGap =
         gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
       return createLayoutMobile({
+        parentToChildGap,
+        childToChildGap: parentToChildGap,
+        parentToParentGap,
+      }, { excludedIds: deletedIdSet });
+    }
+
+    if (layout.id === "mobile-dinosaur") {
+      const parentToChildGap =
+        gapOverrides.parentToChildGap ?? (editorToolsEnabled ? 0 : undefined);
+      const parentToParentGap =
+        gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
+      return createLayoutMobileDinosaur({
         parentToChildGap,
         childToChildGap: parentToChildGap,
         parentToParentGap,

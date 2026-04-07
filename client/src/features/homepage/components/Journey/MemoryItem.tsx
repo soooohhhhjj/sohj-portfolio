@@ -81,6 +81,7 @@ export default function MemoryItem(props: MemoryItemProps) {
 
     const isMobileLayout =
       props.layoutId === "mobile" ||
+      props.layoutId === "mobile-dinosaur" ||
       props.layoutId === "mobile-xxsm" ||
       props.layoutId === "mobile-sm";
 
@@ -112,6 +113,7 @@ export default function MemoryItem(props: MemoryItemProps) {
     const text = props.modalDetails ?? "Milestone summary coming soon.";
     const isMobileLayout =
       props.layoutId === "mobile" ||
+      props.layoutId === "mobile-dinosaur" ||
       props.layoutId === "mobile-xxsm" ||
       props.layoutId === "mobile-sm";
 
@@ -267,6 +269,7 @@ export default function MemoryItem(props: MemoryItemProps) {
       >
         {props.editorEnabled &&
         props.layoutId !== "mobile" &&
+        props.layoutId !== "mobile-dinosaur" &&
         props.layoutId !== "mobile-xxsm" &&
         props.layoutId !== "mobile-sm" ? (
           <>
