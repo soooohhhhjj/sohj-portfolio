@@ -296,6 +296,7 @@ export default function MemoryItem(props: MemoryItemProps) {
           ref={cardRef}
           className={`${parentCardPositionClasses} 
           relative overflow-visible border-none
+          rounded-[0.35rem]
           p-[1.1rem]
           journey-map-card journey-showcase__card journey-showcase__card--parent`}
         >
@@ -339,6 +340,7 @@ export default function MemoryItem(props: MemoryItemProps) {
       w-full max-w-none h-full
       flex flex-col
       relative overflow-visible border-none
+      rounded-[0.35rem]
       p-4
       journey-map-card journey-showcase__card journey-showcase__card--child
       ${props.editorEnabled
