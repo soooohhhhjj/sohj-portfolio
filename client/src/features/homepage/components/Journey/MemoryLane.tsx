@@ -8,7 +8,6 @@
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import MemoryItem from "./MemoryItem";
-import MemoryPath from "./MemoryPath";
 import JourneyNodeModal from "./JourneyNodeModal";
 import { journeyContent } from "./journey.content";
 import { useJourneyEditorCardOverrides } from "./hooks/useJourneyEditorCardOverrides";
@@ -27,6 +26,7 @@ import {
 import { useContainerSize } from "./layout/useContainerSize";
 import { useViewportWidth } from "./layout/useViewportWidth";
 import type { Anchor, JourneyItemNode } from "./types/journey.types";
+import { JourneyEdgeLayer } from "./ui/JourneyEdgeLayer";
 import { JourneyEditorHudPortal } from "./ui/JourneyEditorHudPortal";
 import {
   buildEdgeOverrideKey,
@@ -1509,76 +1509,22 @@ function MemoryLaneImpl({
     >
       {editorEnabled ? <div className="journey-editor-grid" /> : null}
 
-      <svg
-        className={`absolute inset-0 z-0 w-full h-full base-text-color ${
-          editorEnabled ? "pointer-events-auto" : "pointer-events-none"
-        }`}
-      >
-        {renderEdges.map((edge) => (
-          <MemoryPath
-            key={edgeKeyOf(edge)}
-            edge={edge}
-            items={effectiveItemMap}
-            parentCardSizes={parentCardSizes}
-            editorEnabled={editorEnabled}
-            isSelected={selectedEdgeKey === edgeKeyOf(edge)}
-            onSelectEdge={handleSelectEdge}
-          />
-        ))}
-
-        {editorEnabled && selectedEdgeKey && selectedVia.length > 0
-          ? selectedVia.map((point, index) => (
-              <circle
-                key={`${selectedEdgeKey}-via-${index}`}
-                cx={point.x}
-                cy={point.y}
-                r={index === selectedViaIndex ? 7 : 6}
-                fill={
-                  index === selectedViaIndex
-                    ? "rgba(52, 211, 153, 0.5)"
-                    : "rgba(52, 211, 153, 0.35)"
-                }
-                stroke="rgba(52, 211, 153, 0.9)"
-                strokeWidth={index === selectedViaIndex ? 1.6 : 1.2}
-                className="cursor-grab active:cursor-grabbing"
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  if (selectedEditorCardId) setSelectedEditorCardId(null);
-                  setSelectedViaIndex(index);
-                  if (event.altKey) {
-                    handleRemoveViaPoint(selectedEdgeKey, index);
-                    return;
-                  }
-
-                  const lane = ref.current;
-                  if (!lane) return;
-                  const rect = lane.getBoundingClientRect();
-                  const startX = event.clientX;
-                  const startY = event.clientY;
-                  const start = { x: point.x, y: point.y };
-
-                  const move = (moveEvent: PointerEvent) => {
-                    const x = Math.round(start.x + (moveEvent.clientX - startX));
-                    const y = Math.round(start.y + (moveEvent.clientY - startY));
-                    handleMoveViaPoint(selectedEdgeKey, index, {
-                      x: Math.max(0, Math.min(rect.width, x)),
-                      y: Math.max(0, y),
-                    });
-                  };
-
-                  const up = () => {
-                    window.removeEventListener("pointermove", move);
-                    window.removeEventListener("pointerup", up);
-                  };
-
-                  window.addEventListener("pointermove", move);
-                  window.addEventListener("pointerup", up, { once: true });
-                }}
-              />
-            ))
-          : null}
-      </svg>
+      <JourneyEdgeLayer
+        laneRef={ref}
+        editorEnabled={editorEnabled}
+        renderEdges={renderEdges}
+        effectiveItemMap={effectiveItemMap}
+        parentCardSizes={parentCardSizes}
+        selectedEdgeKey={selectedEdgeKey}
+        selectedVia={selectedVia}
+        selectedViaIndex={selectedViaIndex}
+        setSelectedViaIndex={setSelectedViaIndex}
+        selectedEditorCardId={selectedEditorCardId}
+        setSelectedEditorCardId={setSelectedEditorCardId}
+        onSelectEdge={handleSelectEdge}
+        handleRemoveViaPoint={handleRemoveViaPoint}
+        handleMoveViaPoint={handleMoveViaPoint}
+      />
 
       {visibleItems.map((item) => (
         <MemoryItem
