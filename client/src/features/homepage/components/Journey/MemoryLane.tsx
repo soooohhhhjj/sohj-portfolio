@@ -28,6 +28,20 @@ import {
 import { useContainerSize } from "./layout/useContainerSize";
 import { useViewportWidth } from "./layout/useViewportWidth";
 import type { Anchor, JourneyItemNode } from "./types/journey.types";
+import {
+  buildEdgeOverrideKey,
+  buildGapOverrideKey,
+  buildNodeOverrideKey,
+  buildParentCardSizeKey,
+  DELETED_IDS_STORAGE_KEY,
+  HUD_MINIMIZED_STORAGE_KEY,
+  HUD_POS_STORAGE_KEY,
+  readLocalStorageJson,
+  readLocalStorageParentCardSizeOverride,
+  readLocalStorageStringArray,
+  type EdgeOverride,
+  type NodeLayoutOverride,
+} from "./utils/journeyEditorStorage";
 
 import "./CSS/memoryLane.css";
 
@@ -37,21 +51,6 @@ interface MemoryLaneProps {
   editorActive?: boolean;
 }
 
-type NodeLayoutOverride = Partial<{ x: number; y: number; width: number; height: number }>;
-type EdgeOverride = Partial<{
-  fromAnchor: Anchor;
-  toAnchor: Anchor;
-  via: { x: number; y: number }[];
-}>;
-
-const buildNodeOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:nodes`;
-const buildEdgeOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:edges`;
-const buildParentCardSizeKey = (layoutId: string) =>
-  `journey-editor:${layoutId}:parentCardSize`;
-const buildGapOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:gaps`;
-const HUD_POS_STORAGE_KEY = "sohj.debug.journeyEditor.hudPos";
-const HUD_MINIMIZED_STORAGE_KEY = "sohj.debug.journeyEditor.hudMinimized";
-const DELETED_IDS_STORAGE_KEY = "journey-editor:deletedIds.v1";
 const edgeKeyOf = (edge: { from: string; to: string }) => `${edge.from}->${edge.to}`;
 
 const anchorOrder: Anchor[] = ["top", "right", "bottom", "left"];
@@ -77,50 +76,6 @@ export default function MemoryLane({
       editorActive={editorActive}
     />
   );
-}
-
-function readLocalStorageJson<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return fallback;
-    if (Array.isArray(parsed)) return fallback;
-    return parsed as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function readLocalStorageStringArray(key: string): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((value): value is string => typeof value === "string");
-  } catch {
-    return [];
-  }
-}
-
-function readLocalStorageParentCardSizeOverride(
-  layoutId: string,
-): { width: number; height: number } | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(buildParentCardSizeKey(layoutId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { width?: unknown; height?: unknown } | null;
-    const nextW = Number(parsed?.width);
-    const nextH = Number(parsed?.height);
-    if (!Number.isFinite(nextW) || !Number.isFinite(nextH)) return null;
-    return { width: nextW, height: nextH };
-  } catch {
-    return null;
-  }
 }
 
 function MemoryLaneImpl({
