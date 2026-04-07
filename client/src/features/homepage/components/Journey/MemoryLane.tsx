@@ -550,13 +550,8 @@ function MemoryLaneImpl({
     if (visibleItemsBase.length === 0) return visibleItemsBase;
 
     const sorted = [...visibleItemsBase].sort((a, b) => (a.y - b.y) || (a.x - b.x));
-
-    const baseGapAfter: Record<string, number> = {};
-    for (let idx = 1; idx < sorted.length; idx++) {
-      const prev = sorted[idx - 1];
-      const next = sorted[idx];
-      baseGapAfter[prev.id] = next.y - (prev.y + prev.height);
-    }
+    const stackedChildGap = effectiveParentToChildGap ?? 0;
+    const stackedParentGap = effectiveParentToParentGap ?? 0;
 
     const computed = new Map<string, JourneyItemNode>();
     let cursorY = sorted[0].y;
@@ -566,7 +561,7 @@ function MemoryLaneImpl({
       else {
         const prev = sorted[idx - 1];
         const prevComputed = computed.get(prev.id) ?? prev;
-        const gap = baseGapAfter[prev.id] ?? 0;
+        const gap = item.type === "parent" ? stackedParentGap : stackedChildGap;
         cursorY = prevComputed.y + prevComputed.height + gap;
       }
 
@@ -582,7 +577,13 @@ function MemoryLaneImpl({
     }
 
     return visibleItemsBase.map((item) => computed.get(item.id) ?? item);
-  }, [isStackedMobileLayout, parentCardSizes, visibleItemsBase]);
+  }, [
+    effectiveParentToChildGap,
+    effectiveParentToParentGap,
+    isStackedMobileLayout,
+    parentCardSizes,
+    visibleItemsBase,
+  ]);
 
   const effectiveItemMap = useMemo(() => {
     return Object.fromEntries(visibleItems.map((item) => [item.id, item]));

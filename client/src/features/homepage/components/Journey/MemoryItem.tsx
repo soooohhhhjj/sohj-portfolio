@@ -93,14 +93,28 @@ export default function MemoryItem(props: MemoryItemProps) {
     if (!next.width || !next.height) return;
 
     props.onMeasure?.(props.id, next);
-  }, [props.editorEnabled, props.id, props.layoutId, props.modalDetails, props.onMeasure, props.title, type]);
+  }, [
+    props.editorEnabled,
+    props.id,
+    props.layoutId,
+    props.modalDetails,
+    props.onMeasure,
+    props.title,
+    type,
+    width,
+  ]);
 
   useLayoutEffect(() => {
     if (type !== "parent") return;
     const text = props.modalDetails ?? "Milestone summary coming soon.";
     const isMobileLayout = props.layoutId === "mobile" || props.layoutId === "mobile-sm";
 
-    if (!props.editorEnabled && isMobileLayout) return;
+    if (isMobileLayout) {
+      if (parentDetailsRef.current) {
+        parentDetailsRef.current.style.maxHeight = "";
+      }
+      return;
+    }
     constrainToInnerBox(parentDetailsRef.current, cardRef.current);
     truncateToFit(parentDetailsRef.current, text);
   }, [height, props.editorEnabled, props.layoutId, props.modalDetails, type, width]);
