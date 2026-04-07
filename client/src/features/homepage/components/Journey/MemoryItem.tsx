@@ -225,17 +225,27 @@ export default function MemoryItem(props: MemoryItemProps) {
     resizeStateRef.current = null;
   };
 
+  const resizeHandleBaseClassName = `absolute z-30
+  size-[14px] rounded-full
+  border border-emerald-400/75 bg-emerald-400/20
+  shadow-[0_0_0_3px_rgba(0,0,0,0.22)]
+  touch-none select-none`;
+
   if (type === "parent" && props.icon) {
     const Icon = props.icon;
+    const isMobileLayout = props.layoutId === "mobile" || props.layoutId === "mobile-sm";
+    const parentCardPositionClasses = isMobileLayout
+      ? "static w-full max-w-none h-auto"
+      : "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[var(--journey-parent-card-width)] max-w-[var(--journey-parent-card-width)] h-[var(--journey-parent-card-height)]";
 
     return (
       <div
         ref={parentWrapperRef}
-        className={`absolute z-10 flex items-center justify-center memory-node ${
-          props.editorEnabled
-            ? "cursor-grab active:cursor-grabbing touch-none select-none"
-            : "cursor-pointer"
-        }`}
+        className={`absolute z-20
+        flex items-center justify-center
+        ${props.editorEnabled
+          ? "cursor-grab active:cursor-grabbing touch-none select-none"
+          : "cursor-pointer"}`}
         role="button"
         tabIndex={0}
         onClick={handleItemClick}
@@ -245,28 +255,36 @@ export default function MemoryItem(props: MemoryItemProps) {
         onPointerUp={handlePointerUp}
         aria-label={`Open ${props.id} details`}
       >
-        {props.editorEnabled && props.layoutId !== "mobile" && props.layoutId !== "mobile-sm" ? (
+        {props.editorEnabled && !isMobileLayout ? (
           <>
             <span
-              className="journey-resize-handle journey-resize-handle--nw"
+              className={`${resizeHandleBaseClassName}
+              -left-[7px] -top-[7px]
+              cursor-nwse-resize`}
               onPointerDown={(e) => handleResizePointerDown("nw", e)}
               onPointerMove={handleResizePointerMove}
               onPointerUp={handleResizePointerUp}
             />
             <span
-              className="journey-resize-handle journey-resize-handle--ne"
+              className={`${resizeHandleBaseClassName}
+              -right-[7px] -top-[7px]
+              cursor-nesw-resize`}
               onPointerDown={(e) => handleResizePointerDown("ne", e)}
               onPointerMove={handleResizePointerMove}
               onPointerUp={handleResizePointerUp}
             />
             <span
-              className="journey-resize-handle journey-resize-handle--sw"
+              className={`${resizeHandleBaseClassName}
+              -left-[7px] -bottom-[7px]
+              cursor-nesw-resize`}
               onPointerDown={(e) => handleResizePointerDown("sw", e)}
               onPointerMove={handleResizePointerMove}
               onPointerUp={handleResizePointerUp}
             />
             <span
-              className="journey-resize-handle journey-resize-handle--se"
+              className={`${resizeHandleBaseClassName}
+              -right-[7px] -bottom-[7px]
+              cursor-nwse-resize`}
               onPointerDown={(e) => handleResizePointerDown("se", e)}
               onPointerMove={handleResizePointerMove}
               onPointerUp={handleResizePointerUp}
@@ -276,17 +294,27 @@ export default function MemoryItem(props: MemoryItemProps) {
 
         <article
           ref={cardRef}
-          className="journey-memory-parent-card journey-map-card journey-showcase__card journey-showcase__card--parent"
+          className={`${parentCardPositionClasses} 
+          journey-map-card journey-showcase__card journey-showcase__card--parent`}
         >
           <div className="journey-map-card__parent-header">
             <div className="journey-map-card__icon-shell">
-              <Icon className="journey-map-card__icon" strokeWidth={1.3} />
+              <Icon className="size-[1.4rem] text-[var(--base-text-color)]" strokeWidth={1.3} />
             </div>
-            <h3 className="journey-map-card__title font-jura">{props.title ?? props.id}</h3>
+            <h3 className="font-jura 
+            text-[0.94rem] font-[500] tracking-[.1px] 
+            truncate">
+              {props.title ?? props.id}
+            </h3>
           </div>
           <p
             ref={parentDetailsRef}
-            className="journey-map-card__details journey-map-card__details--truncate font-jura text-sm leading-relaxed"
+            className="font-jura 
+            mt-[0.72rem] pt-[0.8rem] 
+            border-t border-dashed border-[rgba(247,247,217,0.28)] 
+            text-[0.82rem] leading-[1.55] tracking-[.1px] 
+            text-[var(--base-text-color)] opacity-[0.72] 
+            overflow-hidden"
           >
             {props.modalDetails ?? "Milestone summary coming soon."}
           </p>
@@ -301,11 +329,13 @@ export default function MemoryItem(props: MemoryItemProps) {
   return (
     <article
       ref={childWrapperRef}
-      className={`absolute z-10 journey-map-card journey-showcase__card journey-showcase__card--child ${
-        props.editorEnabled
-          ? "cursor-grab active:cursor-grabbing touch-none select-none"
-          : "cursor-pointer"
-      }`}
+      className={`absolute z-10
+      w-full max-w-none h-full
+      flex flex-col
+      journey-map-card journey-showcase__card journey-showcase__card--child
+      ${props.editorEnabled
+        ? "cursor-grab active:cursor-grabbing touch-none select-none"
+        : "cursor-pointer"}`}
       role="button"
       tabIndex={0}
       onClick={handleItemClick}
@@ -318,25 +348,33 @@ export default function MemoryItem(props: MemoryItemProps) {
       {props.editorEnabled ? (
         <>
           <span
-            className="journey-resize-handle journey-resize-handle--nw"
+            className={`${resizeHandleBaseClassName}
+            -left-[7px] -top-[7px]
+            cursor-nwse-resize`}
             onPointerDown={(e) => handleResizePointerDown("nw", e)}
             onPointerMove={handleResizePointerMove}
             onPointerUp={handleResizePointerUp}
           />
           <span
-            className="journey-resize-handle journey-resize-handle--ne"
+            className={`${resizeHandleBaseClassName}
+            -right-[7px] -top-[7px]
+            cursor-nesw-resize`}
             onPointerDown={(e) => handleResizePointerDown("ne", e)}
             onPointerMove={handleResizePointerMove}
             onPointerUp={handleResizePointerUp}
           />
           <span
-            className="journey-resize-handle journey-resize-handle--sw"
+            className={`${resizeHandleBaseClassName}
+            -left-[7px] -bottom-[7px]
+            cursor-nesw-resize`}
             onPointerDown={(e) => handleResizePointerDown("sw", e)}
             onPointerMove={handleResizePointerMove}
             onPointerUp={handleResizePointerUp}
           />
           <span
-            className="journey-resize-handle journey-resize-handle--se"
+            className={`${resizeHandleBaseClassName}
+            -right-[7px] -bottom-[7px]
+            cursor-nwse-resize`}
             onPointerDown={(e) => handleResizePointerDown("se", e)}
             onPointerMove={handleResizePointerMove}
             onPointerUp={handleResizePointerUp}
@@ -349,18 +387,25 @@ export default function MemoryItem(props: MemoryItemProps) {
           width="w-full"
           corner="rounded-[2px]"
           shadow=""
-          className="overflow-hidden journey-map-card__media"
+          className="overflow-hidden 
+          flex-1 min-h-0 h-auto 
+          mb-[0.55rem]"
         >
           <img
             src={props.image}
             alt={title}
-            className="journey-map-card__image"
+            className="block w-full h-full object-cover object-top"
             draggable={false}
           />
         </GlassCard>
       ) : null}
 
-      <h4 className="journey-map-card__child-title font-jura">{title}</h4>
+      <h4 className="font-jura 
+      ml-[2px] 
+      text-[0.95rem] font-[600] tracking-[.1px] 
+      truncate">
+        {title}
+      </h4>
       <div className="ml-1 flex flex-col gap-0 font-jura text-xs base-text-color">
         <div className="mt-1 flex items-center leading-none">
           <span className="mb-1 select-none opacity-55">L</span>

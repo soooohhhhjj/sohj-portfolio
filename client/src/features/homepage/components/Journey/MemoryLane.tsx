@@ -1523,7 +1523,7 @@ function MemoryLaneImpl({
   return (
     <div
       ref={ref}
-      className="memory-lane relative w-full"
+      className="memory-lane isolate relative w-full"
       data-journey-layout={layout.id}
       onPointerDown={handleLanePointerDown}
       onPointerUp={handleLanePointerUp}
