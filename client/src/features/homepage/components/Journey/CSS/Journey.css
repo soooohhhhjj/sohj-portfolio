@@ -56,21 +56,6 @@
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   }
 
-  .journey-showcase__card--parent {
-    width: min(100%, 19rem);
-    padding: 1.1rem;
-    border: none;
-    overflow: visible;
-  }
-
-  .journey-showcase__card--child {
-    width: min(100%, 19rem);
-    padding: 1rem;
-    border: none;
-    overflow: visible;
-    --journey-card-surface: rgba(255, 255, 255, 0.012);
-  }
-
   .journey-showcase__card--child::before,
   .journey-showcase__card--child::after {
     content: '';

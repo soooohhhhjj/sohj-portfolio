@@ -295,6 +295,8 @@ export default function MemoryItem(props: MemoryItemProps) {
         <article
           ref={cardRef}
           className={`${parentCardPositionClasses} 
+          relative overflow-visible border-none
+          p-[1.1rem]
           journey-map-card journey-showcase__card journey-showcase__card--parent`}
         >
           <div className="flex items-center gap-[0.85rem]">
@@ -336,6 +338,8 @@ export default function MemoryItem(props: MemoryItemProps) {
       className={`absolute z-10
       w-full max-w-none h-full
       flex flex-col
+      relative overflow-visible border-none
+      p-4
       journey-map-card journey-showcase__card journey-showcase__card--child
       ${props.editorEnabled
         ? "cursor-grab active:cursor-grabbing touch-none select-none"
