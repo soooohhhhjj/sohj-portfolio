@@ -80,19 +80,30 @@ export default function MemoryItem(props: MemoryItemProps) {
     if (!el) return;
 
     const isMobileLayout = props.layoutId === "mobile" || props.layoutId === "mobile-sm";
-    const measuredHeight = isMobileLayout ? el.scrollHeight : el.offsetHeight;
+
+    let measuredHeight = el.offsetHeight;
+    if (isMobileLayout) {
+      const prevHeight = el.style.height;
+      el.style.height = "auto";
+      measuredHeight = Math.ceil(el.scrollHeight || el.offsetHeight || 0);
+      el.style.height = prevHeight;
+    }
+
     const next = { width: el.offsetWidth, height: measuredHeight };
     if (!next.width || !next.height) return;
 
     props.onMeasure?.(props.id, next);
-  }, [props.id, props.layoutId, props.onMeasure, type]);
+  }, [props.editorEnabled, props.id, props.layoutId, props.modalDetails, props.onMeasure, props.title, type]);
 
   useLayoutEffect(() => {
     if (type !== "parent") return;
     const text = props.modalDetails ?? "Milestone summary coming soon.";
+    const isMobileLayout = props.layoutId === "mobile" || props.layoutId === "mobile-sm";
+
+    if (!props.editorEnabled && isMobileLayout) return;
     constrainToInnerBox(parentDetailsRef.current, cardRef.current);
     truncateToFit(parentDetailsRef.current, text);
-  }, [height, props.modalDetails, type, width]);
+  }, [height, props.editorEnabled, props.layoutId, props.modalDetails, type, width]);
 
   const handleItemClick = () => {
     if (props.editorEnabled) return;

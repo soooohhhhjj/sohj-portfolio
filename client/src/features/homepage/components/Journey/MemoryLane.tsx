@@ -408,11 +408,9 @@ function MemoryLaneImpl({
 
   const visibleItems = useMemo(() => {
     if (!isStackedMobileLayout) return visibleItemsBase;
-    if (editorClickMode !== "modal") return visibleItemsBase;
     if (visibleItemsBase.length === 0) return visibleItemsBase;
 
     const sorted = [...visibleItemsBase].sort((a, b) => (a.y - b.y) || (a.x - b.x));
-    const byId = new Map(sorted.map((item) => [item.id, item]));
 
     const baseGapAfter: Record<string, number> = {};
     for (let idx = 1; idx < sorted.length; idx++) {
@@ -445,7 +443,7 @@ function MemoryLaneImpl({
     }
 
     return visibleItemsBase.map((item) => computed.get(item.id) ?? item);
-  }, [editorClickMode, isStackedMobileLayout, parentCardSizes, visibleItemsBase]);
+  }, [isStackedMobileLayout, parentCardSizes, visibleItemsBase]);
 
   const effectiveItemMap = useMemo(() => {
     return Object.fromEntries(visibleItems.map((item) => [item.id, item]));
