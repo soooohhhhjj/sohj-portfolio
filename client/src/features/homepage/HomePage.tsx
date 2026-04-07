@@ -6,6 +6,7 @@ import { Hero } from './components/Hero';
 import Journey from './components/Journey';
 import { SkillsTitle } from './components/SkillsTitle';
 import { Navbar } from '../../shared/layouts';
+import './HomePage.css';
 
 type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 'forward';
 

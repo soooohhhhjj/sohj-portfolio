@@ -1,0 +1,24 @@
+/* HomePage layout (extracted from globals.css) */
+.homepage {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.homepage__welcome-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 60;
+  will-change: transform;
+}
+
+.homepage__content {
+  position: relative;
+  z-index: 1;
+}
+
