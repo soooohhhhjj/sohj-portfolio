@@ -1,7 +1,7 @@
 import type { JourneyItemContent } from "../types/journey.types";
 import { journeyContent } from "../journey.content";
 import type { LayoutConfig, LayoutItem } from "./layout.types";
-import { baseEdges } from "./layout.edges";
+import { buildLinearEdges } from "./layout.edges";
 
 const canvasWidth = 576;
 const paddingX = 0;
@@ -9,9 +9,9 @@ const cardWidth = canvasWidth - paddingX * 2;
 const gapAfterParent = 40;
 const gapAfterCard = 30;
 const gapAfterLastChild = 100;
-const startY = 70;
+const startY = 0;
 
-const getCardHeight = (_item: JourneyItemContent) => 420;
+const getCardHeight = () => 420;
 
 const estimateTextLines = (text: string, charsPerLine: number) => {
   const normalized = text.trim().replace(/\s+/g, " ");
@@ -30,21 +30,42 @@ const getParentHeight = (item: JourneyItemContent) => {
   return Math.min(520, Math.max(200, Math.round(estimated)));
 };
 
-const buildStackedItems = () => {
+export type JourneyStackedGapOverridesSm = Partial<{
+  parentToChildGap: number;
+  childToChildGap: number;
+  parentToParentGap: number;
+}>;
+
+export const DEFAULT_MOBILE_SM_GAPS: Required<JourneyStackedGapOverridesSm> = {
+  parentToChildGap: gapAfterParent,
+  childToChildGap: gapAfterCard,
+  parentToParentGap: gapAfterLastChild,
+};
+
+const normalizeGap = (value: number) => Math.max(0, Math.round(value));
+
+const buildStackedItems = (
+  gaps: Required<JourneyStackedGapOverridesSm>,
+  excludedIds: ReadonlySet<string>,
+) => {
   let y = startY;
   const items: LayoutItem[] = [];
 
-  let lastWasChild = false;
-
   for (let index = 0; index < journeyContent.length; index++) {
     const item = journeyContent[index];
-    const isLast = index === journeyContent.length - 1;
+    if (excludedIds.has(item.id)) continue;
+
+    let nextVisible: JourneyItemContent | null = null;
+    for (let nextIndex = index + 1; nextIndex < journeyContent.length; nextIndex++) {
+      const candidate = journeyContent[nextIndex];
+      if (excludedIds.has(candidate.id)) continue;
+      nextVisible = candidate;
+      break;
+    }
+
+    const hasNext = Boolean(nextVisible);
 
     if (item.type === "parent") {
-      if (lastWasChild) {
-        y += gapAfterLastChild;
-      }
-
       const height = getParentHeight(item);
       items.push({
         id: item.id,
@@ -54,12 +75,13 @@ const buildStackedItems = () => {
         height,
       });
       y += height;
-      if (!isLast) y += gapAfterParent;
-      lastWasChild = false;
+      if (hasNext && nextVisible) {
+        y += nextVisible.type === "parent" ? gaps.parentToParentGap : gaps.parentToChildGap;
+      }
       continue;
     }
 
-    const height = getCardHeight(item);
+    const height = getCardHeight();
     items.push({
       id: item.id,
       x: paddingX,
@@ -68,21 +90,38 @@ const buildStackedItems = () => {
       height,
     });
     y += height;
-    if (!isLast) y += gapAfterCard;
-    lastWasChild = true;
+    if (hasNext && nextVisible) {
+      y += nextVisible.type === "parent" ? gaps.parentToParentGap : gaps.childToChildGap;
+    }
   }
 
   return { items, height: y };
 };
 
-const stacked = buildStackedItems();
+export const createLayoutMobileSm = (
+  overrides: JourneyStackedGapOverridesSm = {},
+  options: { excludedIds?: Iterable<string> } = {},
+): LayoutConfig => {
+  const excludedIdSet = new Set(options.excludedIds ?? []);
 
-export const layoutMobileSm: LayoutConfig = {
-  id: "mobile-sm",
-  minWidth: 640,
-  maxWidth: 767,
-  canvasWidth,
-  scaleWithContainer: true,
-  items: stacked.items,
-  edges: baseEdges,
+  const gaps: Required<JourneyStackedGapOverridesSm> = {
+    parentToChildGap: normalizeGap(overrides.parentToChildGap ?? DEFAULT_MOBILE_SM_GAPS.parentToChildGap),
+    childToChildGap: normalizeGap(overrides.childToChildGap ?? DEFAULT_MOBILE_SM_GAPS.childToChildGap),
+    parentToParentGap: normalizeGap(overrides.parentToParentGap ?? DEFAULT_MOBILE_SM_GAPS.parentToParentGap),
+  };
+
+  const stacked = buildStackedItems(gaps, excludedIdSet);
+  const linearEdges = buildLinearEdges(stacked.items);
+
+  return {
+    id: "mobile-sm",
+    minWidth: 640,
+    maxWidth: 767,
+    canvasWidth,
+    scaleWithContainer: true,
+    items: stacked.items,
+    edges: linearEdges,
+  };
 };
+
+export const layoutMobileSm: LayoutConfig = createLayoutMobileSm();

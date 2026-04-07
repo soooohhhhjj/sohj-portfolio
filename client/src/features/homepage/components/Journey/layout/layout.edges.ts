@@ -1,4 +1,15 @@
-import type { LayoutEdge } from "./layout.types";
+import type { LayoutEdge, LayoutItem } from "./layout.types";
+
+export const buildLinearEdges = (items: LayoutItem[]): LayoutEdge[] => {
+  if (items.length < 2) return [];
+
+  return items.slice(0, -1).map((item, index) => ({
+    from: item.id,
+    to: items[index + 1].id,
+    fromAnchor: "bottom",
+    toAnchor: "top",
+  }));
+};
 
 export const baseEdges: LayoutEdge[] = [
   { from: "node1", to: "node1-c1", fromAnchor: "bottom", toAnchor: "right" },
