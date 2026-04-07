@@ -86,10 +86,10 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 initial={{ y: '100vh' }}
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 1.1, ease: easeSmooth, delay: 0.03 }}
-                className="font-bruno 
+                className="font-bruno hero-role-text 
                 text-[16px] xxsm:text-[18px] xsm:text-[22px] sm:text-[24px] md:text-[20px] lg:text-[24px] 
                 font-[500] tracking-[1px] 
-                mt-10 sm:mt-10 hero-role-text"
+                mt-10 sm:mt-10"
               >
                 Full-Stack Developer
               </motion.p>
@@ -98,49 +98,78 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 initial={{ y: '100vh' }}
                 animate={{ y: shouldAnimate ? 0 : '100vh' }}
                 transition={{ duration: 1.2, ease: easeSmooth, delay: 0.04 }}
-                className="hero-icon-links mt-6 sm:mt-7 
+                className="relative inline-flex flex-wrap gap-[25px] mt-6 sm:mt-7 
+                justify-center md:justify-start 
                 [--hero-action-icon-size:21px] md:[--hero-action-icon-size:18px] lg:[--hero-action-icon-size:21px]"
               >
                 <a
                   href={resumeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hero-icon-link"
+                  className="group relative inline-flex items-center justify-start 
+                  gap-0 hover:gap-2 
+                  h-[calc(var(--hero-action-icon-size)+12px)] md:h-[calc(var(--hero-action-icon-size)+10px)] 
+                  text-current hero-action-link"
                   aria-label="Open resume"
                 >
-                  <FileText className="hero-icon-link__icon" />
-                  <span className="hero-icon-link__label">Resume</span>
+                  <FileText className="shrink-0 w-[var(--hero-action-icon-size)] h-[var(--hero-action-icon-size)]" />
+                  <span
+                    className="font-jura text-[13px] tracking-[0.5px] hero-action-label"
+                  >
+                    Resume
+                  </span>
                 </a>
 
                 <a
                   href="https://github.com/soooohhhhjj"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hero-icon-link"
+                  className="group relative inline-flex items-center justify-start 
+                  gap-0 hover:gap-2 
+                  h-[calc(var(--hero-action-icon-size)+12px)] md:h-[calc(var(--hero-action-icon-size)+10px)] 
+                  text-current hero-action-link"
                   aria-label="Open GitHub profile"
                 >
-                  <Github className="hero-icon-link__icon" />
-                  <span className="hero-icon-link__label">GitHub</span>
+                  <Github className="shrink-0 w-[var(--hero-action-icon-size)] h-[var(--hero-action-icon-size)]" />
+                  <span
+                    className="font-jura text-[13px] tracking-[0.5px] hero-action-label"
+                  >
+                    GitHub
+                  </span>
                 </a>
 
                 <a
                   href="http://linkedin.com/in/carlojoshua-abellera"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hero-icon-link"
+                  className="group relative inline-flex items-center justify-start 
+                  gap-0 hover:gap-2 
+                  h-[calc(var(--hero-action-icon-size)+12px)] md:h-[calc(var(--hero-action-icon-size)+10px)] 
+                  text-current hero-action-link"
                   aria-label="Open LinkedIn profile"
                 >
-                  <Linkedin className="hero-icon-link__icon" />
-                  <span className="hero-icon-link__label">LinkedIn</span>
+                  <Linkedin className="shrink-0 w-[var(--hero-action-icon-size)] h-[var(--hero-action-icon-size)]" />
+                  <span
+                    className="font-jura text-[13px] tracking-[0.5px] hero-action-label"
+                  >
+                    LinkedIn
+                  </span>
                 </a>
 
                 <a
                   href="mailto:carlojoshua.abellera.ph@gmail.com"
-                  className="hero-icon-link"
+                  className="group relative inline-flex items-center justify-start 
+                  gap-0 hover:gap-2 
+                  h-[calc(var(--hero-action-icon-size)+12px)] md:h-[calc(var(--hero-action-icon-size)+10px)] 
+                  text-current hero-action-link"
                   aria-label="Send an email"
                 >
-                  <Mail className="hero-icon-link__icon" />
-                  <span className="hero-icon-link__label">Email</span>
+                  <Mail className="shrink-0 w-[var(--hero-action-icon-size)] h-[var(--hero-action-icon-size)]" />
+                  <span
+                    className="font-jura text-[13px] tracking-[0.5px] hero-action-label"
+                  >
+                    Email
+                  </span>
                 </a>
               </motion.div>
             </div>
