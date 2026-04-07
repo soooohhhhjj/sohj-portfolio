@@ -264,6 +264,7 @@ export default function JourneyNodeModal({
   const modalFrameClass = isParent
     ? "journey-modal-frame journey-modal-frame-parent"
     : "journey-modal-frame journey-modal-frame-child";
+  const modalRadiusClass = isParent ? "rounded-[6px]" : "rounded-[7px]";
   const techTags = item.techTags ?? [];
   const highlightTags = item.highlightTags ?? [];
   const hasTechTags = techTags.length > 0;
@@ -345,7 +346,12 @@ export default function JourneyNodeModal({
               role="dialog"
               aria-modal="true"
               aria-label="Journey details"
-              className={`relative mx-auto w-full max-w-5xl max-h-[86vh] overflow-hidden ${modalFrameClass}`}
+              className={`relative z-[140]
+              mx-auto w-full
+              max-w-5xl max-h-[86vh]
+              overflow-hidden
+              ${modalRadiusClass}
+              ${modalFrameClass}`}
             >
               <div
                 className="relative z-10 max-h-[86vh] touch-pan-y overflow-y-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -378,7 +384,7 @@ export default function JourneyNodeModal({
 
               {isParent ? (
                 <div className="relative p-5 sm:p-6">
-                  <div className="relative memory-node rounded-[6px] p-5 sm:p-6">
+                  <div className="relative rounded-[6px] p-5 sm:p-6">
                     <div className="flex items-center gap-4">
                       <div className="inline-flex h-14 w-14 items-center justify-center rounded-lg border border-white/20 bg-white/[0.03]">
                         {ParentIcon ? (
@@ -411,7 +417,9 @@ export default function JourneyNodeModal({
                         key={child.id}
                         type="button"
                         onClick={() => onSelectItem(child)}
-                        className="group relative memory-card rounded-[7px] p-4 text-left transition-all duration-200 hover:bg-white/[0.05] hover:shadow-[0_0_16px_rgba(255,255,255,0.22),0_0_44px_rgba(120,220,255,0.16)]"
+                        className="group relative memory-card
+                        rounded-[7px] p-4
+                        text-left"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
