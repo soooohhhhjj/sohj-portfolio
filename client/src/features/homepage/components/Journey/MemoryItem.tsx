@@ -297,7 +297,7 @@ export default function MemoryItem(props: MemoryItemProps) {
           className={`${parentCardPositionClasses} 
           journey-map-card journey-showcase__card journey-showcase__card--parent`}
         >
-          <div className="journey-map-card__parent-header">
+          <div className="flex items-center gap-[0.85rem]">
             <div className="journey-map-card__icon-shell">
               <Icon className="size-[1.4rem] text-[var(--base-text-color)]" strokeWidth={1.3} />
             </div>

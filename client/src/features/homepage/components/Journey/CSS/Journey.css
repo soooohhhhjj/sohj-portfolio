@@ -99,12 +99,6 @@
     opacity: 0.45;
   }
 
-  .journey-map-card__parent-header {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-  }
-
   .journey-map-card__icon-shell {
     position: relative;
     display: inline-flex;
