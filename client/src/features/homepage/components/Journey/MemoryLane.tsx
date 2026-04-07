@@ -1488,35 +1488,45 @@ function MemoryLaneImpl({
     startClientY: number;
   }>(null);
 
+  const handleLanePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!editorToolsEnabled) return;
+      if (event.button !== 0) return;
+      if (event.currentTarget !== event.target) return;
+      laneClickStateRef.current = {
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+      };
+    },
+    [editorToolsEnabled],
+  );
+
+  const handleLanePointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!editorToolsEnabled) return;
+      const state = laneClickStateRef.current;
+      if (!state) return;
+      if (state.pointerId !== event.pointerId) return;
+      laneClickStateRef.current = null;
+      if (event.currentTarget !== event.target) return;
+
+      const dx = Math.abs(event.clientX - state.startClientX);
+      const dy = Math.abs(event.clientY - state.startClientY);
+      if (dx > 3 || dy > 3) return;
+
+      handleEditorClickModeChange("modal");
+    },
+    [editorToolsEnabled, handleEditorClickModeChange],
+  );
+
   return (
     <div
       ref={ref}
       className="memory-lane relative w-full"
       data-journey-layout={layout.id}
-      onPointerDown={(event) => {
-        if (!editorToolsEnabled) return;
-        if (event.button !== 0) return;
-        if (event.currentTarget !== event.target) return;
-        laneClickStateRef.current = {
-          pointerId: event.pointerId,
-          startClientX: event.clientX,
-          startClientY: event.clientY,
-        };
-      }}
-      onPointerUp={(event) => {
-        if (!editorToolsEnabled) return;
-        const state = laneClickStateRef.current;
-        if (!state) return;
-        if (state.pointerId !== event.pointerId) return;
-        laneClickStateRef.current = null;
-        if (event.currentTarget !== event.target) return;
-
-        const dx = Math.abs(event.clientX - state.startClientX);
-        const dy = Math.abs(event.clientY - state.startClientY);
-        if (dx > 3 || dy > 3) return;
-
-        handleEditorClickModeChange("modal");
-      }}
+      onPointerDown={handleLanePointerDown}
+      onPointerUp={handleLanePointerUp}
     >
       {editorEnabled ? <div className="journey-editor-grid" /> : null}
 
