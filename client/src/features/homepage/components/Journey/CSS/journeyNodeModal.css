@@ -148,6 +148,51 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.journey-modal-rail-item {
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.journey-modal-rail-item:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 1);
+}
+
+.journey-modal-nav-btn {
+  transition: color 150ms ease;
+}
+
+.journey-modal-nav-btn:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.journey-modal-nav-btn--parent:hover {
+  color: rgb(253 224 71); /* yellow-300 */
+}
+
+.journey-modal-close-btn {
+  transition: color 150ms ease;
+}
+
+.journey-modal-close-btn:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.journey-modal-close-icon {
+  transition: transform 300ms ease;
+}
+
+.journey-modal-close-btn:hover .journey-modal-close-icon {
+  transform: rotate(90deg);
+}
+
+.journey-modal-child-icon {
+  transition: color 150ms ease;
+}
+
+.journey-modal-child-link:hover .journey-modal-child-icon {
+  color: rgb(250 204 21); /* yellow-400 */
+}
+
 /* #region Low GPU/Phone Optimizations */
 @media (hover: none) and (pointer: coarse) {
   .memory-card {

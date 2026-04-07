@@ -74,7 +74,13 @@ function IconRailItem({
   tooltipSide = "right",
 }: IconRailItemProps) {
   const commonClassName =
-    "inline-flex h-9 w-9 items-center justify-center rounded border border-white/15 bg-white/[0.03] text-white/80 transition hover:border-white/35 hover:text-white";
+    `journey-modal-rail-item inline-flex
+    h-9 w-9
+    items-center justify-center
+    rounded
+    border border-white/15
+    bg-white/[0.03]
+    text-white/80`;
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -135,7 +141,13 @@ function IconRailItem({
         typeof document !== "undefined" &&
         createPortal(
           <span
-            className="pointer-events-none fixed z-[9999] whitespace-nowrap rounded border border-white/25 bg-black px-2 py-1 font-jura text-[11px] tracking-[0.4px] text-white shadow-[0_12px_28px_rgba(0,0,0,0.75)]"
+            className="pointer-events-none fixed z-[9999]
+            whitespace-nowrap
+            rounded border border-white/25
+            bg-black
+            px-2 py-1
+            font-jura text-[11px] tracking-[0.4px] text-white
+            shadow-[0_12px_28px_rgba(0,0,0,0.75)]"
             style={{
               left: tooltipPos.x,
               top: tooltipPos.y,
@@ -333,7 +345,10 @@ export default function JourneyNodeModal({
                     animate={{ opacity: [0.15, 0.6, 0.15], x: [0, 3, 0], scale: 1 }}
                     whileHover={{ opacity: 1, scale: 1.06, x: 0 }}
                     transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                    className="inline-flex h-9 w-9 items-center justify-center text-white/65 transition-colors hover:text-white"
+                    className="journey-modal-nav-btn inline-flex
+                    h-9 w-9
+                    items-center justify-center
+                    text-white/65"
                   >
                     <ChevronGlyph direction="left" className="h-9 w-7" />
                   </motion.button>
@@ -356,10 +371,16 @@ export default function JourneyNodeModal({
               ${modalFrameClass}`}
             >
               <div
-                className="relative z-10 max-h-[86vh] touch-pan-y overflow-y-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                className="relative z-10
+                max-h-[86vh]
+                touch-pan-y overflow-y-auto overscroll-contain
+                [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               >
               <div
-                className={`z-20 flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6 ${
+                className={`z-20 flex items-center justify-between
+                border-b border-white/10
+                px-5 py-4 sm:px-6
+                ${
                   isParent
                     ? "relative bg-transparent backdrop-blur-0"
                     : "sticky top-0 bg-black/30 backdrop-blur-md"
@@ -378,9 +399,9 @@ export default function JourneyNodeModal({
                   type="button"
                   onClick={onClose}
                   aria-label="Close modal"
-                  className="group p-2 text-white/45 transition-colors hover:text-white"
+                  className="journey-modal-close-btn p-2 text-white/45"
                 >
-                  <X className="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" />
+                  <X className="journey-modal-close-icon h-5 w-5" />
                 </button>
               </div>
 
@@ -419,7 +440,7 @@ export default function JourneyNodeModal({
                         key={child.id}
                         type="button"
                         onClick={() => onSelectItem(child)}
-                        className="group relative memory-card
+                        className="journey-modal-child-link relative memory-card
                         rounded-[7px] p-4
                         text-left"
                       >
@@ -434,7 +455,7 @@ export default function JourneyNodeModal({
                               </p>
                             )}
                           </div>
-                          <FolderKanban className="mt-1 h-4 w-4 text-white/35 transition-colors group-hover:text-yellow-400" />
+                          <FolderKanban className="journey-modal-child-icon mt-1 h-4 w-4 text-white/35" />
                         </div>
                       </button>
                     ))}
@@ -600,10 +621,14 @@ export default function JourneyNodeModal({
                   animate={{ opacity: [0.15, 0.6, 0.15], x: [0, -3, 0], scale: 1 }}
                   whileHover={{ opacity: 1, scale: 1.06, x: 0 }}
                   transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                  className={`inline-flex h-9 w-9 items-center justify-center transition-colors ${
+                  className={`journey-modal-nav-btn inline-flex
+                  h-9 w-9
+                  items-center justify-center
+                  ${nextItemIsParent ? "journey-modal-nav-btn--parent" : ""}
+                  ${
                     nextItemIsParent
-                      ? "text-yellow-400/90 hover:text-yellow-300"
-                      : "text-white/65 hover:text-white"
+                      ? "text-yellow-400/90"
+                      : "text-white/65"
                   }`}
                 >
                   <ChevronGlyph direction="right" className="h-9 w-7" />
