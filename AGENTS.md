@@ -108,6 +108,7 @@ STRICT:
 - Follow existing naming conventions
 - Do not introduce unused code
 - Do not leave TODOs unless instructed
+- After making changes, always check for potential bugs, unintentional behavior, and errors within the scope of the request before concluding or committing
 
 
 ## Git Rules

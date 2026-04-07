@@ -44,6 +44,24 @@ type EdgeOverride = Partial<{
   via: { x: number; y: number }[];
 }>;
 
+const sanitizeStackedMobileNodeOverrides = (
+  raw: Record<string, NodeLayoutOverride>,
+  parentIds: ReadonlySet<string>,
+) => {
+  const next: Record<string, NodeLayoutOverride> = {};
+
+  for (const [key, value] of Object.entries(raw)) {
+    if (parentIds.has(key)) continue;
+
+    const height = Number(value?.height);
+    if (!Number.isFinite(height) || height <= 0) continue;
+
+    next[key] = { height: Math.round(height) };
+  }
+
+  return next;
+};
+
 const buildNodeOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:nodes`;
 const buildEdgeOverrideKey = (layoutId: string) => `journey-editor:${layoutId}:edges`;
 const buildParentCardSizeKey = (layoutId: string) =>
@@ -292,15 +310,9 @@ function MemoryLaneImpl({
       {},
     );
 
-    if (!isStackedMobileLayout) return raw;
-
     const parentIds = new Set(journeyContent.filter((item) => item.type === "parent").map((item) => item.id));
-    const next: Record<string, NodeLayoutOverride> = {};
-    for (const [key, value] of Object.entries(raw)) {
-      if (parentIds.has(key)) continue;
-      next[key] = value;
-    }
-    return next;
+    if (!isStackedMobileLayout) return raw;
+    return sanitizeStackedMobileNodeOverrides(raw, parentIds);
   });
 
   useEffect(() => {
@@ -319,15 +331,15 @@ function MemoryLaneImpl({
       );
 
       let changed = false;
-      const record = { ...(parsed as Record<string, unknown>) };
-      for (const id of parentIds) {
-        if (!(id in record)) continue;
-        delete record[id];
-        changed = true;
-      }
+      const record = parsed as Record<string, NodeLayoutOverride>;
+      const sanitized = sanitizeStackedMobileNodeOverrides(record, parentIds);
+      const nextRaw = JSON.stringify(sanitized);
+      const prevRaw = JSON.stringify(record);
 
+      if (prevRaw === nextRaw) return;
+      changed = true;
       if (!changed) return;
-      window.localStorage.setItem(key, JSON.stringify(record));
+      window.localStorage.setItem(key, nextRaw);
     } catch {
       // ignore bad localStorage
     }
@@ -409,11 +421,7 @@ function MemoryLaneImpl({
         const parentIds = new Set(
           journeyContent.filter((item) => item.type === "parent").map((item) => item.id),
         );
-        const next: Record<string, NodeLayoutOverride> = {};
-        for (const [key, value] of Object.entries(nodeOverrides)) {
-          if (parentIds.has(key)) continue;
-          next[key] = value;
-        }
+        const next = sanitizeStackedMobileNodeOverrides(nodeOverrides, parentIds);
         window.localStorage.setItem(buildNodeOverrideKey(layout.id), JSON.stringify(next));
         return;
       }
@@ -978,6 +986,7 @@ function MemoryLaneImpl({
   };
 
   const handleEditMove = useCallback((id: string, next: { x: number; y: number }) => {
+    if (isStackedMobileLayout) return;
     if (!ref.current || !width) {
       setNodeOverrides((prev) => ({ ...prev, [id]: { ...(prev[id] ?? {}), ...next } }));
       return;
@@ -988,8 +997,6 @@ function MemoryLaneImpl({
       setNodeOverrides((prev) => ({ ...prev, [id]: { ...(prev[id] ?? {}), ...next } }));
       return;
     }
-    if (isStackedMobileLayout && base.type === "parent") return;
-
     const clamp = (value: number, min: number, max: number) =>
       Math.min(max, Math.max(min, value));
 
@@ -1029,7 +1036,20 @@ function MemoryLaneImpl({
       if (!ref.current || !width) return;
       const base = effectiveItemMap[id] ?? itemMap[id];
       if (!base) return;
-      if (isStackedMobileLayout && base.type === "parent") return;
+      if (isStackedMobileLayout) {
+        if (base.type === "parent") return;
+
+        const minHeight = 160;
+        const clampedHeight = Math.max(minHeight, Math.round(next.height));
+
+        setNodeOverrides((prev) => ({
+          ...prev,
+          [id]: {
+            height: clampedHeight,
+          },
+        }));
+        return;
+      }
 
       const clamp = (value: number, min: number, max: number) =>
         Math.min(max, Math.max(min, value));
