@@ -13,6 +13,8 @@ import BouncingImage from "./ui/BouncingImage";
 import type { JourneyItemNode } from "./types/journey.types";
 import { getJourneyModalTechIcon } from "./ui/journeyModal.techIcons";
 
+import "./CSS/journeyNodeModal.css";
+
 interface JourneyNodeModalProps {
   item: JourneyItemNode | null;
   parentChildren: JourneyItemNode[];

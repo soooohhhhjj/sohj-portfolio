@@ -1,0 +1,175 @@
+.memory-card {
+  background: rgba(255, 255, 255, 0.035);
+
+  transition:
+    box-shadow 260ms ease,
+    background-color 220ms ease;
+
+  box-shadow:
+    0 0 10px rgba(255, 255, 255, 0.14),
+    0 0 28px rgba(120, 220, 255, 0.08);
+}
+
+/* frame */
+.memory-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.45),
+    rgba(255, 255, 255, 0.14) 35%,
+    rgba(255, 255, 255, 0.14) 65%,
+    rgba(255, 255, 255, 0.45)
+  );
+
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 1px;
+
+  pointer-events: none;
+  transition:
+    background 280ms ease,
+    opacity 220ms ease;
+  opacity: 0.9;
+}
+
+/* inner soft line */
+.memory-card::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 5px;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+  transition: border-color 240ms ease;
+}
+
+.memory-card:hover {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow:
+    0 0 14px rgba(255, 255, 255, 0.26),
+    0 0 40px rgba(120, 220, 255, 0.18);
+}
+
+.memory-card:hover::before {
+  background: linear-gradient(
+    315deg,
+    rgba(255, 255, 255, 0.58),
+    rgba(255, 255, 255, 0.2) 35%,
+    rgba(255, 255, 255, 0.08) 65%,
+    rgba(255, 255, 255, 0.45)
+  );
+  opacity: 1;
+}
+
+.memory-card:hover::after {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* ===========================
+   JOURNEY MODAL FRAMES
+=========================== */
+
+.journey-modal-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.journey-modal-frame::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.journey-modal-frame-parent {
+  background: rgba(0, 0, 0, 0.30);
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.18),
+    0 0 42px rgba(120, 220, 255, 0.14);
+}
+
+.journey-modal-frame-parent::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.65),
+    rgba(255, 255, 255, 0.15) 35%,
+    rgba(255, 255, 255, 0.05) 65%,
+    rgba(255, 255, 255, 0.35)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 1px;
+  opacity: 0.95;
+}
+
+.journey-modal-frame-parent::after {
+  inset: 3px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.journey-modal-frame-child {
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow:
+    0 0 10px rgba(255, 255, 255, 0.14),
+    0 0 28px rgba(120, 220, 255, 0.08);
+}
+
+.journey-modal-frame-child::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.45),
+    rgba(255, 255, 255, 0.14) 35%,
+    rgba(255, 255, 255, 0.14) 65%,
+    rgba(255, 255, 255, 0.45)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 1px;
+  opacity: 0.9;
+}
+
+.journey-modal-frame-child::after {
+  inset: 6px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* #region Low GPU/Phone Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .memory-card {
+    box-shadow: none;
+    transition: none;
+  }
+
+  .memory-card::before,
+  .memory-card::after {
+    display: none;
+  }
+
+  .journey-modal-frame-parent,
+  .journey-modal-frame-child {
+    box-shadow: none;
+  }
+
+  .journey-modal-frame-parent::before,
+  .journey-modal-frame-parent::after,
+  .journey-modal-frame-child::before,
+  .journey-modal-frame-child::after {
+    display: none;
+  }
+}
+/* #endregion Low GPU/Phone Optimizations */
