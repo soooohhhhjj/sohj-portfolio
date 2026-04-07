@@ -57,6 +57,27 @@ Breakpoints:
 - Always reuse existing breakpoint system
 - Do NOT hardcode new breakpoint values
 
+### Tailwind vs CSS (Project Pattern)
+
+Use Tailwind for all "basic" styling:
+- Layout: display/flex/grid, positioning, spacing, sizing (w/h), z-index
+- Typography: font family/size/weight, tracking/leading, text align
+- Visual basics: opacity, borders, border-radius, colors (when simple), responsive variants
+
+Use CSS files only for "special" or hard-to-express styling:
+- Backgrounds/gradients, complex shadows, filters, clip-path, calc-heavy rules
+- Keyframe animations
+- Vendor-specific properties (ex: `-webkit-text-stroke`)
+- Interactive styling is allowed in CSS (hover/focus/active states + transitions), especially when it would make Tailwind class strings noisy
+
+CSS placement:
+- Prefer feature/component-scoped CSS (colocated with the component/feature)
+- Keep `globals.css` for truly global base styles/utilities only
+- Avoid leaving unused selectors in global CSS; remove unused CSS when working in the relevant scope
+
+Tailwind class formatting:
+- Prefer grouped, multi-line `className` strings (base styles + responsive overrides grouped) over long one-liners
+
 
 ## Backend Rules (Node + Express + TS)
 
