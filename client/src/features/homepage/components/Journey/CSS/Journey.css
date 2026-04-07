@@ -44,47 +44,6 @@
     }
   }
 
-  .journey-showcase {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding-right: 1rem;
-    padding-left: 1rem;
-  }
-
-  .journey-showcase--linear {
-    align-items: flex-start;
-  }
-
-  .journey-linear-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-  }
-
-  .journey-linear-connector {
-    position: relative;
-    width: min(100%, 19rem);
-    height: 1.35rem;
-    opacity: 0.85;
-  }
-
-  .journey-linear-connector::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 1px dashed rgba(247, 247, 217, 0.35);
-  }
-
-  .journey-showcase__connector {
-    display: none;
-  }
-
   .journey-showcase__card,
   .journey-map-card {
     position: relative;
@@ -206,37 +165,6 @@
     border: 1px solid rgba(247, 247, 217, 0.12);
     border-radius: 0.18rem;
     opacity: 0.38;
-  }
-
-
-
-  @media (min-width: 1024px) {
-    .journey-showcase {
-      flex-direction: row;
-      align-items: center;
-      gap: 1.5rem;
-      padding-right: 0;
-      padding-left: 0;
-    }
-
-    .journey-showcase--linear {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .journey-showcase--linear .journey-showcase__connector {
-      display: none;
-    }
-
-    .journey-showcase__connector {
-      display: block;
-      width: 3.5rem;
-      height: 0;
-      flex: 0 0 auto;
-      border-top: 1px dashed rgba(247, 247, 217, 0.35);
-      opacity: 0.85;
-    }
   }
   /* #endregion Journey Section */
 }
