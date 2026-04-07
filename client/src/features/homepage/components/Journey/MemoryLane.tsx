@@ -21,6 +21,10 @@ import {
   type JourneyStackedGapOverrides,
 } from "./layout/layout.mobile";
 import {
+  DEFAULT_MOBILE_XXSM_GAPS,
+  createLayoutMobileXxsm,
+} from "./layout/layout.mobile.xxsm";
+import {
   DEFAULT_MOBILE_SM_GAPS,
   createLayoutMobileSm,
   type JourneyStackedGapOverridesSm,
@@ -150,7 +154,8 @@ function MemoryLaneImpl({
   const isDev = import.meta.env.DEV;
   const editorToolsEnabled = Boolean(editorEnabled) && isDev;
   const { ref, width } = useContainerSize<HTMLDivElement>();
-  const isStackedMobileLayout = layout.id === "mobile" || layout.id === "mobile-sm";
+  const isStackedMobileLayout =
+    layout.id === "mobile" || layout.id === "mobile-xxsm" || layout.id === "mobile-sm";
 
   const parentIdSet = useMemo(() => {
     return new Set(journeyContent.filter((item) => item.type === "parent").map((item) => item.id));
@@ -180,6 +185,7 @@ function MemoryLaneImpl({
 
   const gapDefaults = useMemo(() => {
     if (layout.id === "mobile") return DEFAULT_MOBILE_GAPS;
+    if (layout.id === "mobile-xxsm") return DEFAULT_MOBILE_XXSM_GAPS;
     if (layout.id === "mobile-sm") return DEFAULT_MOBILE_SM_GAPS;
     return null;
   }, [layout.id]);
@@ -244,6 +250,18 @@ function MemoryLaneImpl({
       const parentToParentGap =
         gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
       return createLayoutMobile({
+        parentToChildGap,
+        childToChildGap: parentToChildGap,
+        parentToParentGap,
+      }, { excludedIds: deletedIdSet });
+    }
+
+    if (layout.id === "mobile-xxsm") {
+      const parentToChildGap =
+        gapOverrides.parentToChildGap ?? (editorToolsEnabled ? 0 : undefined);
+      const parentToParentGap =
+        gapOverrides.parentToParentGap ?? (editorToolsEnabled ? 0 : undefined);
+      return createLayoutMobileXxsm({
         parentToChildGap,
         childToChildGap: parentToChildGap,
         parentToParentGap,
@@ -377,6 +395,7 @@ function MemoryLaneImpl({
       return false;
     }
   });
+  const [copyFeedback, setCopyFeedback] = useState<"idle" | "success" | "error">("idle");
 
   const {
     overrides: cardTextOverrides,
@@ -1493,17 +1512,28 @@ function MemoryLaneImpl({
   }, [isStackedMobileLayout, items, templateSize]);
 
   const handleCopyEdits = useCallback(async () => {
-    const unscaled = Object.fromEntries(
-      Object.entries(nodeOverrides).map(([id, pos]) => [
-        id,
-        {
-          x: pos.x == null ? undefined : Math.round(pos.x / scale),
-          y: pos.y == null ? undefined : Math.round(pos.y / scale),
-          width: pos.width == null ? undefined : Math.round(pos.width / scale),
-          height: pos.height == null ? undefined : Math.round(pos.height / scale),
-        },
-      ]),
-    );
+    const unscaled = isStackedMobileLayout
+      ? Object.fromEntries(
+          visibleItems
+            .filter((item) => item.type !== "parent")
+            .map((item) => [
+              item.id,
+              {
+                height: Math.round(item.height / scale),
+              },
+            ]),
+        )
+      : Object.fromEntries(
+          Object.entries(nodeOverrides).map(([id, pos]) => [
+            id,
+            {
+              x: pos.x == null ? undefined : Math.round(pos.x / scale),
+              y: pos.y == null ? undefined : Math.round(pos.y / scale),
+              width: pos.width == null ? undefined : Math.round(pos.width / scale),
+              height: pos.height == null ? undefined : Math.round(pos.height / scale),
+            },
+          ]),
+        );
 
     const edgePayload = Object.fromEntries(
       Object.entries(edgeOverrides).map(([key, value]) => [
@@ -1525,6 +1555,12 @@ function MemoryLaneImpl({
       canvasWidth: layout.canvasWidth,
       nodes: unscaled,
       edges: edgePayload,
+      gaps: isStackedMobileLayout
+        ? {
+            parentToChildGap: effectiveParentToChildGap ?? 0,
+            parentToParentGap: effectiveParentToParentGap ?? 0,
+          }
+        : undefined,
       parentCardSize: parentCardSizeOverride ?? undefined,
     };
 
@@ -1532,10 +1568,32 @@ function MemoryLaneImpl({
 
     try {
       await navigator.clipboard.writeText(text);
+      setCopyFeedback("success");
     } catch {
-      // clipboard can fail on some environments; nothing else to do without UX.
+      setCopyFeedback("error");
     }
-  }, [edgeOverrides, layout.canvasWidth, layout.id, nodeOverrides, parentCardSizeOverride, scale]);
+  }, [
+    edgeOverrides,
+    effectiveParentToChildGap,
+    effectiveParentToParentGap,
+    isStackedMobileLayout,
+    layout.canvasWidth,
+    layout.id,
+    nodeOverrides,
+    parentCardSizeOverride,
+    scale,
+    visibleItems,
+  ]);
+
+  useEffect(() => {
+    if (copyFeedback === "idle") return;
+
+    const timeout = window.setTimeout(() => {
+      setCopyFeedback("idle");
+    }, 1800);
+
+    return () => window.clearTimeout(timeout);
+  }, [copyFeedback]);
 
   const laneClickStateRef = useRef<null | {
     pointerId: number;
@@ -2016,6 +2074,12 @@ function MemoryLaneImpl({
                 <button type="button" onClick={handleCopyEdits}>
                   Copy Layout JSON
                 </button>
+                {copyFeedback === "success" ? (
+                  <span className="journey-editor-hud__hint">Copied</span>
+                ) : null}
+                {copyFeedback === "error" ? (
+                  <span className="journey-editor-hud__hint">Copy failed</span>
+                ) : null}
                 <button type="button" onClick={handleMatchAllToTemplate}>
                   Match All to node1-c1
                 </button>

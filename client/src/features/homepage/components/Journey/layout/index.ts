@@ -3,10 +3,12 @@ import { layoutDesktopLg } from "./layout.desktop.lg";
 import { layoutDesktopXl } from "./layout.desktop.xl";
 import { layoutDesktop2xl } from "./layout.desktop.2xl";
 import { layoutMobile } from "./layout.mobile";
+import { layoutMobileXxsm } from "./layout.mobile.xxsm";
 import { layoutMobileSm } from "./layout.mobile.sm";
 import { layoutTablet } from "./layout.tablet";
 
 export const journeyLayouts: LayoutConfig[] = [
+  layoutMobileXxsm,
   layoutMobile,
   layoutMobileSm,
   layoutTablet,

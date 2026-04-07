@@ -79,7 +79,10 @@ export default function MemoryItem(props: MemoryItemProps) {
     const el = cardRef.current;
     if (!el) return;
 
-    const isMobileLayout = props.layoutId === "mobile" || props.layoutId === "mobile-sm";
+    const isMobileLayout =
+      props.layoutId === "mobile" ||
+      props.layoutId === "mobile-xxsm" ||
+      props.layoutId === "mobile-sm";
 
     let measuredHeight = el.offsetHeight;
     if (isMobileLayout) {
@@ -107,7 +110,10 @@ export default function MemoryItem(props: MemoryItemProps) {
   useLayoutEffect(() => {
     if (type !== "parent") return;
     const text = props.modalDetails ?? "Milestone summary coming soon.";
-    const isMobileLayout = props.layoutId === "mobile" || props.layoutId === "mobile-sm";
+    const isMobileLayout =
+      props.layoutId === "mobile" ||
+      props.layoutId === "mobile-xxsm" ||
+      props.layoutId === "mobile-sm";
 
     if (isMobileLayout) {
       if (parentDetailsRef.current) {
@@ -259,7 +265,10 @@ export default function MemoryItem(props: MemoryItemProps) {
         onPointerUp={handlePointerUp}
         aria-label={`Open ${props.id} details`}
       >
-        {props.editorEnabled && props.layoutId !== "mobile" && props.layoutId !== "mobile-sm" ? (
+        {props.editorEnabled &&
+        props.layoutId !== "mobile" &&
+        props.layoutId !== "mobile-xxsm" &&
+        props.layoutId !== "mobile-sm" ? (
           <>
             <span
               className="journey-resize-handle journey-resize-handle--nw"
