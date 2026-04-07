@@ -11,7 +11,24 @@ const gapAfterCard = 30;
 const gapAfterLastChild = 100;
 const startY = 0;
 
-const getCardHeight = () => 420;
+const mobileSmCardHeights: Partial<Record<string, number>> = {
+  "node1-c1": 391,
+  "node1-c2": 391,
+  "node1-c3": 387,
+  "node2-c1": 390,
+  "node2-c2": 390,
+  "node3-c1": 387,
+  "node3-c2": 387,
+  "node4-c1": 387,
+  "node4-c2": 390,
+  "node4-c3": 390,
+  "node5-c1": 387,
+  "node6-p1": 387,
+  "node6-p2": 387,
+  "node6-p3": 387,
+};
+
+const getCardHeight = (itemId: string) => mobileSmCardHeights[itemId] ?? 420;
 
 const estimateTextLines = (text: string, charsPerLine: number) => {
   const normalized = text.trim().replace(/\s+/g, " ");
@@ -81,7 +98,7 @@ const buildStackedItems = (
       continue;
     }
 
-    const height = getCardHeight();
+    const height = getCardHeight(item.id);
     items.push({
       id: item.id,
       x: paddingX,
