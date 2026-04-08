@@ -1,0 +1,405 @@
+.proposal-page {
+  min-height: 100vh;
+}
+
+.proposal-hero {
+  position: relative;
+  z-index: 10;
+}
+
+.proposal-hero__image-card {
+  max-height: 540px;
+}
+
+.proposal-hero__intro {
+  margin: 0;
+  font-family: 'Jura', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 12px rgba(206, 226, 252, 0.35);
+  -webkit-text-stroke: 0.2px;
+}
+
+.proposal-hero__headline {
+  margin: 0;
+  font-family: 'Anta', sans-serif;
+  font-size: 34px;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 18px rgba(206, 226, 252, 0.28);
+  -webkit-text-stroke: 0.9px;
+}
+
+.proposal-hero__role {
+  margin: 0;
+  font-family: 'Bruno Ace SC', sans-serif;
+  font-size: 16px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 22px rgba(206, 226, 252, 0.22);
+}
+
+.proposal-hero__summary,
+.proposal-section-heading__copy,
+.proposal-skill-card__body,
+.proposal-project-card__summary,
+.proposal-about-card__copy,
+.proposal-fact-item p {
+  margin: 0;
+  color: rgba(247, 247, 217, 0.8);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.proposal-hero__cta-row,
+.proposal-social-links,
+.proposal-contact-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.proposal-primary-cta,
+.proposal-secondary-cta,
+.proposal-social-link,
+.proposal-contact-action,
+.proposal-footer__top-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--base-text-color);
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.05);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.proposal-primary-cta,
+.proposal-secondary-cta,
+.proposal-contact-action {
+  border-radius: 999px;
+  padding: 0.85rem 1.15rem;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+}
+
+.proposal-social-link {
+  border-radius: 999px;
+  padding: 0.72rem 0.95rem;
+  font-size: 13px;
+  letter-spacing: 0.35px;
+}
+
+.proposal-primary-cta:hover,
+.proposal-secondary-cta:hover,
+.proposal-social-link:hover,
+.proposal-contact-action:hover,
+.proposal-footer__top-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(247, 247, 217, 0.35);
+  box-shadow: 0 0 24px rgba(247, 247, 217, 0.12);
+}
+
+.proposal-social-link__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.proposal-skill-grid,
+.proposal-project-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.proposal-skill-card,
+.proposal-project-card,
+.proposal-about-card,
+.proposal-contact-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.07), transparent 35%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+  box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.04), 0 0 24px rgba(255, 255, 255, 0.05);
+}
+
+.proposal-skill-card {
+  padding: 1.2rem;
+}
+
+.proposal-skill-card__icon-wrap,
+.proposal-mini-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--base-text-color);
+}
+
+.proposal-skill-card__icon-wrap {
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+}
+
+.proposal-skill-card__title,
+.proposal-project-card__title {
+  margin: 1rem 0 0.7rem;
+  font-family: 'Bruno Ace SC', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.8px;
+}
+
+.proposal-section-shell,
+.proposal-footer-shell {
+  margin-top: 3.5rem;
+}
+
+.proposal-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.proposal-section-heading {
+  max-width: 680px;
+}
+
+.proposal-section-heading__eyebrow {
+  margin: 0;
+  font-family: 'Bruno Ace SC', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  opacity: 0.78;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.28);
+}
+
+.proposal-section-heading__title {
+  margin: 0.65rem 0 0;
+  font-family: 'Bruno Ace SC', sans-serif;
+  font-size: 27px;
+  line-height: 1.25;
+  letter-spacing: 0.8px;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.18);
+}
+
+.proposal-project-card {
+  padding: 1rem;
+}
+
+.proposal-project-card__image-wrap {
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.proposal-project-card__image {
+  display: block;
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.proposal-project-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1rem;
+}
+
+.proposal-project-card__stack {
+  margin: 0;
+  font-family: 'Jura', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  opacity: 0.78;
+}
+
+.proposal-project-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  font-family: 'Jura', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  opacity: 0.92;
+}
+
+.proposal-about-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.proposal-about-card {
+  padding: 1.25rem;
+}
+
+.proposal-section-heading__title--about,
+.proposal-section-heading__title--contact {
+  font-size: 25px;
+}
+
+.proposal-about-card__copy + .proposal-about-card__copy {
+  margin-top: 1rem;
+}
+
+.proposal-fact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1.1rem;
+}
+
+.proposal-fact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.proposal-fact-item__icon {
+  margin-top: 0.35rem;
+  flex: 0 0 auto;
+  opacity: 0.7;
+}
+
+.proposal-mini-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.4rem;
+}
+
+.proposal-mini-stat {
+  border-radius: 999px;
+  padding: 0.7rem 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+.proposal-contact-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.35rem;
+}
+
+.proposal-contact-panel__copy {
+  max-width: 640px;
+}
+
+.proposal-footer {
+  padding-bottom: 2rem;
+}
+
+.proposal-footer__card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.15rem 0 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.proposal-footer__brand,
+.proposal-footer__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.proposal-footer__name {
+  font-family: 'Bruno Ace SC', sans-serif;
+  font-size: 18px;
+  letter-spacing: 1.4px;
+}
+
+.proposal-footer__role,
+.proposal-footer__meta span {
+  font-size: 13px;
+  color: rgba(247, 247, 217, 0.72);
+  letter-spacing: 0.3px;
+}
+
+.proposal-footer__top-link {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.65rem 0.9rem;
+  font-size: 12px;
+}
+
+@media (min-width: 640px) {
+  .proposal-hero__headline {
+    font-size: 45px;
+  }
+
+  .proposal-skill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .proposal-contact-panel {
+    padding: 1.6rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .proposal-hero__intro {
+    font-size: 16px;
+  }
+
+  .proposal-hero__headline {
+    font-size: 52px;
+  }
+
+  .proposal-hero__role {
+    font-size: 18px;
+  }
+
+  .proposal-project-grid,
+  .proposal-about-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .proposal-section-heading__title {
+    font-size: 31px;
+  }
+
+  .proposal-footer__card,
+  .proposal-footer__meta {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .proposal-hero__headline {
+    font-size: 61px;
+  }
+
+  .proposal-skill-grid,
+  .proposal-project-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .proposal-contact-panel {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .proposal-contact-panel__actions {
+    max-width: 360px;
+    justify-content: flex-end;
+  }
+}

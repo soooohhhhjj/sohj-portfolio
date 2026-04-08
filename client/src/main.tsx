@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
 import { HomePage } from './features/homepage/HomePage';
+import { HomeProposal } from './features/homepage/components/HomeProposal';
 import { Footer } from './shared/layouts';
 import { StarfieldBackground } from './shared/components/StarfieldBackground';
 import { BreakpointDebugOverlay } from './shared/components/BreakpointDebugOverlay';
@@ -14,6 +15,9 @@ const STARFIELD_ENABLED_STORAGE_KEY = 'sohj.debug.starfield.enabled';
 const PERF_LITE_ENABLED_STORAGE_KEY = 'sohj.debug.perfLite.enabled';
 
 export function App() {
+  const currentView =
+    typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('view');
+  const isProposalView = currentView === 'home-proposal';
   const [starMode, setStarMode] = useState<StarMode>('normal');
   const [isStarfieldEnabled, setIsStarfieldEnabled] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
@@ -56,16 +60,20 @@ export function App() {
   return (
     <div className={`app-shell ${isPerfLiteEnabled ? 'perf-debug-lite' : ''}`}>
       {isStarfieldEnabled ? <StarfieldBackground mode={starMode} /> : null}
-        <main className="app-content">
+      <main className="app-content">
+        {isProposalView ? (
+          <HomeProposal />
+        ) : (
           <HomePage
             key={introReplayKey}
             setStarMode={setStarMode}
             onIntroFinishedChange={setIsIntroFinished}
             isJourneyEditorEnabled={isJourneyEditorEnabled}
           />
-        </main>
-      <Footer />
-      {showDebugPanels ? (
+        )}
+      </main>
+      {isProposalView ? null : <Footer />}
+      {showDebugPanels && !isProposalView ? (
         <BreakpointDebugOverlay
           isStarfieldEnabled={isStarfieldEnabled}
           onToggleStarfield={() => setIsStarfieldEnabled((prev) => !prev)}

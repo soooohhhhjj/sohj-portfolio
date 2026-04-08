@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { motion, type Easing } from 'framer-motion';
-import { FileText, Github, Linkedin, Mail } from 'lucide-react';
+import { FileText, Github, Lightbulb, Linkedin, Mail } from 'lucide-react';
 import { Section, SectionContent } from '../../../shared/components/Container';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import HeroCards from './hero/HeroCards';
@@ -15,6 +15,7 @@ interface HeroProps {
 
 export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
   const resumeUrl = `${import.meta.env.BASE_URL}sohj-resume.pdf`;
+  const proposalUrl = `${import.meta.env.BASE_URL}?view=home-proposal`;
 
   useEffect(() => {
     if (!shouldAnimate) return;
@@ -110,6 +111,17 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 >
                   <FileText className="hero-icon-link__icon" />
                   <span className="hero-icon-link__label">Resume</span>
+                </a>
+
+                <a
+                  href={proposalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hero-icon-link"
+                  aria-label="Open home section proposal"
+                >
+                  <Lightbulb className="hero-icon-link__icon" />
+                  <span className="hero-icon-link__label">Proposal</span>
                 </a>
 
                 <a
