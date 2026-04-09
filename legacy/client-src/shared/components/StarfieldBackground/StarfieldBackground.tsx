@@ -154,6 +154,7 @@ export function StarfieldBackground({ mode = 'normal' }: StarfieldBackgroundProp
       const orientationChanged = (previous.width > previous.height) !== (nextWidth > nextHeight);
       const isHeightOnlyResize = widthDelta <= 2 && heightDelta > 0;
 
+      // Ignore mobile browser chrome height changes to avoid starfield "jump".
       if (isMobileViewport && isHeightOnlyResize && !orientationChanged) {
         return;
       }
@@ -166,6 +167,7 @@ export function StarfieldBackground({ mode = 'normal' }: StarfieldBackgroundProp
       if (shouldRegenerate) {
         createLayers(nextWidth, nextHeight);
       } else {
+        // Mobile address-bar collapse usually changes only height; keep stars and remap them.
         scaleLayersToViewport(previous.width, previous.height, nextWidth, nextHeight);
       }
 
