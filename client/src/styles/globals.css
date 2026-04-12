@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anta&family=Bruno+Ace+SC&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,6 +10,22 @@
   font-family: 'Manrope', sans-serif;
   color: #e2e8f0;
   background: #000000;
+  --base-text-color: rgb(247, 247, 217);
+  --bp-dinosaur: 350px;
+  --bp-xxsm: 400px;
+  --bp-xsm: 480px;
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --cw-mobile: 300px;
+  --cw-dinosaur: 310px;
+  --cw-xxsm: 360px;
+  --cw-xsm: 440px;
+  --cw-sm: 576px;
+  --cw-md: 730px;
+  --cw-lg: 930px;
+  --cw-xl: 930px;
 }
 
 * {
@@ -63,4 +80,100 @@ body,
   inset: 0;
   z-index: 0;
   pointer-events: none;
+}
+
+.section-shell {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.section-content {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.section-style {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.responsiveness {
+  width: 100%;
+  max-width: var(--cw-dinosaur);
+  margin-inline: auto;
+}
+
+.content-width {
+  max-width: var(--cw-mobile);
+}
+
+.content-width--mobile {
+  max-width: var(--cw-mobile);
+}
+
+.content-width--dinosaur {
+  max-width: var(--cw-dinosaur);
+}
+
+.content-width--xxsm {
+  max-width: var(--cw-xxsm);
+}
+
+.content-width--xsm {
+  max-width: var(--cw-xsm);
+}
+
+.content-width--sm {
+  max-width: var(--cw-sm);
+}
+
+.content-width--md {
+  max-width: var(--cw-md);
+}
+
+.content-width--lg {
+  max-width: var(--cw-lg);
+}
+
+.content-width--xl {
+  max-width: var(--cw-xl);
+}
+
+@media (min-width: 400px) {
+  .responsiveness {
+    max-width: var(--cw-xxsm);
+  }
+}
+
+@media (min-width: 480px) {
+  .responsiveness {
+    max-width: var(--cw-xsm);
+  }
+}
+
+@media (min-width: 640px) {
+  .responsiveness {
+    max-width: var(--cw-sm);
+  }
+}
+
+@media (min-width: 768px) {
+  .responsiveness {
+    max-width: var(--cw-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsiveness {
+    max-width: var(--cw-lg);
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsiveness {
+    max-width: var(--cw-xl);
+  }
 }
