@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { motion, type Easing } from 'framer-motion';
 import { FileText, Github, Linkedin, Mail } from 'lucide-react';
+import { type ComponentType } from 'react';
 import { Section, SectionContent } from '../../../shared/components/Container';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { HeroCards } from './HeroCards';
@@ -14,8 +15,49 @@ interface HeroProps {
   onAnimationsComplete: () => void;
 }
 
+type HeroActionLink = {
+  href: string;
+  label: string;
+  ariaLabel: string;
+  Icon: ComponentType<{ className?: string }>;
+  target?: '_blank';
+  rel?: string;
+};
+
 export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
   const resumeUrl = `${import.meta.env.BASE_URL}sohj-resume.pdf`;
+  const heroActionLinks: HeroActionLink[] = [
+    {
+      href: resumeUrl,
+      label: 'Resume',
+      ariaLabel: 'Open resume',
+      Icon: FileText,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    },
+    {
+      href: 'https://github.com/soooohhhhjj',
+      label: 'GitHub',
+      ariaLabel: 'Open GitHub profile',
+      Icon: Github,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    },
+    {
+      href: 'http://linkedin.com/in/carlojoshua-abellera',
+      label: 'LinkedIn',
+      ariaLabel: 'Open LinkedIn profile',
+      Icon: Linkedin,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    },
+    {
+      href: 'mailto:carlojoshua.abellera.ph@gmail.com',
+      label: 'Email',
+      ariaLabel: 'Send an email',
+      Icon: Mail,
+    },
+  ];
 
   useEffect(() => {
     if (!shouldAnimate) {
@@ -93,55 +135,31 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 Full-Stack Developer
               </motion.p>
 
-              <motion.div
-                initial={{ y: '100vh' }}
-                animate={{ y: shouldAnimate ? 0 : '100vh' }}
-                transition={{ duration: 1.2, ease: easeSmooth, delay: 0.04 }}
+              <div
                 className="hero-icon-links mt-6 sm:mt-7 
                 [--hero-action-icon-size:21px] md:[--hero-action-icon-size:18px] lg:[--hero-action-icon-size:21px]"
               >
-                <a
-                  href={resumeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hero-icon-link"
-                  aria-label="Open resume"
-                >
-                  <FileText className="hero-icon-link__icon" />
-                  <span className="hero-icon-link__label">Resume</span>
-                </a>
-
-                <a
-                  href="https://github.com/soooohhhhjj"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hero-icon-link"
-                  aria-label="Open GitHub profile"
-                >
-                  <Github className="hero-icon-link__icon" />
-                  <span className="hero-icon-link__label">GitHub</span>
-                </a>
-
-                <a
-                  href="http://linkedin.com/in/carlojoshua-abellera"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hero-icon-link"
-                  aria-label="Open LinkedIn profile"
-                >
-                  <Linkedin className="hero-icon-link__icon" />
-                  <span className="hero-icon-link__label">LinkedIn</span>
-                </a>
-
-                <a
-                  href="mailto:carlojoshua.abellera.ph@gmail.com"
-                  className="hero-icon-link"
-                  aria-label="Send an email"
-                >
-                  <Mail className="hero-icon-link__icon" />
-                  <span className="hero-icon-link__label">Email</span>
-                </a>
-              </motion.div>
+                {heroActionLinks.map(({ href, label, ariaLabel, Icon, target, rel }, index) => (
+                  <motion.a
+                    key={label}
+                    href={href}
+                    target={target}
+                    rel={rel}
+                    className="hero-icon-link"
+                    aria-label={ariaLabel}
+                    initial={{ y: '100vh' }}
+                    animate={{ y: shouldAnimate ? 0 : '100vh' }}
+                    transition={{
+                      duration: 1.2,
+                      ease: easeSmooth,
+                      delay: 0.04 + index * 0.03,
+                    }}
+                  >
+                    <Icon className="hero-icon-link__icon" />
+                    <span className="hero-icon-link__label">{label}</span>
+                  </motion.a>
+                ))}
+              </div>
             </div>
           </div>
 
