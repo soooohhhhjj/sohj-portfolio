@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Hero } from './features/hero/components/Hero';
 import { useIntroSequence } from './features/homepage/hooks/useIntroSequence';
+import { RelevantExperiences } from './features/relevant-experiences/components/RelevantExperiences';
 import { Welcome } from './features/welcome/components/Welcome';
 import { useResponsiveTokens } from './shared/hooks/useResponsiveTokens';
 import { Navbar } from './shared/layouts';
@@ -39,6 +40,10 @@ export function App() {
             shouldAnimate={hasWelcomeFinished}
             onAnimationsComplete={() => setHasHeroFinished(true)}
           />
+        </div>
+
+        <div className="relative z-[1]" id="relevant-experiences-section">
+          <RelevantExperiences />
         </div>
       </main>
     </div>
