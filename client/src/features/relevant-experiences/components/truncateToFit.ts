@@ -43,7 +43,7 @@ export function truncateToFit(el: HTMLElement | null, fullText: string, options?
     const remainder = text.slice(lastSpace + 1);
     const nextWord = remainder.split(/\s+/)[0] ?? '';
 
-    let filled = prefix;
+    const filled = prefix;
     let i = 0;
     while (i < nextWord.length) {
       const nextCandidate = `${filled} ${nextWord.slice(0, i + 1)}${ellipsis}`;
