@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
+  RelevantExperienceConnection,
   RelevantExperienceNode,
   RelevantExperiencesContentState,
 } from '../components/relevantExperiences.types';
@@ -13,6 +14,10 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
     nodes: content.nodes.map((node) => ({
       ...node,
       layout: { ...node.layout },
+    })),
+    connections: content.connections.map((connection) => ({
+      ...connection,
+      viaPoints: connection.viaPoints.map((point) => ({ ...point })),
     })),
   };
 }
@@ -72,6 +77,50 @@ export function useRelevantExperiencesEditorState() {
     });
   }, []);
 
+  const updateConnection = useCallback((
+    connectionId: string,
+    transform: (connection: RelevantExperienceConnection) => RelevantExperienceConnection,
+  ) => {
+    setContent((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        connections: prev.connections.map((connection) => (
+          connection.id === connectionId ? transform(connection) : connection
+        )),
+      };
+    });
+  }, []);
+
+  const addConnection = useCallback((connection: RelevantExperienceConnection) => {
+    setContent((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        connections: [...prev.connections, connection],
+      };
+    });
+  }, []);
+
+  const removeConnection = useCallback((connectionId: string) => {
+    setContent((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        connections: prev.connections.filter((connection) => connection.id !== connectionId),
+      };
+    });
+  }, []);
+
   const resetNodeToPersisted = useCallback((nodeId: string) => {
     const persistedState = persistedStateRef.current;
     if (!persistedState) {
@@ -127,6 +176,9 @@ export function useRelevantExperiencesEditorState() {
     loadError,
     setContent,
     updateNode,
+    updateConnection,
+    addConnection,
+    removeConnection,
     resetNodeToPersisted,
     resetToPersisted,
     save,

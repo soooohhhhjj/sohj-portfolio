@@ -8,6 +8,8 @@ export type RelevantExperienceNodeLayout = {
   height: number;
 };
 
+export type RelevantExperienceConnectionAnchor = 'top' | 'right' | 'bottom' | 'left';
+
 export type RelevantExperienceNode = {
   id: string;
   type: RelevantExperienceNodeType;
@@ -21,4 +23,20 @@ export type RelevantExperienceNode = {
 
 export type RelevantExperiencesContentState = {
   nodes: RelevantExperienceNode[];
+  connections: RelevantExperienceConnection[];
+};
+
+export type RelevantExperienceConnectionPoint = {
+  x: number;
+  y: number;
+};
+
+export type RelevantExperienceConnection = {
+  id: string;
+  from: string;
+  to: string;
+  fromAnchor: RelevantExperienceConnectionAnchor;
+  toAnchor: RelevantExperienceConnectionAnchor;
+  viaPoints: RelevantExperienceConnectionPoint[];
+  variant: 'group' | 'detail';
 };

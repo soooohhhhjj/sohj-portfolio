@@ -15,6 +15,13 @@ type RelevantExperienceNodeLayout = {
   height: number;
 };
 
+type RelevantExperienceConnectionAnchor = 'top' | 'right' | 'bottom' | 'left';
+
+export type RelevantExperienceConnectionPoint = {
+  x: number;
+  y: number;
+};
+
 export type RelevantExperienceNode = {
   id: string;
   type: RelevantExperienceNodeType;
@@ -26,8 +33,19 @@ export type RelevantExperienceNode = {
   layout: RelevantExperienceNodeLayout;
 };
 
+export type RelevantExperienceConnection = {
+  id: string;
+  from: string;
+  to: string;
+  fromAnchor: RelevantExperienceConnectionAnchor;
+  toAnchor: RelevantExperienceConnectionAnchor;
+  viaPoints: RelevantExperienceConnectionPoint[];
+  variant: 'group' | 'detail';
+};
+
 export type RelevantExperiencesContentState = {
   nodes: RelevantExperienceNode[];
+  connections: RelevantExperienceConnection[];
 };
 
 type LegacyTextOverride = {
@@ -46,6 +64,7 @@ type LegacyNodeOverride = {
 
 type StoredContentState = {
   nodes?: RelevantExperienceNode[] | null;
+  connections?: RelevantExperienceConnection[] | null;
   textOverrides?: LegacyTextOverride[] | null;
   nodeOverrides?: LegacyNodeOverride[] | null;
 } | null;
@@ -56,7 +75,27 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
       ...node,
       layout: { ...node.layout },
     })),
+    connections: content.connections.map((connection) => ({
+      ...connection,
+      viaPoints: connection.viaPoints.map((point) => ({ ...point })),
+    })),
   };
+}
+
+function sanitizeConnectionPoint(input: unknown) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return null;
+  }
+
+  const point = input as Record<string, unknown>;
+  if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+    return null;
+  }
+
+  return {
+    x: Math.max(0, Math.round(Number(point.x))),
+    y: Math.max(0, Math.round(Number(point.y))),
+  } satisfies RelevantExperienceConnectionPoint;
 }
 
 function sanitizeNodeLayout(input: unknown) {
@@ -116,6 +155,62 @@ function sanitizeNode(input: unknown) {
   } satisfies RelevantExperienceNode;
 }
 
+function sanitizeConnection(input: unknown, nodeIds: Set<string>) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return null;
+  }
+
+  const connection = input as Record<string, unknown>;
+  const id = typeof connection.id === 'string' ? connection.id.trim() : '';
+  const from = typeof connection.from === 'string' ? connection.from.trim() : '';
+  const to = typeof connection.to === 'string' ? connection.to.trim() : '';
+  const fromAnchor =
+    connection.fromAnchor === 'top' ||
+    connection.fromAnchor === 'right' ||
+    connection.fromAnchor === 'bottom' ||
+    connection.fromAnchor === 'left'
+      ? connection.fromAnchor
+      : null;
+  const toAnchor =
+    connection.toAnchor === 'top' ||
+    connection.toAnchor === 'right' ||
+    connection.toAnchor === 'bottom' ||
+    connection.toAnchor === 'left'
+      ? connection.toAnchor
+      : null;
+  const variant =
+    connection.variant === 'group' || connection.variant === 'detail' ? connection.variant : null;
+  const viaPoints = Array.isArray(connection.viaPoints)
+    ? connection.viaPoints
+        .map((point) => sanitizeConnectionPoint(point))
+        .filter((point): point is RelevantExperienceConnectionPoint => point !== null)
+    : [];
+
+  if (
+    !id ||
+    !from ||
+    !to ||
+    from === to ||
+    !nodeIds.has(from) ||
+    !nodeIds.has(to) ||
+    !fromAnchor ||
+    !toAnchor ||
+    !variant
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    from,
+    to,
+    fromAnchor,
+    toAnchor,
+    viaPoints,
+    variant,
+  } satisfies RelevantExperienceConnection;
+}
+
 function sanitizeContentState(input: unknown): RelevantExperiencesContentState | null {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return null;
@@ -132,7 +227,14 @@ function sanitizeContentState(input: unknown): RelevantExperiencesContentState |
     return null;
   }
 
-  return { nodes };
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  const connections = Array.isArray(payload.connections)
+    ? payload.connections
+        .map((connection) => sanitizeConnection(connection, nodeIds))
+        .filter((connection): connection is RelevantExperienceConnection => connection !== null)
+    : [];
+
+  return { nodes, connections };
 }
 
 function buildStateFromLegacyDocument(document: StoredContentState) {
@@ -156,6 +258,8 @@ function buildStateFromLegacyDocument(document: StoredContentState) {
       },
     };
   });
+
+  nextState.connections = [];
 
   return nextState;
 }
@@ -190,6 +294,7 @@ async function ensureRelevantExperiencesContentState() {
       {
         $set: {
           nodes: contentState.nodes,
+          connections: contentState.connections,
         },
         $unset: {
           textOverrides: 1,
@@ -221,6 +326,7 @@ export async function saveRelevantExperiencesContentState(input: unknown) {
       $set: {
         key: SECTION_KEY,
         nodes: contentState.nodes,
+        connections: contentState.connections,
       },
       $unset: {
         textOverrides: 1,

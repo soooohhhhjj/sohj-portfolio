@@ -211,6 +211,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
 export function RelevantExperiences({ editorEnabled = false }: RelevantExperiencesProps) {
   const laneRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
+  const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(MIN_CANVAS_WIDTH);
   const [measuredNodeLayouts, setMeasuredNodeLayouts] = useState<Record<string, RelevantExperienceNodeLayout>>({});
   const [hudMinimized, setHudMinimized] = useState<boolean>(() => readLocalStorageJson(HUD_MINIMIZED_STORAGE_KEY, false));
@@ -252,6 +253,16 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
   useEffect(() => {
     if (typeof window !== 'undefined') window.localStorage.setItem(HUD_MINIMIZED_STORAGE_KEY, JSON.stringify(hudMinimized));
   }, [hudMinimized]);
+
+  useEffect(() => {
+    if (editorEnabled) {
+      return;
+    }
+
+    setSelectedNodeId(null);
+    setSelectedConnectionId(null);
+    setSelectedViaIndex(null);
+  }, [editorEnabled]);
 
   const nodes = useMemo(() => content?.nodes ?? [], [content]);
   const connections = useMemo(() => content?.connections ?? [], [content]);
@@ -317,6 +328,21 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
 
   const handleSelectNode = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
+    setSelectedConnectionId(null);
+    setSelectedViaIndex(null);
+  }, []);
+
+  const handleCanvasRef = useCallback((node: HTMLDivElement | null) => {
+    canvasRef.current = node;
+    setCanvasElement(node);
+  }, []);
+
+  const handleClearSelection = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    setSelectedNodeId(null);
     setSelectedConnectionId(null);
     setSelectedViaIndex(null);
   }, []);
@@ -518,8 +544,9 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
               <div className="relevant-experiences-intro text-center"><h2 className="relevant-experiences-intro__title font-anta">Relevant Experiences</h2></div>
               <div ref={laneRef} className="relevant-experiences-editor-lane">
                 <div className="relevant-experiences-map" style={{ height: `${canvasHeight * scale}px` }}>
-                  <div ref={canvasRef} className="relevant-experiences-map__canvas" style={{ width: `${baseCanvasWidth}px`, height: `${canvasHeight}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+                  <div ref={handleCanvasRef} className="relevant-experiences-map__canvas" style={{ width: `${baseCanvasWidth}px`, height: `${canvasHeight}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }} onPointerDown={editorEnabled ? handleClearSelection : undefined}>
                     {editorEnabled ? <div className="relevant-experiences-editor-grid" /> : null}
+                    {editorEnabled ? <div className="relevant-experiences-editor-guides" /> : null}
                     <RelevantExperienceConnections
                       canvasHeight={canvasHeight}
                       canvasWidth={baseCanvasWidth}
@@ -527,12 +554,12 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
                       nodes={nodes}
                       measuredNodeLayouts={measuredNodeLayoutsById}
                       editorEnabled={editorEnabled}
-                      selectedConnectionId={selectedConnectionId}
+                      selectedConnectionId={editorEnabled ? selectedConnectionId : null}
                       selectedViaIndex={selectedViaIndex}
                       onSelectConnection={handleSelectConnection}
                       onSelectViaPoint={handleSelectViaPoint}
                     />
-                    {nodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={selectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasRef.current} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
+                    {nodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={editorEnabled && selectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
                   </div>
                 </div>
               </div>

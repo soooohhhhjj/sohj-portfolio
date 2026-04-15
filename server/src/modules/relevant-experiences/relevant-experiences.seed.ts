@@ -17,6 +17,18 @@ type RelevantExperiencesContentState = {
       height: number;
     };
   }>;
+  connections: Array<{
+    id: string;
+    from: string;
+    to: string;
+    fromAnchor: 'top' | 'right' | 'bottom' | 'left';
+    toAnchor: 'top' | 'right' | 'bottom' | 'left';
+    viaPoints: Array<{
+      x: number;
+      y: number;
+    }>;
+    variant: 'group' | 'detail';
+  }>;
 };
 
 export const relevantExperiencesSeedState: RelevantExperiencesContentState = {
@@ -80,4 +92,5 @@ export const relevantExperiencesSeedState: RelevantExperiencesContentState = {
       layout: { x: 555, y: 1040, width: 315, height: 243 },
     },
   ],
+  connections: [],
 };
