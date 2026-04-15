@@ -65,7 +65,7 @@
 
   /* #region Relevant Experiences Intro */
   .relevant-experiences-intro {
-    margin: 0 auto;
+    margin: 0 auto 3.5rem;
     max-width: 44rem;
   }
 
@@ -87,106 +87,153 @@
   }
   /* #endregion */
 
-  /* #region Relevant Experiences Layout */
-  .relevant-experiences-list {
-    margin-top: 3.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3rem;
-  }
-
-  .relevant-experiences-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .relevant-experiences-track-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .relevant-experiences-group__connector {
+  /* #region Relevant Experiences Map */
+  .relevant-experiences-editor-lane {
     position: relative;
-    width: 1px;
-    height: 2rem;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(247, 247, 217, 0.52) 0 7px,
-      transparent 7px 14px
-    );
-    opacity: 0.9;
-  }
-
-  .relevant-experiences-children {
-    position: relative;
-    display: grid;
     width: 100%;
-    gap: 1rem;
   }
+
+  .relevant-experiences-map {
+    position: relative;
+    width: 100%;
+  }
+
+  .relevant-experiences-map__canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .relevant-experiences-editor-grid {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    --re-grid-size: 40px;
+    --re-grid-half: 20px;
+    opacity: 0.18;
+    background-image:
+      linear-gradient(rgba(52, 211, 153, 0.22) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(52, 211, 153, 0.22) 1px, transparent 1px);
+    background-size: var(--re-grid-size) var(--re-grid-size);
+    background-repeat: repeat;
+    background-position: calc(50% - var(--re-grid-half)) calc(50% - var(--re-grid-half));
+  }
+
   /* #endregion */
 
   /* #region Relevant Experiences Cards */
   .relevant-experiences-card {
+    position: absolute;
+    z-index: 10;
+    overflow: visible;
+  }
+
+  .relevant-experiences-card--editable {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .relevant-experiences-card--editable:active {
+    cursor: grabbing;
+  }
+
+  .relevant-experiences-card--selected {
+    box-shadow:
+      0 0 0 1px rgba(52, 211, 153, 0.55),
+      0 0 24px rgba(52, 211, 153, 0.16);
+    border-radius: 0.35rem;
+  }
+
+  .relevant-experiences-card.memory-node {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .relevant-experiences-card.memory-node::before,
+  .relevant-experiences-card.memory-node::after {
+    content: none;
+  }
+
+  .relevant-experiences-card.memory-node:hover {
+    background: transparent;
+  }
+
+  .relevant-experiences-card svg {
+    z-index: 0;
+  }
+
+  .relevant-experiences-card .journey-map-card {
+    z-index: 10;
+  }
+
+  .relevant-experiences-card.journey-showcase__card--child {
+    width: 100%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .relevant-experiences-card .journey-map-card__media {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-bottom: 0.55rem;
+    height: auto;
+  }
+
+  .relevant-experiences-card .journey-showcase__card--parent {
+    max-width: none;
+  }
+
+  .relevant-experiences-card .journey-memory-parent-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+  }
+
+  .relevant-experiences-card .journey-showcase__card,
+  .relevant-experiences-card .journey-map-card,
+  .relevant-experiences-card.journey-showcase__card,
+  .relevant-experiences-card.journey-map-card {
     position: relative;
     width: 100%;
     overflow: hidden;
-    color: var(--base-text-color);
-    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid var(--base-text-color);
+    border-radius: 0.35rem;
+    --journey-card-surface: rgba(255, 255, 255, 0.012);
+    background: var(--journey-card-surface);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   }
 
-  .relevant-experiences-card--parent {
-    width: 315px;
-    max-width: 315px;
-    min-height: 243px;
-    padding: 1.15rem;
+  .relevant-experiences-card .journey-showcase__card--parent {
+    padding: 1.1rem;
+    border: none;
+    overflow: visible;
   }
 
-  .relevant-experiences-card--child {
-    width: 315px;
-    max-width: 315px;
-    min-height: 243px;
-    padding: 0.9rem;
-    display: flex;
-    flex-direction: column;
+  .relevant-experiences-card.journey-showcase__card--child {
+    padding: 1rem;
+    border: none;
+    overflow: visible;
+    --journey-card-surface: rgba(255, 255, 255, 0.012);
   }
 
-  .relevant-experiences-card--parent::before,
-  .relevant-experiences-card--parent::after,
-  .relevant-experiences-card--child::before,
-  .relevant-experiences-card--child::after {
+  .relevant-experiences-card.journey-showcase__card--child::before,
+  .relevant-experiences-card.journey-showcase__card--child::after {
     content: '';
     position: absolute;
-    inset: 0;
+    inset: -1px;
     pointer-events: none;
   }
 
-  .relevant-experiences-card--parent::before {
-    background:
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.35rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.35rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1.35rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1px 1.35rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1.35rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1px 1.35rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1.35rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.35rem no-repeat;
-    opacity: 0.75;
-  }
-
-  .relevant-experiences-card--parent::after {
-    inset: 0.45rem;
-    border: 1px solid rgba(247, 247, 217, 0.12);
-    border-radius: 0.18rem;
-    opacity: 0.38;
-  }
-
-  .relevant-experiences-card--child::before {
+  .relevant-experiences-card.journey-showcase__card--child::before {
     background:
       linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.15rem 1px no-repeat,
       linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.15rem no-repeat,
@@ -199,20 +246,45 @@
     opacity: 0.75;
   }
 
-  .relevant-experiences-card--child::after {
+  .relevant-experiences-card.journey-showcase__card--child::after {
     inset: 0.35rem;
     border: 1px solid rgba(247, 247, 217, 0.14);
     border-radius: 0.18rem;
     opacity: 0.45;
   }
 
-  .relevant-experiences-card__parent-header {
+  .relevant-experiences-card--selected.journey-showcase__card--child {
+    box-shadow:
+      0 0 0 1px rgba(52, 211, 153, 0.55),
+      0 0 24px rgba(52, 211, 153, 0.16),
+      inset 0 0 0 1px rgba(52, 211, 153, 0.35);
+  }
+
+  .relevant-experiences-card--selected.journey-showcase__card--child::before {
+    opacity: 1;
+    background:
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1.15rem 1px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1px 1.15rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1.15rem 1px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1px 1.15rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1.15rem 1px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1px 1.15rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1.15rem 1px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1px 1.15rem no-repeat;
+  }
+
+  .relevant-experiences-card--selected.journey-showcase__card--child::after {
+    border-color: rgba(52, 211, 153, 0.5);
+    opacity: 0.9;
+  }
+
+  .relevant-experiences-card .journey-map-card__parent-header {
     display: flex;
     align-items: center;
     gap: 0.85rem;
   }
 
-  .relevant-experiences-card__icon-shell {
+  .relevant-experiences-card .journey-map-card__icon-shell {
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -225,7 +297,7 @@
     clip-path: polygon(0 0, calc(100% - 0.3rem) 0, 100% 0.3rem, 100% 100%, 0.3rem 100%, 0 calc(100% - 0.3rem));
   }
 
-  .relevant-experiences-card__icon-shell::before {
+  .relevant-experiences-card .journey-map-card__icon-shell::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -234,7 +306,7 @@
     opacity: 0.9;
   }
 
-  .relevant-experiences-card__icon-shell::after {
+  .relevant-experiences-card .journey-map-card__icon-shell::after {
     content: '';
     position: absolute;
     left: 0.58rem;
@@ -244,13 +316,13 @@
     opacity: 0.9;
   }
 
-  .relevant-experiences-card__icon {
-    width: 1.35rem;
-    height: 1.35rem;
+  .relevant-experiences-card .journey-map-card__icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    color: var(--base-text-color);
   }
 
-  .relevant-experiences-card__title {
-    margin: 0;
+  .relevant-experiences-card .journey-map-card__title {
     font-size: 0.94rem;
     font-weight: 500;
     letter-spacing: 0.1px;
@@ -259,22 +331,18 @@
     white-space: nowrap;
   }
 
-  .relevant-experiences-card__child-title {
-    position: relative;
-    z-index: 1;
-    margin: 0.85rem 0 0 2px;
+  .relevant-experiences-card .journey-map-card__child-title {
     font-size: 0.95rem;
     font-weight: 600;
     letter-spacing: 0.1px;
+    margin-left: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .relevant-experiences-card__details {
-    position: relative;
-    z-index: 1;
-    margin: 0.75rem 0 0;
+  .relevant-experiences-card .journey-map-card__details {
+    margin-top: 0.72rem;
     color: var(--base-text-color);
     font-family: 'Jura', sans-serif;
     font-size: 0.82rem;
@@ -282,25 +350,49 @@
     opacity: 0.72;
   }
 
-  .relevant-experiences-card__details--parent {
+  .relevant-experiences-card .journey-map-card__details--truncate {
+    overflow: hidden;
+  }
+
+  .relevant-experiences-card .journey-showcase__card--parent .journey-map-card__details {
     padding-top: 0.8rem;
     border-top: 1px dashed rgba(247, 247, 217, 0.28);
-    overflow: hidden;
   }
 
-  .relevant-experiences-card__image-wrap {
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
+  .relevant-experiences-card .journey-showcase__card--parent::before,
+  .relevant-experiences-card .journey-showcase__card--parent::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .relevant-experiences-card .journey-showcase__card--parent::before {
+    background:
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.35rem no-repeat;
+    opacity: 0.75;
+  }
+
+  .relevant-experiences-card .journey-showcase__card--parent::after {
+    inset: 0.45rem;
+    border: 1px solid rgba(247, 247, 217, 0.12);
+    border-radius: 0.18rem;
+    opacity: 0.38;
+  }
+
+  .relevant-experiences-card .journey-map-card__media {
+    margin-bottom: 0.75rem;
     aspect-ratio: 16 / 10;
-    flex: 1 1 auto;
-    min-height: 0;
-    border-radius: 0.22rem;
-    border: 1px solid rgba(247, 247, 217, 0.14);
-    background: rgba(255, 255, 255, 0.03);
   }
 
-  .relevant-experiences-card__image {
+  .relevant-experiences-card .journey-map-card__image {
     display: block;
     width: 100%;
     height: 100%;
@@ -308,37 +400,207 @@
     object-position: top center;
   }
 
-  .relevant-experiences-card__child-copy {
-    margin-left: 0.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    font-size: 0.75rem;
-    color: var(--base-text-color);
+  .relevant-experiences-resize-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(52, 211, 153, 0.22);
+    border: 1px solid rgba(52, 211, 153, 0.75);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.22);
+    z-index: 30;
+    touch-action: none;
+    user-select: none;
   }
 
-  .relevant-experiences-card__child-detail-row {
-    margin-top: 0.25rem;
+  .relevant-experiences-resize-handle--nw {
+    left: -7px;
+    top: -7px;
+    cursor: nwse-resize;
+  }
+
+  .relevant-experiences-resize-handle--ne {
+    right: -7px;
+    top: -7px;
+    cursor: nesw-resize;
+  }
+
+  .relevant-experiences-resize-handle--sw {
+    left: -7px;
+    bottom: -7px;
+    cursor: nesw-resize;
+  }
+
+  .relevant-experiences-resize-handle--se {
+    right: -7px;
+    bottom: -7px;
+    cursor: nwse-resize;
+  }
+  /* #endregion */
+
+  /* #region Relevant Experiences HUD */
+  .relevant-experiences-editor-hud {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 90;
+    width: min(92vw, 28rem);
+    max-height: min(86vh, 48rem);
+    overflow: auto;
+    padding: 1.25rem 0.95rem 0.85rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.82);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+    will-change: transform;
+  }
+
+  .relevant-experiences-editor-hud--minimized {
+    width: fit-content;
+    max-width: 92vw;
+    padding-bottom: 0.7rem;
+  }
+
+  .relevant-experiences-editor-hud__drag-grip {
+    position: absolute;
+    top: 0.55rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 5px;
+    border-radius: 999px;
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    background: rgba(52, 211, 153, 0.12);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .relevant-experiences-editor-hud__title-row {
     display: flex;
     align-items: center;
-    line-height: 1;
+    justify-content: space-between;
+    gap: 0.75rem;
   }
 
-  .relevant-experiences-card__child-detail-prefix {
-    margin-bottom: 0.25rem;
-    user-select: none;
-    opacity: 0.55;
+  .relevant-experiences-editor-hud__title-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
-  .relevant-experiences-card__child-detail-text {
-    margin: 0 0 0 0.25rem;
-    flex: 1 1 auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    opacity: 0.7;
+  .relevant-experiences-editor-hud__title {
+    font-family: 'Jura', sans-serif;
     font-size: 0.75rem;
-    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .relevant-experiences-editor-hud__mini-toggle {
+    font-family: 'Jura', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    padding: 0.32rem 0.55rem;
+    border-radius: 0.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .relevant-experiences-editor-hud__meta,
+  .relevant-experiences-editor-hud__actions {
+    margin-top: 0.7rem;
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .relevant-experiences-editor-hud__meta,
+  .relevant-experiences-editor-hud__hint {
+    font-family: 'Jura', sans-serif;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  .relevant-experiences-editor-hud__card-editor {
+    margin-top: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .relevant-experiences-editor-hud__card-row,
+  .relevant-experiences-editor-hud__field {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    align-items: start;
+    gap: 0.55rem;
+  }
+
+  .relevant-experiences-editor-hud__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem 0.75rem;
+  }
+
+  .relevant-experiences-editor-hud__grid .relevant-experiences-editor-hud__field {
+    grid-template-columns: 1.4rem 1fr;
+  }
+
+  .relevant-experiences-editor-hud__label {
+    font-family: 'Jura', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    padding-top: 0.25rem;
+  }
+
+  .relevant-experiences-editor-hud__select,
+  .relevant-experiences-editor-hud__input,
+  .relevant-experiences-editor-hud__textarea {
+    width: 100%;
+    min-width: 0;
+    border-radius: 0.45rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.82);
+    font-family: 'Jura', sans-serif;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.58rem;
+    outline: none;
+  }
+
+  .relevant-experiences-editor-hud__textarea {
+    resize: vertical;
+    min-height: 4rem;
+  }
+
+  .relevant-experiences-editor-hud__select:focus,
+  .relevant-experiences-editor-hud__input:focus,
+  .relevant-experiences-editor-hud__textarea:focus {
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+  }
+
+  .relevant-experiences-editor-hud__card-actions,
+  .relevant-experiences-editor-hud__actions {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .relevant-experiences-editor-hud__card-actions button,
+  .relevant-experiences-editor-hud__actions button {
+    font-family: 'Jura', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    padding: 0.48rem 0.62rem;
+    border-radius: 0.45rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.05);
   }
   /* #endregion */
 
@@ -348,13 +610,6 @@
       font-size: 40px;
       -webkit-text-stroke: 1px;
       margin-top: 22px;
-    }
-
-    .relevant-experiences-card--parent,
-    .relevant-experiences-card--child {
-      width: 100%;
-      max-width: none;
-      min-height: auto;
     }
   }
 
