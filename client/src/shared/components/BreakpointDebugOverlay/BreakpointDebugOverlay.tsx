@@ -29,6 +29,8 @@ interface BreakpointDebugOverlayProps {
   isPerfLiteEnabled: boolean;
   onTogglePerfLite: () => void;
   onReplayIntro: () => void;
+  isRelevantExperiencesEditorEnabled: boolean;
+  onToggleRelevantExperiencesEditor: () => void;
   onLogout: () => void;
 }
 
@@ -118,6 +120,8 @@ export function BreakpointDebugOverlay({
   isPerfLiteEnabled,
   onTogglePerfLite,
   onReplayIntro,
+  isRelevantExperiencesEditorEnabled,
+  onToggleRelevantExperiencesEditor,
   onLogout,
 }: BreakpointDebugOverlayProps) {
   const [viewportWidth, setViewportWidth] = useState<number>(
@@ -213,6 +217,21 @@ export function BreakpointDebugOverlay({
               aria-label={isVisible ? 'Hide breakpoint overlay' : 'Show breakpoint overlay'}
             >
               {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+
+            <button
+              type="button"
+              className="breakpoint-debug__panel-btn"
+              onClick={onToggleRelevantExperiencesEditor}
+              aria-label={
+                isRelevantExperiencesEditorEnabled
+                  ? 'Disable relevant experiences edit mode'
+                  : 'Enable relevant experiences edit mode'
+              }
+            >
+              <span className="text-[10px] font-jura tracking-[1px] text-white/80">
+                {isRelevantExperiencesEditorEnabled ? 'RE' : 're'}
+              </span>
             </button>
 
             <button
