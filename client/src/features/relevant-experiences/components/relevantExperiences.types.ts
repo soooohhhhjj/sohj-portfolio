@@ -16,6 +16,7 @@ export type RelevantExperienceNode = {
   parentId?: string;
   title: string;
   details: string;
+  tags?: string[];
   image?: string;
   icon?: RelevantExperienceIcon;
   layout: RelevantExperienceNodeLayout;

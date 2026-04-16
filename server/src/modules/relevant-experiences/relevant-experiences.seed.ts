@@ -8,6 +8,7 @@ type RelevantExperiencesContentState = {
     parentId?: string;
     title: string;
     details: string;
+    tags?: string[];
     image?: string;
     icon?: RelevantExperienceIcon;
     layout: {
@@ -49,6 +50,7 @@ export const relevantExperiencesSeedState: RelevantExperiencesContentState = {
       title: 'NCII Certificate',
       details:
         'Formal IT training focused on servicing, installation, and core networking fundamentals.',
+      tags: ['Installation', 'Configuration', 'Basic Networking'],
       image: '/Journey/node2/nc2-certi.PNG',
       layout: { x: 555, y: 0, width: 315, height: 243 },
     },
@@ -59,6 +61,7 @@ export const relevantExperiencesSeedState: RelevantExperiencesContentState = {
       title: 'Transfer It Internship Experience',
       details:
         'Internship exposure across support, maintenance, inventory, and operational workflows in a real company setup.',
+      tags: ['Hardware Maintenance', 'Troubleshooting', 'OS Setup', 'Remote Support', 'Documentation'],
       image: '/Journey/node4/tit-logo.png',
       layout: { x: 60, y: 360, width: 315, height: 243 },
     },
@@ -78,6 +81,7 @@ export const relevantExperiencesSeedState: RelevantExperiencesContentState = {
       title: 'System Architecture Thesis',
       details:
         'Inventory management thesis project centered on system structure, data flow, and implementation.',
+      tags: ['HTML', 'CSS', 'JavaScript', 'PHP', 'MySQL', 'Architecture'],
       image: '/Journey/node4/sysarch.PNG',
       layout: { x: 180, y: 720, width: 315, height: 243 },
     },
@@ -88,6 +92,7 @@ export const relevantExperiencesSeedState: RelevantExperiencesContentState = {
       title: 'Capstone Thesis',
       details:
         'Academic system project focused on debugging, integration support, and improving project stability.',
+      tags: ['HTML', 'CSS', 'JavaScript', 'PHP', 'MySQL', 'Integration'],
       image: '/Journey/node4/capstone-thesis.png',
       layout: { x: 555, y: 1040, width: 315, height: 243 },
     },

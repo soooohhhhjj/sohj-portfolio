@@ -13,6 +13,7 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
   return {
     nodes: content.nodes.map((node) => ({
       ...node,
+      ...(node.tags ? { tags: [...node.tags] } : {}),
       layout: { ...node.layout },
     })),
     connections: content.connections.map((connection) => ({

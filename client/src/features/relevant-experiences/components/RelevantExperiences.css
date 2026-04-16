@@ -215,15 +215,13 @@
   }
 
   .relevant-experiences-card__surface--child {
-    display: flex;
-    flex-direction: column;
     min-height: 0;
   }
 
   .relevant-experiences-card__body {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
   }
 
   .relevant-experiences-card .journey-map-card,
@@ -234,16 +232,6 @@
   .relevant-experiences-card .journey-showcase__card--child {
     width: 100%;
     max-width: none;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  .relevant-experiences-card .journey-map-card__media {
-    flex: 1 1 auto;
-    min-height: 0;
-    margin-bottom: 0.55rem;
-    height: auto;
   }
 
   .relevant-experiences-card .journey-showcase__card--parent {
@@ -257,7 +245,6 @@
     width: 100%;
     overflow: hidden;
     border: 1px solid var(--base-text-color);
-    border-radius: 0.35rem;
     --journey-card-surface: rgba(255, 255, 255, 0.012);
     background: var(--journey-card-surface);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
@@ -274,34 +261,36 @@
     border: none;
     overflow: hidden;
     --journey-card-surface: rgba(255, 255, 255, 0.012);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   }
 
-  .relevant-experiences-card .journey-showcase__card--child::before,
-  .relevant-experiences-card .journey-showcase__card--child::after {
+  .relevant-experiences-card .relevant-experiences-card__surface--framed::before,
+  .relevant-experiences-card .relevant-experiences-card__surface--framed::after {
     content: '';
     position: absolute;
-    inset: -1px;
+    inset: 0;
     pointer-events: none;
+    z-index: 2;
   }
 
-  .relevant-experiences-card .journey-showcase__card--child::before {
+  .relevant-experiences-card .relevant-experiences-card__surface--framed::before {
     background:
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.15rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.15rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1.15rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1px 1.15rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1.15rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1px 1.15rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1.15rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.15rem no-repeat;
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1.35rem 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.35rem no-repeat;
     opacity: 0.75;
   }
 
-  .relevant-experiences-card .journey-showcase__card--child::after {
-    inset: 0.35rem;
-    border: 1px solid rgba(247, 247, 217, 0.14);
+  .relevant-experiences-card .relevant-experiences-card__surface--framed::after {
+    inset: 0.45rem;
+    border: 1px solid rgba(247, 247, 217, 0.12);
     border-radius: 0.18rem;
-    opacity: 0.45;
+    opacity: 0.38;
   }
 
   .relevant-experiences-card--selected .journey-showcase__card--child {
@@ -311,20 +300,20 @@
       inset 0 0 0 1px rgba(52, 211, 153, 0.35);
   }
 
-  .relevant-experiences-card--selected .journey-showcase__card--child::before {
+  .relevant-experiences-card--selected .relevant-experiences-card__surface--framed::before {
     opacity: 1;
     background:
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1.15rem 1px no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1px 1.15rem no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1.15rem 1px no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1px 1.15rem no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1.15rem 1px no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1px 1.15rem no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1.15rem 1px no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1px 1.15rem no-repeat;
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1.35rem 1px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1px 1.35rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1.35rem 1px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1px 1.35rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1.35rem 1px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1px 1.35rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1.35rem 1px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1px 1.35rem no-repeat;
   }
 
-  .relevant-experiences-card--selected .journey-showcase__card--child::after {
+  .relevant-experiences-card--selected .relevant-experiences-card__surface--framed::after {
     border-color: rgba(52, 211, 153, 0.5);
     opacity: 0.9;
   }
@@ -385,13 +374,14 @@
     font-size: 0.95rem;
     font-weight: 700;
     letter-spacing: 0.1px;
-    margin-left: 2px;
+
     line-height: 1.35;
     white-space: normal;
   }
 
   .relevant-experiences-card .journey-map-card__child-details {
     margin: 0.5rem 0 0;
+    padding-left: 2px;
     color: rgba(247, 247, 217, 0.7);
     font-size: 0.74rem;
     line-height: 1.45;
@@ -404,6 +394,8 @@
     flex-wrap: wrap;
     gap: 0.38rem;
     margin-top: 0.72rem;
+    padding-left: 3px;
+    overflow: hidden;
   }
 
   .relevant-experiences-card__tag {
@@ -439,45 +431,15 @@
     border-top: 1px dashed rgba(247, 247, 217, 0.28);
   }
 
-  .relevant-experiences-card .journey-showcase__card--parent::before,
-  .relevant-experiences-card .journey-showcase__card--parent::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  .relevant-experiences-card .journey-showcase__card--parent::before {
-    background:
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.35rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.35rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1.35rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1px 1.35rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1.35rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1px 1.35rem no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1.35rem 1px no-repeat,
-      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.35rem no-repeat;
-    opacity: 0.75;
-  }
-
-  .relevant-experiences-card .journey-showcase__card--parent::after {
-    inset: 0.45rem;
-    border: 1px solid rgba(247, 247, 217, 0.12);
-    border-radius: 0.18rem;
-    opacity: 0.38;
-  }
-
   .relevant-experiences-card .journey-map-card__media {
     margin-bottom: 0.75rem;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: auto;
   }
 
   .relevant-experiences-card .journey-map-card__image {
     display: block;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top center;
+    height: auto;
   }
 
   .relevant-experiences-resize-handle {

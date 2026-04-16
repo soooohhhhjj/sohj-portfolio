@@ -28,6 +28,7 @@ export type RelevantExperienceNode = {
   parentId?: string;
   title: string;
   details: string;
+  tags?: string[];
   image?: string;
   icon?: RelevantExperienceIcon;
   layout: RelevantExperienceNodeLayout;
@@ -73,6 +74,7 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
   return {
     nodes: content.nodes.map((node) => ({
       ...node,
+      ...(node.tags ? { tags: [...node.tags] } : {}),
       layout: { ...node.layout },
     })),
     connections: content.connections.map((connection) => ({
@@ -132,6 +134,11 @@ function sanitizeNode(input: unknown) {
   const title = typeof node.title === 'string' ? node.title.trim() : '';
   const details = typeof node.details === 'string' ? node.details.trim() : '';
   const layout = sanitizeNodeLayout(node.layout);
+  const tags = Array.isArray(node.tags)
+    ? node.tags
+        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter((tag): tag is string => Boolean(tag))
+    : [];
 
   if (!id || !type || !title || !details || !layout) {
     return null;
@@ -149,6 +156,7 @@ function sanitizeNode(input: unknown) {
     ...(parentId ? { parentId } : {}),
     title,
     details,
+    ...(tags.length > 0 ? { tags } : {}),
     ...(image ? { image } : {}),
     ...(icon ? { icon } : {}),
     layout,
@@ -237,6 +245,25 @@ function sanitizeContentState(input: unknown): RelevantExperiencesContentState |
   return { nodes, connections };
 }
 
+function applySeedNodeDefaults(content: RelevantExperiencesContentState): RelevantExperiencesContentState {
+  const seedNodesById = new Map(relevantExperiencesSeedState.nodes.map((node) => [node.id, node]));
+
+  return {
+    ...content,
+    nodes: content.nodes.map((node) => {
+      const seedNode = seedNodesById.get(node.id);
+      if (!seedNode?.tags?.length || node.tags?.length) {
+        return node;
+      }
+
+      return {
+        ...node,
+        tags: [...seedNode.tags],
+      };
+    }),
+  };
+}
+
 function buildStateFromLegacyDocument(document: StoredContentState) {
   const nextState = cloneContentState(relevantExperiencesSeedState);
   const textOverrides = new Map((document?.textOverrides ?? []).map((override) => [override.id, override]));
@@ -267,7 +294,7 @@ function buildStateFromLegacyDocument(document: StoredContentState) {
 function toState(document: StoredContentState) {
   const sanitizedState = sanitizeContentState(document);
   if (sanitizedState) {
-    return sanitizedState;
+    return applySeedNodeDefaults(sanitizedState);
   }
 
   return buildStateFromLegacyDocument(document);

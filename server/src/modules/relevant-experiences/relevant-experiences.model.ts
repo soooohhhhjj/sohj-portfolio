@@ -37,6 +37,7 @@ const relevantExperiencesNodeSchema = new Schema(
     parentId: { type: String, trim: true, default: undefined },
     title: { type: String, required: true, trim: true },
     details: { type: String, required: true, trim: true },
+    tags: { type: [String], default: undefined },
     image: { type: String, trim: true, default: undefined },
     icon: {
       type: String,

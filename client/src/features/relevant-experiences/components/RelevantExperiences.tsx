@@ -23,7 +23,6 @@ const MIN_CARD_WIDTH = 200;
 const MIN_CARD_HEIGHT = 170;
 const MIN_CANVAS_WIDTH = 930;
 const MIN_CANVAS_HEIGHT = 0;
-const CANVAS_BOTTOM_PADDING = 160;
 const CONNECTION_ANCHORS: RelevantExperienceConnectionAnchor[] = ['top', 'right', 'bottom', 'left'];
 
 function readLocalStorageJson<T>(key: string, fallback: T): T {
@@ -45,7 +44,7 @@ function resolveCanvasHeight(nodes: RelevantExperienceNode[]) {
     Math.max(maxBottom, node.layout.y + node.layout.height)
   ), 0);
 
-  return Math.max(MIN_CANVAS_HEIGHT, furthestBottom + CANVAS_BOTTOM_PADDING);
+  return Math.max(MIN_CANVAS_HEIGHT, furthestBottom);
 }
 
 function clampNodeLayoutToCanvas(layout: RelevantExperienceNodeLayout, canvasHeight: number) {
@@ -69,6 +68,19 @@ function clampCanvasPoint(point: RelevantExperienceConnectionPoint, canvasHeight
 
 function createConnectionId() {
   return `connection-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function formatTagsForEditor(tags?: string[]) {
+  return tags?.join(', ') ?? '';
+}
+
+function parseTagsFromEditor(value: string) {
+  const nextTags = value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+  return nextTags.length > 0 ? nextTags : undefined;
 }
 
 function TruncatedText({ as = 'p', text, className }: { as?: 'p' | 'span'; text: string; className: string }) {
@@ -236,7 +248,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
         </>
       ) : null}
       {node.type === 'parent' && node.icon ? (
-        <article className="relevant-experiences-card__surface relevant-experiences-card__surface--parent journey-map-card journey-showcase__card journey-showcase__card--parent">
+        <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--parent journey-map-card journey-showcase__card journey-showcase__card--parent">
           <div className="journey-map-card__parent-header">
             <div className="journey-map-card__icon-shell"><RelevantExperienceIconGlyph icon={node.icon} /></div>
             <h3 className="journey-map-card__title font-jura">{node.title}</h3>
@@ -244,7 +256,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
           <TruncatedText text={node.details} className="journey-map-card__details journey-map-card__details--truncate font-jura text-sm leading-relaxed" />
         </article>
       ) : (
-        <article className="relevant-experiences-card__surface relevant-experiences-card__surface--child journey-map-card journey-showcase__card journey-showcase__card--child">
+        <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--child journey-map-card journey-showcase__card journey-showcase__card--child">
           {imageSrc ? (
             <GlassCard width="w-full" corner="rounded-[2px]" shadow="" className="overflow-hidden journey-map-card__media">
               <img src={imageSrc} alt={node.title} className="journey-map-card__image" loading="lazy" draggable={false} />
@@ -276,6 +288,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [selectedViaIndex, setSelectedViaIndex] = useState<number | null>(null);
   const [pendingConnectionTargetId, setPendingConnectionTargetId] = useState<string>('');
+  const [tagEditorDraft, setTagEditorDraft] = useState<{ nodeId: string | null; value: string }>({ nodeId: null, value: '' });
   const [copyFeedback, setCopyFeedback] = useState<'idle' | 'success' | 'error'>('idle');
   const {
     content,
@@ -310,22 +323,18 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     if (typeof window !== 'undefined') window.localStorage.setItem(HUD_MINIMIZED_STORAGE_KEY, JSON.stringify(hudMinimized));
   }, [hudMinimized]);
 
-  useEffect(() => {
-    if (editorEnabled) {
-      return;
-    }
-
-    setSelectedNodeId(null);
-    setSelectedConnectionId(null);
-    setSelectedViaIndex(null);
-  }, [editorEnabled]);
-
   const nodes = useMemo(() => content?.nodes ?? [], [content]);
   const connections = useMemo(() => content?.connections ?? [], [content]);
-  const selectedNode = useMemo(() => nodes.find((node) => node.id === selectedNodeId) ?? null, [nodes, selectedNodeId]);
-  const selectedConnection = useMemo(() => connections.find((connection) => connection.id === selectedConnectionId) ?? null, [connections, selectedConnectionId]);
+  const activeSelectedNodeId = editorEnabled ? selectedNodeId : null;
+  const activeSelectedConnectionId = editorEnabled ? selectedConnectionId : null;
+  const activeSelectedViaIndex = editorEnabled ? selectedViaIndex : null;
+  const selectedNode = useMemo(() => nodes.find((node) => node.id === activeSelectedNodeId) ?? null, [activeSelectedNodeId, nodes]);
+  const selectedConnection = useMemo(() => connections.find((connection) => connection.id === activeSelectedConnectionId) ?? null, [activeSelectedConnectionId, connections]);
   const selectedNodeLayout = selectedNode?.layout ?? null;
   const measuredNodeLayoutsById = useMemo(() => new Map(Object.entries(measuredNodeLayouts)), [measuredNodeLayouts]);
+  const tagEditorValue = selectedNode?.type === 'child'
+    ? (tagEditorDraft.nodeId === selectedNode.id ? tagEditorDraft.value : formatTagsForEditor(selectedNode.tags))
+    : '';
   const availableConnectionTargets = useMemo(() => (
     selectedNode
       ? nodes.filter((node) => node.id !== selectedNode.id)
@@ -340,7 +349,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
       const nextLayout = transform(node.layout);
       const nextCanvasHeight = Math.max(
         canvasHeight,
-        nextLayout.y + Math.max(MIN_CARD_HEIGHT, nextLayout.height) + CANVAS_BOTTOM_PADDING,
+        nextLayout.y + Math.max(MIN_CARD_HEIGHT, nextLayout.height),
       );
 
       return {
@@ -397,6 +406,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedNodeId(nodeId);
     setSelectedConnectionId(null);
     setSelectedViaIndex(null);
+    setTagEditorDraft((prev) => (prev.nodeId === nodeId ? prev : { nodeId: null, value: '' }));
   }, []);
 
   const handleCanvasRef = useCallback((node: HTMLDivElement | null) => {
@@ -411,6 +421,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedNodeId(null);
     setSelectedConnectionId(null);
     setSelectedViaIndex(null);
+    setTagEditorDraft({ nodeId: null, value: '' });
   }, []);
 
   const handleSelectConnection = useCallback((connectionId: string, event: ReactPointerEvent<SVGPathElement>) => {
@@ -418,6 +429,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedConnectionId(connectionId);
     setSelectedNodeId(null);
     setSelectedViaIndex(null);
+    setTagEditorDraft({ nodeId: null, value: '' });
 
     if (!event.shiftKey) {
       return;
@@ -444,6 +456,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedConnectionId(connectionId);
     setSelectedNodeId(null);
     setSelectedViaIndex(viaIndex);
+    setTagEditorDraft({ nodeId: null, value: '' });
 
     if (event.altKey) {
       updateConnection(connectionId, (connection) => ({
@@ -584,6 +597,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedConnectionId(null);
     setSelectedViaIndex(null);
     setPendingConnectionTargetId('');
+    setTagEditorDraft({ nodeId: null, value: '' });
   }, [resetToPersisted]);
 
   const statusBody = isLoading ? (
@@ -619,12 +633,12 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
                       nodes={nodes}
                       measuredNodeLayouts={measuredNodeLayoutsById}
                       editorEnabled={editorEnabled}
-                      selectedConnectionId={editorEnabled ? selectedConnectionId : null}
-                      selectedViaIndex={selectedViaIndex}
+                      selectedConnectionId={activeSelectedConnectionId}
+                      selectedViaIndex={activeSelectedViaIndex}
                       onSelectConnection={handleSelectConnection}
                       onSelectViaPoint={handleSelectViaPoint}
                     />
-                    {nodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={editorEnabled && selectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
+                    {nodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={activeSelectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
                   </div>
                 </div>
               </div>
@@ -637,14 +651,33 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
           <div className="relevant-experiences-editor-hud__drag-grip" onPointerDown={handleHudPointerDown} aria-label="Drag relevant experiences editor panel" role="presentation" />
           <div className="relevant-experiences-editor-hud__title-row">
             <div className="relevant-experiences-editor-hud__title">Relevant Experiences Edit Mode</div>
-            <div className="relevant-experiences-editor-hud__title-actions"><button type="button" className="relevant-experiences-editor-hud__mini-toggle" onClick={() => setHudMinimized((prev) => !prev)}>{hudMinimized ? 'Expand' : 'Minimize'}</button></div>
+            <div className="relevant-experiences-editor-hud__title-actions">
+              <button type="button" className="relevant-experiences-editor-hud__mini-toggle" onClick={save} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save'}</button>
+              <button type="button" className="relevant-experiences-editor-hud__mini-toggle" onClick={() => setHudMinimized((prev) => !prev)}>{hudMinimized ? 'Expand' : 'Minimize'}</button>
+            </div>
           </div>
           {!hudMinimized ? <div className="relevant-experiences-editor-hud__meta"><span>canvas: {Math.round(baseCanvasWidth)} x {canvasHeight}</span><span>scale: {scale.toFixed(3)}</span><span>card: {selectedNode?.id ?? 'none'}</span><span>connector: {selectedConnection?.id ?? 'none'}</span></div> : null}
-          {!hudMinimized ? <div className="relevant-experiences-editor-hud__card-editor"><div className="relevant-experiences-editor-hud__card-row"><label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-selected-card">Card</label><select id="relevant-experiences-editor-selected-card" className="relevant-experiences-editor-hud__select" value={selectedNodeId ?? ''} onChange={(event) => { const nextNodeId = event.target.value || null; setSelectedNodeId(nextNodeId); setSelectedConnectionId(null); setSelectedViaIndex(null); }}><option value="">(click a card)</option>{nodes.map((node) => <option key={node.id} value={node.id}>{`${node.id} - ${node.title}`}</option>)}</select></div>
+          {!hudMinimized ? <div className="relevant-experiences-editor-hud__card-editor"><div className="relevant-experiences-editor-hud__card-row"><label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-selected-card">Card</label><select id="relevant-experiences-editor-selected-card" className="relevant-experiences-editor-hud__select" value={activeSelectedNodeId ?? ''} onChange={(event) => { const nextNodeId = event.target.value || null; setSelectedNodeId(nextNodeId); setSelectedConnectionId(null); setSelectedViaIndex(null); setTagEditorDraft({ nodeId: null, value: '' }); }}><option value="">(click a card)</option>{nodes.map((node) => <option key={node.id} value={node.id}>{`${node.id} - ${node.title}`}</option>)}</select></div>
             {selectedNode && selectedNodeLayout ? (
               <>
                 <div className="relevant-experiences-editor-hud__field"><label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-card-title">Title</label><input id="relevant-experiences-editor-card-title" className="relevant-experiences-editor-hud__input" value={selectedNode.title} onChange={(event) => updateNode(selectedNode.id, (node) => ({ ...node, title: event.target.value }))} /></div>
                 <div className="relevant-experiences-editor-hud__field"><label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-card-details">{selectedNode.type === 'parent' ? 'Summary' : 'Details'}</label><textarea id="relevant-experiences-editor-card-details" className="relevant-experiences-editor-hud__textarea" rows={selectedNode.type === 'parent' ? 4 : 3} value={selectedNode.details} onChange={(event) => updateNode(selectedNode.id, (node) => ({ ...node, details: event.target.value }))} /></div>
+                {selectedNode.type === 'child' ? (
+                  <div className="relevant-experiences-editor-hud__field">
+                    <label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-card-tags">Tags</label>
+                    <textarea
+                      id="relevant-experiences-editor-card-tags"
+                      className="relevant-experiences-editor-hud__textarea"
+                      rows={3}
+                      value={tagEditorValue}
+                      onChange={(event) => {
+                        const nextValue = event.target.value;
+                        setTagEditorDraft({ nodeId: selectedNode.id, value: nextValue });
+                        updateNode(selectedNode.id, (node) => ({ ...node, tags: parseTagsFromEditor(nextValue) }));
+                      }}
+                    />
+                  </div>
+                ) : null}
                 <div className="relevant-experiences-editor-hud__grid">
                   <div className="relevant-experiences-editor-hud__field"><label className="relevant-experiences-editor-hud__label">X</label><input className="relevant-experiences-editor-hud__input" type="number" value={selectedNodeLayout.x} onChange={(event) => handleMoveNode(selectedNode.id, { x: Number(event.target.value), y: selectedNodeLayout.y })} /></div>
                   <div className="relevant-experiences-editor-hud__field"><label className="relevant-experiences-editor-hud__label">Y</label><input className="relevant-experiences-editor-hud__input" type="number" value={selectedNodeLayout.y} onChange={(event) => handleMoveNode(selectedNode.id, { x: selectedNodeLayout.x, y: Number(event.target.value) })} /></div>
@@ -684,6 +717,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
                     setSelectedConnectionId(nextConnectionId);
                     setSelectedNodeId(null);
                     setSelectedViaIndex(null);
+                    setTagEditorDraft({ nodeId: null, value: '' });
                   }}
                 >
                   <option value="">(click a line)</option>
