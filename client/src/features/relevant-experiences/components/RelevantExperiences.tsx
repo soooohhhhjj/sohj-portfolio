@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { BriefcaseBusiness, FolderKanban } from 'lucide-react';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { Section, SectionContent } from '../../../shared/components/Container';
+import { BREAKPOINTS, CONTENT_MAX_WIDTH } from '../../../shared/constants/breakpoints';
 import { useRelevantExperiencesEditorState } from '../hooks/useRelevantExperiencesEditorState';
 import { RelevantExperienceConnections } from './RelevantExperienceConnections';
 import { getRenderableConnectionPoints } from './experienceConnections';
@@ -122,6 +123,51 @@ function ChildCardTag({ label }: { label: string }) {
   return <span className="relevant-experiences-card__tag font-jura">{label}</span>;
 }
 
+function RelevantExperienceCardContent({
+  node,
+  truncateParentDetails = false,
+}: {
+  node: RelevantExperienceNode;
+  truncateParentDetails?: boolean;
+}) {
+  const imageSrc = resolveAssetPath(node.image);
+
+  if (node.type === 'parent' && node.icon) {
+    return (
+      <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--parent journey-map-card journey-showcase__card journey-showcase__card--parent">
+        <div className="journey-map-card__parent-header">
+          <div className="journey-map-card__icon-shell"><RelevantExperienceIconGlyph icon={node.icon} /></div>
+          <h3 className="journey-map-card__title font-jura">{node.title}</h3>
+        </div>
+        {truncateParentDetails ? (
+          <TruncatedText text={node.details} className="journey-map-card__details journey-map-card__details--truncate font-jura text-sm leading-relaxed" />
+        ) : (
+          <p className="journey-map-card__details font-jura text-sm leading-relaxed">{node.details}</p>
+        )}
+      </article>
+    );
+  }
+
+  return (
+    <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--child journey-map-card journey-showcase__card journey-showcase__card--child">
+      {imageSrc ? (
+        <GlassCard width="w-full" corner="rounded-[2px]" shadow="" className="overflow-hidden journey-map-card__media">
+          <img src={imageSrc} alt={node.title} className="journey-map-card__image" loading="lazy" draggable={false} />
+        </GlassCard>
+      ) : null}
+      <div className="relevant-experiences-card__body">
+        <h4 className="journey-map-card__child-title font-jura">{node.title}</h4>
+        <p className="journey-map-card__child-details font-jura">{node.details}</p>
+        {node.tags?.length ? (
+          <div className="relevant-experiences-card__tags" aria-label={`${node.title} tags`}>
+            {node.tags.map((tag) => <ChildCardTag key={`${node.id}-${tag}`} label={tag} />)}
+          </div>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
 function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, onMeasure, onSelect, onMove, onResize }: {
   node: RelevantExperienceNode;
   selected: boolean;
@@ -239,7 +285,6 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(node.id); }
   };
-  const imageSrc = resolveAssetPath(node.image);
   return (
     <div
       ref={cardRef}
@@ -260,32 +305,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
           <span className="relevant-experiences-resize-handle relevant-experiences-resize-handle--se" onPointerDown={(event) => handleResizePointerDown('se', event)} onPointerMove={handleResizePointerMove} onPointerUp={handleResizePointerUp} />
         </>
       ) : null}
-      {node.type === 'parent' && node.icon ? (
-        <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--parent journey-map-card journey-showcase__card journey-showcase__card--parent">
-          <div className="journey-map-card__parent-header">
-            <div className="journey-map-card__icon-shell"><RelevantExperienceIconGlyph icon={node.icon} /></div>
-            <h3 className="journey-map-card__title font-jura">{node.title}</h3>
-          </div>
-          <TruncatedText text={node.details} className="journey-map-card__details journey-map-card__details--truncate font-jura text-sm leading-relaxed" />
-        </article>
-      ) : (
-        <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--child journey-map-card journey-showcase__card journey-showcase__card--child">
-          {imageSrc ? (
-            <GlassCard width="w-full" corner="rounded-[2px]" shadow="" className="overflow-hidden journey-map-card__media">
-              <img src={imageSrc} alt={node.title} className="journey-map-card__image" loading="lazy" draggable={false} />
-            </GlassCard>
-          ) : null}
-          <div className="relevant-experiences-card__body">
-            <h4 className="journey-map-card__child-title font-jura">{node.title}</h4>
-            <p className="journey-map-card__child-details font-jura">{node.details}</p>
-            {node.tags?.length ? (
-              <div className="relevant-experiences-card__tags" aria-label={`${node.title} tags`}>
-                {node.tags.map((tag) => <ChildCardTag key={`${node.id}-${tag}`} label={tag} />)}
-              </div>
-            ) : null}
-          </div>
-        </article>
-      )}
+      <RelevantExperienceCardContent node={node} truncateParentDetails />
     </div>
   );
 }
@@ -304,6 +324,10 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
   const [pendingConnectionTargetId, setPendingConnectionTargetId] = useState<string>('');
   const [tagEditorDraft, setTagEditorDraft] = useState<{ nodeId: string | null; value: string }>({ nodeId: null, value: '' });
   const [copyFeedback, setCopyFeedback] = useState<'idle' | 'success' | 'error'>('idle');
+  const [viewportWidth, setViewportWidth] = useState<number>(
+    typeof window === 'undefined' ? BREAKPOINTS.lg : window.innerWidth,
+  );
+  const activeLayoutKey = viewportWidth >= BREAKPOINTS.lg ? 'lg' : 'md';
   const {
     content,
     isLoading,
@@ -317,7 +341,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     save,
     isSaving,
     saveFeedback,
-  } = useRelevantExperiencesEditorState();
+  } = useRelevantExperiencesEditorState(activeLayoutKey);
 
   useEffect(() => {
     const lane = laneRef.current;
@@ -327,6 +351,15 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     });
     resizeObserver.observe(lane);
     return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth);
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -355,9 +388,71 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
       ? nodes.filter((node) => node.id !== selectedNode.id)
       : []
   ), [nodes, selectedNode]);
-  const baseCanvasWidth = MIN_CANVAS_WIDTH;
-  const scale = useMemo(() => (canvasWidth ? canvasWidth / baseCanvasWidth : 1), [baseCanvasWidth, canvasWidth]);
+  const layoutMode = useMemo<'desktop' | 'linear'>(() => {
+    if (viewportWidth >= BREAKPOINTS.md) {
+      return 'desktop';
+    }
+
+    return 'linear';
+  }, [viewportWidth]);
   const canvasHeight = useMemo(() => resolveCanvasHeight(nodes), [nodes]);
+  const activeCanvasWidth = useMemo(() => {
+    if (viewportWidth >= BREAKPOINTS.lg) {
+      return MIN_CANVAS_WIDTH;
+    }
+
+    if (viewportWidth >= BREAKPOINTS.md) {
+      return CONTENT_MAX_WIDTH.md;
+    }
+
+    return MIN_CANVAS_WIDTH;
+  }, [viewportWidth]);
+  const displayNodes = nodes;
+  const displayConnections = connections;
+  const displayCanvasHeight = useMemo(() => resolveCanvasHeight(displayNodes), [displayNodes]);
+  const scale = useMemo(() => {
+    if (!canvasWidth || canvasWidth >= activeCanvasWidth) {
+      return 1;
+    }
+
+    return canvasWidth / activeCanvasWidth;
+  }, [activeCanvasWidth, canvasWidth]);
+  const parentNodes = useMemo(() => (
+    nodes
+      .filter((node) => node.type === 'parent')
+      .sort((left, right) => (
+        left.layout.y - right.layout.y || left.layout.x - right.layout.x
+      ))
+  ), [nodes]);
+  const childNodesByParentId = useMemo(() => {
+    const grouped = new Map<string, RelevantExperienceNode[]>();
+
+    parentNodes.forEach((parent) => {
+      grouped.set(parent.id, []);
+    });
+
+    const orphanChildren: RelevantExperienceNode[] = [];
+
+    nodes
+      .filter((node) => node.type === 'child')
+      .sort((left, right) => (
+        left.layout.y - right.layout.y || left.layout.x - right.layout.x
+      ))
+      .forEach((child) => {
+        if (child.parentId && grouped.has(child.parentId)) {
+          grouped.get(child.parentId)?.push(child);
+          return;
+        }
+
+        orphanChildren.push(child);
+      });
+
+    if (orphanChildren.length > 0) {
+      grouped.set('orphans', orphanChildren);
+    }
+
+    return grouped;
+  }, [nodes, parentNodes]);
 
   const updateNodeLayout = useCallback((nodeId: string, transform: (layout: RelevantExperienceNodeLayout) => RelevantExperienceNodeLayout) => {
     updateNode(nodeId, (node) => {
@@ -588,6 +683,19 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setIsAddCornerMode(false);
   }, [selectedConnection, selectedViaIndex, updateConnection]);
 
+  const handleClearSelectedConnectionCorners = useCallback(() => {
+    if (!selectedConnection || selectedConnection.viaPoints.length === 0) {
+      return;
+    }
+
+    updateConnection(selectedConnection.id, (connection) => ({
+      ...connection,
+      viaPoints: [],
+    }));
+    setSelectedViaIndex(null);
+    setIsAddCornerMode(false);
+  }, [selectedConnection, updateConnection]);
+
   const handleOrthogonalizeSelectedConnection = useCallback(() => {
     if (!selectedConnection || selectedConnection.viaPoints.length === 0) {
       return;
@@ -682,25 +790,61 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
             <>
               <div className="relevant-experiences-intro text-center"><h2 className="relevant-experiences-intro__title font-anta">Relevant Experiences</h2></div>
               <div ref={laneRef} className="relevant-experiences-editor-lane">
-                <div className="relevant-experiences-map" style={{ height: `${canvasHeight * scale}px` }}>
-                  <div ref={handleCanvasRef} className="relevant-experiences-map__canvas" style={{ width: `${baseCanvasWidth}px`, height: `${canvasHeight}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }} onPointerDown={editorEnabled ? handleClearSelection : undefined}>
-                    {editorEnabled ? <div className="relevant-experiences-editor-grid" /> : null}
-                    <RelevantExperienceConnections
-                      canvasHeight={canvasHeight}
-                      canvasWidth={baseCanvasWidth}
-                      connections={connections}
-                      nodes={nodes}
-                      measuredNodeLayouts={measuredNodeLayoutsById}
-                      editorEnabled={editorEnabled}
-                      isAddCornerMode={isAddCornerMode}
-                      selectedConnectionId={activeSelectedConnectionId}
-                      selectedViaIndex={activeSelectedViaIndex}
-                      onSelectConnection={handleSelectConnection}
-                      onSelectViaPoint={handleSelectViaPoint}
-                    />
-                    {nodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={activeSelectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
+                {layoutMode === 'desktop' ? (
+                  <div className="relevant-experiences-map" style={{ height: `${displayCanvasHeight * scale}px` }}>
+                    <div ref={handleCanvasRef} className="relevant-experiences-map__canvas" style={{ width: `${activeCanvasWidth}px`, height: `${displayCanvasHeight}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }} onPointerDown={editorEnabled ? handleClearSelection : undefined}>
+                      {editorEnabled ? <div className="relevant-experiences-editor-grid" /> : null}
+                      <RelevantExperienceConnections
+                        canvasHeight={displayCanvasHeight}
+                        canvasWidth={activeCanvasWidth}
+                        connections={displayConnections}
+                        nodes={displayNodes}
+                        measuredNodeLayouts={measuredNodeLayoutsById}
+                        editorEnabled={editorEnabled}
+                        isAddCornerMode={isAddCornerMode}
+                        selectedConnectionId={activeSelectedConnectionId}
+                        selectedViaIndex={activeSelectedViaIndex}
+                        onSelectConnection={handleSelectConnection}
+                        onSelectViaPoint={handleSelectViaPoint}
+                      />
+                      {displayNodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={activeSelectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="relevant-experiences-responsive relevant-experiences-responsive--linear">
+                    {parentNodes.map((parent) => {
+                      const childNodes = childNodesByParentId.get(parent.id) ?? [];
+
+                      return (
+                        <section key={parent.id} className="relevant-experiences-group">
+                          <div className="relevant-experiences-group__parent relevant-experiences-card-shell">
+                            <RelevantExperienceCardContent node={parent} />
+                          </div>
+                          {childNodes.length > 0 ? (
+                            <div className="relevant-experiences-group__children relevant-experiences-group__children--linear">
+                              {childNodes.map((child) => (
+                                <div key={child.id} className="relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell">
+                                  <RelevantExperienceCardContent node={child} />
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </section>
+                      );
+                    })}
+                    {(childNodesByParentId.get('orphans') ?? []).length > 0 ? (
+                      <section className="relevant-experiences-group relevant-experiences-group--orphans">
+                        <div className="relevant-experiences-group__children relevant-experiences-group__children--linear">
+                          {(childNodesByParentId.get('orphans') ?? []).map((child) => (
+                            <div key={child.id} className="relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell">
+                              <RelevantExperienceCardContent node={child} />
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ) : null}
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -733,9 +877,17 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
               >
                 Ortho
               </button>
+              <button
+                type="button"
+                className="relevant-experiences-editor-hud__mini-toggle"
+                onClick={handleClearSelectedConnectionCorners}
+                disabled={selectedConnection.viaPoints.length === 0}
+              >
+                Remove Corners
+              </button>
             </div>
           ) : null}
-          {!hudMinimized ? <div className="relevant-experiences-editor-hud__meta"><span>canvas: {Math.round(baseCanvasWidth)} x {canvasHeight}</span><span>scale: {scale.toFixed(3)}</span><span>card: {selectedNode?.id ?? 'none'}</span><span>connector: {selectedConnection?.id ?? 'none'}</span></div> : null}
+          {!hudMinimized ? <div className="relevant-experiences-editor-hud__meta"><span>canvas: {Math.round(activeCanvasWidth)} x {displayCanvasHeight}</span><span>scale: {scale.toFixed(3)}</span><span>card: {selectedNode?.id ?? 'none'}</span><span>connector: {selectedConnection?.id ?? 'none'}</span></div> : null}
           {!hudMinimized ? <div className="relevant-experiences-editor-hud__card-editor"><div className="relevant-experiences-editor-hud__card-row"><label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-selected-card">Card</label><select id="relevant-experiences-editor-selected-card" className="relevant-experiences-editor-hud__select" value={activeSelectedNodeId ?? ''} onChange={(event) => { const nextNodeId = event.target.value || null; setSelectedNodeId(nextNodeId); setSelectedConnectionId(null); setSelectedViaIndex(null); setTagEditorDraft({ nodeId: null, value: '' }); }}><option value="">(click a card)</option>{nodes.map((node) => <option key={node.id} value={node.id}>{`${node.id} - ${node.title}`}</option>)}</select></div>
             {selectedNode && selectedNodeLayout ? (
               <>

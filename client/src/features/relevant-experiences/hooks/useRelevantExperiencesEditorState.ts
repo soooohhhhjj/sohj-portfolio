@@ -3,11 +3,15 @@ import type {
   RelevantExperienceConnection,
   RelevantExperienceNode,
   RelevantExperiencesContentState,
+  RelevantExperiencesLayoutNode,
+  RelevantExperiencesLayoutState,
 } from '../components/relevantExperiences.types';
 import {
   getRelevantExperiencesContent,
   saveRelevantExperiencesContent,
 } from '../services/relevantExperiencesService';
+
+type RelevantExperiencesLayoutKey = 'lg' | 'md';
 
 function cloneContentState(content: RelevantExperiencesContentState): RelevantExperiencesContentState {
   return {
@@ -20,10 +24,65 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
       ...connection,
       viaPoints: connection.viaPoints.map((point) => ({ ...point })),
     })),
+    ...(content.mdLayout
+      ? {
+          mdLayout: {
+            nodes: content.mdLayout.nodes.map((node) => ({
+              ...node,
+              layout: { ...node.layout },
+            })),
+            connections: content.mdLayout.connections.map((connection) => ({
+              ...connection,
+              viaPoints: connection.viaPoints.map((point) => ({ ...point })),
+            })),
+          },
+        }
+      : {}),
   };
 }
 
-export function useRelevantExperiencesEditorState() {
+function cloneLayoutState(layout: RelevantExperiencesLayoutState): RelevantExperiencesLayoutState {
+  return {
+    nodes: layout.nodes.map((node) => ({
+      ...node,
+      layout: { ...node.layout },
+    })),
+    connections: layout.connections.map((connection) => ({
+      ...connection,
+      viaPoints: connection.viaPoints.map((point) => ({ ...point })),
+    })),
+  };
+}
+
+function createMdLayoutFromBase(content: RelevantExperiencesContentState): RelevantExperiencesLayoutState {
+  return {
+    nodes: content.nodes.map((node) => ({
+      id: node.id,
+      layout: { ...node.layout },
+    })),
+    connections: content.connections.map((connection) => ({
+      ...connection,
+      viaPoints: connection.viaPoints.map((point) => ({ ...point })),
+    })),
+  };
+}
+
+function mergeLayoutNode(
+  node: RelevantExperienceNode,
+  layoutNodesById: Map<string, RelevantExperiencesLayoutNode>,
+): RelevantExperienceNode {
+  const layoutNode = layoutNodesById.get(node.id);
+  if (!layoutNode) {
+    return node;
+  }
+
+  return {
+    ...node,
+    layout: { ...layoutNode.layout },
+  };
+}
+
+export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExperiencesLayoutKey) {
   const persistedStateRef = useRef<RelevantExperiencesContentState | null>(null);
   const [content, setContent] = useState<RelevantExperiencesContentState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,18 +124,84 @@ export function useRelevantExperiencesEditorState() {
     };
   }, []);
 
+  const getActiveLayoutState = useCallback((state: RelevantExperiencesContentState): RelevantExperiencesLayoutState => {
+    if (activeLayoutKey === 'lg') {
+      return {
+        nodes: state.nodes.map((node) => ({
+          id: node.id,
+          layout: { ...node.layout },
+        })),
+        connections: state.connections.map((connection) => ({
+          ...connection,
+          viaPoints: connection.viaPoints.map((point) => ({ ...point })),
+        })),
+      };
+    }
+
+    return state.mdLayout ? cloneLayoutState(state.mdLayout) : createMdLayoutFromBase(state);
+  }, [activeLayoutKey]);
+
+  const mergedContent = content
+    ? (() => {
+        const activeLayout = getActiveLayoutState(content);
+        const layoutNodesById = new Map(activeLayout.nodes.map((node) => [node.id, node]));
+
+        return {
+          nodes: content.nodes.map((node) => mergeLayoutNode(node, layoutNodesById)),
+          connections: activeLayout.connections,
+          ...(content.mdLayout ? { mdLayout: cloneLayoutState(content.mdLayout) } : {}),
+        } satisfies RelevantExperiencesContentState;
+      })()
+    : null;
+
   const updateNode = useCallback((nodeId: string, transform: (node: RelevantExperienceNode) => RelevantExperienceNode) => {
     setContent((prev) => {
       if (!prev) {
         return prev;
       }
 
+      const activeLayout = getActiveLayoutState(prev);
+      const layoutNodesById = new Map(activeLayout.nodes.map((node) => [node.id, node]));
+      const currentNode = prev.nodes.find((node) => node.id === nodeId);
+      if (!currentNode) {
+        return prev;
+      }
+
+      const mergedNode = mergeLayoutNode(currentNode, layoutNodesById);
+      const nextNode = transform(mergedNode);
+
       return {
         ...prev,
-        nodes: prev.nodes.map((node) => (node.id === nodeId ? transform(node) : node)),
+        nodes: prev.nodes.map((node) => (
+          node.id === nodeId
+            ? {
+                ...node,
+                type: nextNode.type,
+                parentId: nextNode.parentId,
+                title: nextNode.title,
+                details: nextNode.details,
+                tags: nextNode.tags,
+                image: nextNode.image,
+                icon: nextNode.icon,
+                layout: activeLayoutKey === 'lg' ? { ...nextNode.layout } : node.layout,
+              }
+            : node
+        )),
+        ...(activeLayoutKey === 'md'
+          ? {
+              mdLayout: {
+                nodes: activeLayout.nodes.map((layoutNode) => (
+                  layoutNode.id === nodeId
+                    ? { ...layoutNode, layout: { ...nextNode.layout } }
+                    : layoutNode
+                )),
+                connections: activeLayout.connections,
+              },
+            }
+          : {}),
       };
     });
-  }, []);
+  }, [activeLayoutKey, getActiveLayoutState]);
 
   const updateConnection = useCallback((
     connectionId: string,
@@ -87,14 +212,27 @@ export function useRelevantExperiencesEditorState() {
         return prev;
       }
 
+      const activeLayout = getActiveLayoutState(prev);
+      const nextConnections = activeLayout.connections.map((connection) => (
+        connection.id === connectionId ? transform(connection) : connection
+      ));
+
+      if (activeLayoutKey === 'lg') {
+        return {
+          ...prev,
+          connections: nextConnections,
+        };
+      }
+
       return {
         ...prev,
-        connections: prev.connections.map((connection) => (
-          connection.id === connectionId ? transform(connection) : connection
-        )),
+        mdLayout: {
+          nodes: activeLayout.nodes,
+          connections: nextConnections,
+        },
       };
     });
-  }, []);
+  }, [activeLayoutKey, getActiveLayoutState]);
 
   const addConnection = useCallback((connection: RelevantExperienceConnection) => {
     setContent((prev) => {
@@ -102,12 +240,25 @@ export function useRelevantExperiencesEditorState() {
         return prev;
       }
 
+      const activeLayout = getActiveLayoutState(prev);
+      const nextConnections = [...activeLayout.connections, connection];
+
+      if (activeLayoutKey === 'lg') {
+        return {
+          ...prev,
+          connections: nextConnections,
+        };
+      }
+
       return {
         ...prev,
-        connections: [...prev.connections, connection],
+        mdLayout: {
+          nodes: activeLayout.nodes,
+          connections: nextConnections,
+        },
       };
     });
-  }, []);
+  }, [activeLayoutKey, getActiveLayoutState]);
 
   const removeConnection = useCallback((connectionId: string) => {
     setContent((prev) => {
@@ -115,12 +266,25 @@ export function useRelevantExperiencesEditorState() {
         return prev;
       }
 
+      const activeLayout = getActiveLayoutState(prev);
+      const nextConnections = activeLayout.connections.filter((connection) => connection.id !== connectionId);
+
+      if (activeLayoutKey === 'lg') {
+        return {
+          ...prev,
+          connections: nextConnections,
+        };
+      }
+
       return {
         ...prev,
-        connections: prev.connections.filter((connection) => connection.id !== connectionId),
+        mdLayout: {
+          nodes: activeLayout.nodes,
+          connections: nextConnections,
+        },
       };
     });
-  }, []);
+  }, [activeLayoutKey, getActiveLayoutState]);
 
   const resetNodeToPersisted = useCallback((nodeId: string) => {
     const persistedState = persistedStateRef.current;
@@ -133,11 +297,14 @@ export function useRelevantExperiencesEditorState() {
       return;
     }
 
+    const persistedLayout = getActiveLayoutState(persistedState).nodes.find((node) => node.id === nodeId)?.layout
+      ?? persistedNode.layout;
+
     updateNode(nodeId, () => ({
       ...persistedNode,
-      layout: { ...persistedNode.layout },
+      layout: { ...persistedLayout },
     }));
-  }, [updateNode]);
+  }, [getActiveLayoutState, updateNode]);
 
   const resetToPersisted = useCallback(() => {
     const persistedState = persistedStateRef.current;
@@ -172,7 +339,8 @@ export function useRelevantExperiencesEditorState() {
   }, [content]);
 
   return {
-    content,
+    content: mergedContent,
+    rawContent: content,
     isLoading,
     loadError,
     setContent,

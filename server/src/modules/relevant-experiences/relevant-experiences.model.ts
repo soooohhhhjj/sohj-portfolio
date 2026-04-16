@@ -71,11 +71,28 @@ const relevantExperiencesConnectionSchema = new Schema(
   { _id: false },
 );
 
+const relevantExperiencesLayoutNodeSchema = new Schema(
+  {
+    id: { type: String, required: true, trim: true },
+    layout: { type: relevantExperiencesNodeLayoutSchema, required: true },
+  },
+  { _id: false },
+);
+
+const relevantExperiencesLayoutStateSchema = new Schema(
+  {
+    nodes: { type: [relevantExperiencesLayoutNodeSchema], default: [] },
+    connections: { type: [relevantExperiencesConnectionSchema], default: [] },
+  },
+  { _id: false },
+);
+
 const relevantExperiencesDocumentSchema = new Schema(
   {
     key: { type: String, required: true, unique: true, trim: true },
     nodes: { type: [relevantExperiencesNodeSchema], default: [] },
     connections: { type: [relevantExperiencesConnectionSchema], default: [] },
+    mdLayout: { type: relevantExperiencesLayoutStateSchema, default: undefined },
     textOverrides: { type: [relevantExperiencesTextOverrideSchema], default: undefined },
     nodeOverrides: { type: [relevantExperiencesNodeOverrideSchema], default: undefined },
   },

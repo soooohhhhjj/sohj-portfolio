@@ -22,11 +22,6 @@ export type RelevantExperienceNode = {
   layout: RelevantExperienceNodeLayout;
 };
 
-export type RelevantExperiencesContentState = {
-  nodes: RelevantExperienceNode[];
-  connections: RelevantExperienceConnection[];
-};
-
 export type RelevantExperienceConnectionPoint = {
   x: number;
   y: number;
@@ -40,4 +35,20 @@ export type RelevantExperienceConnection = {
   toAnchor: RelevantExperienceConnectionAnchor;
   viaPoints: RelevantExperienceConnectionPoint[];
   variant: 'group' | 'detail';
+};
+
+export type RelevantExperiencesLayoutNode = {
+  id: string;
+  layout: RelevantExperienceNodeLayout;
+};
+
+export type RelevantExperiencesLayoutState = {
+  nodes: RelevantExperiencesLayoutNode[];
+  connections: RelevantExperienceConnection[];
+};
+
+export type RelevantExperiencesContentState = {
+  nodes: RelevantExperienceNode[];
+  connections: RelevantExperienceConnection[];
+  mdLayout?: RelevantExperiencesLayoutState;
 };

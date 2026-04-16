@@ -4,6 +4,8 @@ import { relevantExperiencesSeedState } from './relevant-experiences.seed.js';
 const SECTION_KEY = 'relevant-experiences';
 const MIN_CARD_WIDTH = 200;
 const MIN_CARD_HEIGHT = 170;
+const LG_CANVAS_WIDTH = 930;
+const MD_CANVAS_WIDTH = 730;
 
 type RelevantExperienceNodeType = 'parent' | 'child';
 type RelevantExperienceIcon = 'briefcase-business' | 'folder-kanban';
@@ -44,9 +46,20 @@ export type RelevantExperienceConnection = {
   variant: 'group' | 'detail';
 };
 
+export type RelevantExperiencesLayoutNode = {
+  id: string;
+  layout: RelevantExperienceNodeLayout;
+};
+
+export type RelevantExperiencesLayoutState = {
+  nodes: RelevantExperiencesLayoutNode[];
+  connections: RelevantExperienceConnection[];
+};
+
 export type RelevantExperiencesContentState = {
   nodes: RelevantExperienceNode[];
   connections: RelevantExperienceConnection[];
+  mdLayout?: RelevantExperiencesLayoutState;
 };
 
 type LegacyTextOverride = {
@@ -66,6 +79,7 @@ type LegacyNodeOverride = {
 type StoredContentState = {
   nodes?: RelevantExperienceNode[] | null;
   connections?: RelevantExperienceConnection[] | null;
+  mdLayout?: RelevantExperiencesLayoutState | null;
   textOverrides?: LegacyTextOverride[] | null;
   nodeOverrides?: LegacyNodeOverride[] | null;
 } | null;
@@ -78,6 +92,33 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
       layout: { ...node.layout },
     })),
     connections: content.connections.map((connection) => ({
+      ...connection,
+      viaPoints: connection.viaPoints.map((point) => ({ ...point })),
+    })),
+    ...(content.mdLayout
+      ? {
+          mdLayout: {
+            nodes: content.mdLayout.nodes.map((node) => ({
+              ...node,
+              layout: { ...node.layout },
+            })),
+            connections: content.mdLayout.connections.map((connection) => ({
+              ...connection,
+              viaPoints: connection.viaPoints.map((point) => ({ ...point })),
+            })),
+          },
+        }
+      : {}),
+  };
+}
+
+function cloneLayoutState(layout: RelevantExperiencesLayoutState): RelevantExperiencesLayoutState {
+  return {
+    nodes: layout.nodes.map((node) => ({
+      ...node,
+      layout: { ...node.layout },
+    })),
+    connections: layout.connections.map((connection) => ({
       ...connection,
       viaPoints: connection.viaPoints.map((point) => ({ ...point })),
     })),
@@ -219,6 +260,45 @@ function sanitizeConnection(input: unknown, nodeIds: Set<string>) {
   } satisfies RelevantExperienceConnection;
 }
 
+function sanitizeLayoutNode(input: unknown, nodeIds: Set<string>) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return null;
+  }
+
+  const node = input as Record<string, unknown>;
+  const id = typeof node.id === 'string' ? node.id.trim() : '';
+  const layout = sanitizeNodeLayout(node.layout);
+
+  if (!id || !nodeIds.has(id) || !layout) {
+    return null;
+  }
+
+  return {
+    id,
+    layout,
+  } satisfies RelevantExperiencesLayoutNode;
+}
+
+function sanitizeLayoutState(input: unknown, nodeIds: Set<string>) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return null;
+  }
+
+  const payload = input as Record<string, unknown>;
+  const nodes = Array.isArray(payload.nodes)
+    ? payload.nodes
+        .map((node) => sanitizeLayoutNode(node, nodeIds))
+        .filter((node): node is RelevantExperiencesLayoutNode => node !== null)
+    : [];
+  const connections = Array.isArray(payload.connections)
+    ? payload.connections
+        .map((connection) => sanitizeConnection(connection, nodeIds))
+        .filter((connection): connection is RelevantExperienceConnection => connection !== null)
+    : [];
+
+  return { nodes, connections } satisfies RelevantExperiencesLayoutState;
+}
+
 function sanitizeContentState(input: unknown): RelevantExperiencesContentState | null {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return null;
@@ -242,7 +322,13 @@ function sanitizeContentState(input: unknown): RelevantExperiencesContentState |
         .filter((connection): connection is RelevantExperienceConnection => connection !== null)
     : [];
 
-  return { nodes, connections };
+  const mdLayout = sanitizeLayoutState(payload.mdLayout, nodeIds);
+
+  return {
+    nodes,
+    connections,
+    ...(mdLayout ? { mdLayout } : {}),
+  };
 }
 
 function applySeedNodeDefaults(content: RelevantExperiencesContentState): RelevantExperiencesContentState {
@@ -261,6 +347,37 @@ function applySeedNodeDefaults(content: RelevantExperiencesContentState): Releva
         tags: [...seedNode.tags],
       };
     }),
+  };
+}
+
+function scaleLayout(layout: RelevantExperienceNodeLayout, scale: number): RelevantExperienceNodeLayout {
+  return {
+    x: Math.max(0, Math.round(layout.x * scale)),
+    y: Math.max(0, Math.round(layout.y * scale)),
+    width: Math.max(MIN_CARD_WIDTH, Math.round(layout.width * scale)),
+    height: Math.max(MIN_CARD_HEIGHT, Math.round(layout.height * scale)),
+  };
+}
+
+function scalePoint(point: RelevantExperienceConnectionPoint, scale: number): RelevantExperienceConnectionPoint {
+  return {
+    x: Math.max(0, Math.round(point.x * scale)),
+    y: Math.max(0, Math.round(point.y * scale)),
+  };
+}
+
+function buildMdLayoutFromBase(content: RelevantExperiencesContentState): RelevantExperiencesLayoutState {
+  const scale = MD_CANVAS_WIDTH / LG_CANVAS_WIDTH;
+
+  return {
+    nodes: content.nodes.map((node) => ({
+      id: node.id,
+      layout: scaleLayout(node.layout, scale),
+    })),
+    connections: content.connections.map((connection) => ({
+      ...connection,
+      viaPoints: connection.viaPoints.map((point) => scalePoint(point, scale)),
+    })),
   };
 }
 
@@ -287,6 +404,7 @@ function buildStateFromLegacyDocument(document: StoredContentState) {
   });
 
   nextState.connections = [];
+  nextState.mdLayout = buildMdLayoutFromBase(nextState);
 
   return nextState;
 }
@@ -294,7 +412,12 @@ function buildStateFromLegacyDocument(document: StoredContentState) {
 function toState(document: StoredContentState) {
   const sanitizedState = sanitizeContentState(document);
   if (sanitizedState) {
-    return applySeedNodeDefaults(sanitizedState);
+    const contentWithDefaults = applySeedNodeDefaults(sanitizedState);
+
+    return {
+      ...contentWithDefaults,
+      mdLayout: contentWithDefaults.mdLayout ?? buildMdLayoutFromBase(contentWithDefaults),
+    };
   }
 
   return buildStateFromLegacyDocument(document);
@@ -308,8 +431,13 @@ async function ensureRelevantExperiencesContentState() {
     await RelevantExperiencesModel.create({
       key: SECTION_KEY,
       nodes: seededState.nodes,
+      connections: seededState.connections,
+      mdLayout: buildMdLayoutFromBase(seededState),
     });
-    return seededState;
+    return {
+      ...seededState,
+      mdLayout: buildMdLayoutFromBase(seededState),
+    };
   }
 
   const contentState = toState(document);
@@ -322,6 +450,7 @@ async function ensureRelevantExperiencesContentState() {
         $set: {
           nodes: contentState.nodes,
           connections: contentState.connections,
+          mdLayout: contentState.mdLayout,
         },
         $unset: {
           textOverrides: 1,
@@ -354,6 +483,7 @@ export async function saveRelevantExperiencesContentState(input: unknown) {
         key: SECTION_KEY,
         nodes: contentState.nodes,
         connections: contentState.connections,
+        mdLayout: contentState.mdLayout,
       },
       $unset: {
         textOverrides: 1,
