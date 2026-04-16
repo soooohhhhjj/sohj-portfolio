@@ -125,6 +125,10 @@
     cursor: pointer;
   }
 
+  .relevant-experiences-connection-hitbox--add-corner {
+    cursor: crosshair;
+  }
+
   .relevant-experiences-connection {
     fill: none;
     stroke: currentColor;
@@ -550,8 +554,21 @@
     background: rgba(255, 255, 255, 0.04);
   }
 
+  .relevant-experiences-editor-hud__mini-toggle--active {
+    border-color: rgba(72, 165, 255, 0.45);
+    color: rgba(132, 196, 255, 0.96);
+    background: rgba(72, 165, 255, 0.14);
+  }
+
   .relevant-experiences-editor-hud__meta,
   .relevant-experiences-editor-hud__actions {
+    margin-top: 0.7rem;
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .relevant-experiences-editor-hud__mini-actions {
     margin-top: 0.7rem;
     display: flex;
     gap: 0.55rem;

@@ -5,6 +5,7 @@ import { GlassCard } from '../../../shared/components/GlassCard';
 import { Section, SectionContent } from '../../../shared/components/Container';
 import { useRelevantExperiencesEditorState } from '../hooks/useRelevantExperiencesEditorState';
 import { RelevantExperienceConnections } from './RelevantExperienceConnections';
+import { getRenderableConnectionPoints } from './experienceConnections';
 import { truncateToFit } from './truncateToFit';
 import type {
   RelevantExperienceConnection,
@@ -64,6 +65,18 @@ function clampCanvasPoint(point: RelevantExperienceConnectionPoint, canvasHeight
     x: Math.min(Math.max(0, Math.round(point.x)), MIN_CANVAS_WIDTH),
     y: Math.min(Math.max(0, Math.round(point.y)), canvasHeight),
   };
+}
+
+function snapConnectionPointTowards(
+  point: RelevantExperienceConnectionPoint,
+  target: RelevantExperienceConnectionPoint,
+) {
+  const dx = point.x - target.x;
+  const dy = point.y - target.y;
+
+  return Math.abs(dx) >= Math.abs(dy)
+    ? { x: point.x, y: target.y }
+    : { x: target.x, y: point.y };
 }
 
 function createConnectionId() {
@@ -287,6 +300,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [selectedViaIndex, setSelectedViaIndex] = useState<number | null>(null);
+  const [isAddCornerMode, setIsAddCornerMode] = useState(false);
   const [pendingConnectionTargetId, setPendingConnectionTargetId] = useState<string>('');
   const [tagEditorDraft, setTagEditorDraft] = useState<{ nodeId: string | null; value: string }>({ nodeId: null, value: '' });
   const [copyFeedback, setCopyFeedback] = useState<'idle' | 'success' | 'error'>('idle');
@@ -325,6 +339,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
 
   const nodes = useMemo(() => content?.nodes ?? [], [content]);
   const connections = useMemo(() => content?.connections ?? [], [content]);
+  const nodesById = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes]);
   const activeSelectedNodeId = editorEnabled ? selectedNodeId : null;
   const activeSelectedConnectionId = editorEnabled ? selectedConnectionId : null;
   const activeSelectedViaIndex = editorEnabled ? selectedViaIndex : null;
@@ -406,6 +421,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedNodeId(nodeId);
     setSelectedConnectionId(null);
     setSelectedViaIndex(null);
+    setIsAddCornerMode(false);
     setTagEditorDraft((prev) => (prev.nodeId === nodeId ? prev : { nodeId: null, value: '' }));
   }, []);
 
@@ -421,6 +437,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedNodeId(null);
     setSelectedConnectionId(null);
     setSelectedViaIndex(null);
+    setIsAddCornerMode(false);
     setTagEditorDraft({ nodeId: null, value: '' });
   }, []);
 
@@ -431,7 +448,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedViaIndex(null);
     setTagEditorDraft({ nodeId: null, value: '' });
 
-    if (!event.shiftKey) {
+    if (!isAddCornerMode && !event.shiftKey) {
       return;
     }
 
@@ -439,12 +456,13 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     updateConnection(connectionId, (connection) => {
       const nextViaPoints = [...connection.viaPoints, point];
       setSelectedViaIndex(nextViaPoints.length - 1);
+      setIsAddCornerMode(false);
       return {
         ...connection,
         viaPoints: nextViaPoints,
       };
     });
-  }, [getCanvasPointFromPointer, updateConnection]);
+  }, [getCanvasPointFromPointer, isAddCornerMode, updateConnection]);
 
   const handleSelectViaPoint = useCallback((
     connectionId: string,
@@ -464,6 +482,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
         viaPoints: connection.viaPoints.filter((_, index) => index !== viaIndex),
       }));
       setSelectedViaIndex(null);
+      setIsAddCornerMode(false);
       return;
     }
 
@@ -521,6 +540,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedConnectionId(connection.id);
     setSelectedViaIndex(null);
     setSelectedNodeId(null);
+    setIsAddCornerMode(false);
     setPendingConnectionTargetId('');
   }, [addConnection, nodes, pendingConnectionTargetId, selectedNode]);
 
@@ -529,6 +549,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     if (selectedConnectionId === connectionId) {
       setSelectedConnectionId(null);
       setSelectedViaIndex(null);
+      setIsAddCornerMode(false);
     }
   }, [removeConnection, selectedConnectionId]);
 
@@ -546,6 +567,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
         clampCanvasPoint({ x: nextPoint.x + 32, y: nextPoint.y + 32 }, canvasHeight),
       ];
       setSelectedViaIndex(nextViaPoints.length - 1);
+      setIsAddCornerMode(false);
       return {
         ...connection,
         viaPoints: nextViaPoints,
@@ -563,7 +585,43 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
       viaPoints: connection.viaPoints.filter((_, index) => index !== selectedViaIndex),
     }));
     setSelectedViaIndex(null);
+    setIsAddCornerMode(false);
   }, [selectedConnection, selectedViaIndex, updateConnection]);
+
+  const handleOrthogonalizeSelectedConnection = useCallback(() => {
+    if (!selectedConnection || selectedConnection.viaPoints.length === 0) {
+      return;
+    }
+
+    const points = getRenderableConnectionPoints(selectedConnection, nodesById, measuredNodeLayoutsById);
+    const start = points[0];
+    const end = points[points.length - 1];
+    if (!start || !end) {
+      return;
+    }
+
+    const snapped = selectedConnection.viaPoints.map((point) => ({
+      x: Math.round(point.x),
+      y: Math.round(point.y),
+    }));
+
+    let previousPoint = start;
+    for (let index = 0; index < snapped.length; index += 1) {
+      snapped[index] = snapConnectionPointTowards(snapped[index], previousPoint);
+      previousPoint = snapped[index];
+    }
+
+    let nextPoint = end;
+    for (let index = snapped.length - 1; index >= 0; index -= 1) {
+      snapped[index] = snapConnectionPointTowards(snapped[index], nextPoint);
+      nextPoint = snapped[index];
+    }
+
+    updateConnection(selectedConnection.id, (connection) => ({
+      ...connection,
+      viaPoints: snapped,
+    }));
+  }, [measuredNodeLayoutsById, nodesById, selectedConnection, updateConnection]);
 
   const handleHudPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
@@ -596,6 +654,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     setSelectedNodeId(null);
     setSelectedConnectionId(null);
     setSelectedViaIndex(null);
+    setIsAddCornerMode(false);
     setPendingConnectionTargetId('');
     setTagEditorDraft({ nodeId: null, value: '' });
   }, [resetToPersisted]);
@@ -633,6 +692,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
                       nodes={nodes}
                       measuredNodeLayouts={measuredNodeLayoutsById}
                       editorEnabled={editorEnabled}
+                      isAddCornerMode={isAddCornerMode}
                       selectedConnectionId={activeSelectedConnectionId}
                       selectedViaIndex={activeSelectedViaIndex}
                       onSelectConnection={handleSelectConnection}
@@ -656,6 +716,25 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
               <button type="button" className="relevant-experiences-editor-hud__mini-toggle" onClick={() => setHudMinimized((prev) => !prev)}>{hudMinimized ? 'Expand' : 'Minimize'}</button>
             </div>
           </div>
+          {hudMinimized && selectedConnection ? (
+            <div className="relevant-experiences-editor-hud__mini-actions">
+              <button
+                type="button"
+                className={`relevant-experiences-editor-hud__mini-toggle ${isAddCornerMode ? 'relevant-experiences-editor-hud__mini-toggle--active' : ''}`}
+                onClick={() => setIsAddCornerMode((prev) => !prev)}
+              >
+                {isAddCornerMode ? 'Pick Line...' : 'Add Corner'}
+              </button>
+              <button
+                type="button"
+                className="relevant-experiences-editor-hud__mini-toggle"
+                onClick={handleOrthogonalizeSelectedConnection}
+                disabled={selectedConnection.viaPoints.length === 0}
+              >
+                Ortho
+              </button>
+            </div>
+          ) : null}
           {!hudMinimized ? <div className="relevant-experiences-editor-hud__meta"><span>canvas: {Math.round(baseCanvasWidth)} x {canvasHeight}</span><span>scale: {scale.toFixed(3)}</span><span>card: {selectedNode?.id ?? 'none'}</span><span>connector: {selectedConnection?.id ?? 'none'}</span></div> : null}
           {!hudMinimized ? <div className="relevant-experiences-editor-hud__card-editor"><div className="relevant-experiences-editor-hud__card-row"><label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-selected-card">Card</label><select id="relevant-experiences-editor-selected-card" className="relevant-experiences-editor-hud__select" value={activeSelectedNodeId ?? ''} onChange={(event) => { const nextNodeId = event.target.value || null; setSelectedNodeId(nextNodeId); setSelectedConnectionId(null); setSelectedViaIndex(null); setTagEditorDraft({ nodeId: null, value: '' }); }}><option value="">(click a card)</option>{nodes.map((node) => <option key={node.id} value={node.id}>{`${node.id} - ${node.title}`}</option>)}</select></div>
             {selectedNode && selectedNodeLayout ? (
@@ -774,10 +853,11 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
                   </div>
                   <div className="relevant-experiences-editor-hud__card-actions">
                     <button type="button" onClick={handleAddViaPoint}>Add Corner</button>
+                    <button type="button" onClick={handleOrthogonalizeSelectedConnection} disabled={selectedConnection.viaPoints.length === 0}>Orthogonalize</button>
                     <button type="button" onClick={handleRemoveSelectedViaPoint} disabled={selectedViaIndex === null}>Remove Selected Corner</button>
                     <button type="button" onClick={() => handleRemoveConnection(selectedConnection.id)}>Delete Connector</button>
                   </div>
-                  <div className="relevant-experiences-editor-hud__hint">Shift-click a connector to add a corner. Drag a corner to move it. Alt-click a corner to remove it.</div>
+                  <div className="relevant-experiences-editor-hud__hint">Shift-click a connector to add a corner. Drag a corner to move it. Alt-click a corner to remove it. Orthogonalize snaps connector segments to true horizontal/vertical.</div>
                 </>
               ) : <div className="relevant-experiences-editor-hud__hint">Connectors are empty by default. Select a parent card and use Add Connector to create one.</div>}
             </div>

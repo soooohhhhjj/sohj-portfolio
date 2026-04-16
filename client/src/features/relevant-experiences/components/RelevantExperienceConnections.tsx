@@ -14,6 +14,7 @@ type RelevantExperienceConnectionsProps = {
   nodes: RelevantExperienceNode[];
   measuredNodeLayouts: Map<string, RelevantExperienceNodeLayout>;
   editorEnabled: boolean;
+  isAddCornerMode: boolean;
   selectedConnectionId: string | null;
   selectedViaIndex: number | null;
   onSelectConnection: (connectionId: string, event: ReactPointerEvent<SVGPathElement>) => void;
@@ -31,6 +32,7 @@ export function RelevantExperienceConnections({
   nodes,
   measuredNodeLayouts,
   editorEnabled,
+  isAddCornerMode,
   selectedConnectionId,
   selectedViaIndex,
   onSelectConnection,
@@ -62,7 +64,7 @@ export function RelevantExperienceConnections({
             {editorEnabled ? (
               <path
                 d={path}
-                className="relevant-experiences-connection-hitbox"
+                className={`relevant-experiences-connection-hitbox ${isAddCornerMode ? 'relevant-experiences-connection-hitbox--add-corner' : ''}`}
                 onPointerDown={(event) => onSelectConnection(connection.id, event)}
               />
             ) : null}
