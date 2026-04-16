@@ -1,11 +1,16 @@
+import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { AdminLogin } from './features/admin-auth/components/AdminLogin';
 import { getAdminSession, logoutAdmin } from './features/admin-auth/services/adminAuthService';
+import { Hero } from './features/hero/components/Hero';
+import { useIntroSequence } from './features/homepage/hooks/useIntroSequence';
 import { RelevantExperiences } from './features/relevant-experiences/components/RelevantExperiences';
+import { Welcome } from './features/welcome/components/Welcome';
 import { BreakpointDebugOverlay } from './shared/components/BreakpointDebugOverlay';
 import { useResponsiveTokens } from './shared/hooks/useResponsiveTokens';
 import { StarfieldBackground } from './shared/components/StarfieldBackground';
 import { useScrollVelocity } from './shared/hooks/useScrollVelocity';
+import { Navbar } from './shared/layouts';
 
 type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 'forward';
 const STARFIELD_ENABLED_STORAGE_KEY = 'sohj.debug.starfield.enabled';
@@ -27,18 +32,44 @@ function PortfolioExperience({
   replayKey: number;
 }) {
   useResponsiveTokens();
-  // Yo Codex: remove this RE testing override when Relevant Experiences testing is done.
-  // Restore the intro sequence, welcome screen, hero section, and navbar after RE testing.
-  useScrollVelocity(true);
+  const {
+    hasWelcomeFinished,
+    hasHeroFinished,
+    hasIntroFinished,
+    setHasWelcomeFinished,
+    setHasHeroFinished,
+  } = useIntroSequence();
+  useScrollVelocity(hasIntroFinished);
+  const starMode: StarMode =
+    !hasWelcomeFinished ? 'normal' : !hasHeroFinished ? 'cinematic' : 'normal';
 
   return (
     <div key={replayKey} className={`app-shell ${isPerfLiteEnabled ? 'perf-debug-lite' : ''}`}>
-      {isStarfieldEnabled ? <StarfieldBackground mode="normal" /> : null}
+      {isStarfieldEnabled ? <StarfieldBackground mode={starMode} /> : null}
       <main className="app-content">
-        {/* Yo Codex: remove this RE testing-only block when Relevant Experiences testing is done.
-            Bring back Welcome, Navbar, and Hero before shipping. */}
+        <motion.div
+          className="fixed inset-0 z-[60] w-full will-change-transform"
+          initial={{ y: 0 }}
+          animate={{ y: hasWelcomeFinished ? '-100vh' : 0 }}
+          transition={{ duration: 1, ease: [0.12, 0.7, 0.63, 0.9] }}
+        >
+          <Welcome onAnimationComplete={() => setHasWelcomeFinished(true)} />
+        </motion.div>
+
+        <Navbar shouldAnimate={hasWelcomeFinished} />
+
+        <div className="relative z-[1]" id="hero-section">
+          <Hero
+            shouldAnimate={hasWelcomeFinished}
+            onAnimationsComplete={() => setHasHeroFinished(true)}
+          />
+        </div>
+
         <div className="relative z-[1]" id="relevant-experiences-section">
-          <RelevantExperiences editorEnabled={isRelevantExperiencesEditorEnabled} />
+          <RelevantExperiences
+            editorEnabled={isRelevantExperiencesEditorEnabled}
+            shouldAnimate={hasWelcomeFinished}
+          />
         </div>
       </main>
     </div>
@@ -155,11 +186,7 @@ export function App() {
           onToggleStarfield={() => setIsStarfieldEnabled((prev) => !prev)}
           isPerfLiteEnabled={isPerfLiteEnabled}
           onTogglePerfLite={() => setIsPerfLiteEnabled((prev) => !prev)}
-          onReplayIntro={() => {
-            // Yo Codex: remove this RE testing override when Relevant Experiences testing is done.
-            // Replay is temporarily disabled because intro/hero are bypassed in RE-only mode.
-            window.scrollTo(0, 0);
-          }}
+          onReplayIntro={() => setIntroReplayKey((prev) => prev + 1)}
           isRelevantExperiencesEditorEnabled={isRelevantExperiencesEditorEnabled}
           onToggleRelevantExperiencesEditor={() =>
             setIsRelevantExperiencesEditorEnabled((prev) => !prev)

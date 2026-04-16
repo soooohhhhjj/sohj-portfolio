@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { motion, type Easing } from 'framer-motion';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { BriefcaseBusiness, FolderKanban } from 'lucide-react';
 import { GlassCard } from '../../../shared/components/GlassCard';
@@ -17,7 +18,7 @@ import type {
 } from './relevantExperiences.types';
 import './RelevantExperiences.css';
 
-type RelevantExperiencesProps = { editorEnabled?: boolean };
+type RelevantExperiencesProps = { editorEnabled?: boolean; shouldAnimate?: boolean };
 
 const HUD_POS_STORAGE_KEY = 'sohj.debug.relevantExperiences.hudPos.v1';
 const HUD_MINIMIZED_STORAGE_KEY = 'sohj.debug.relevantExperiences.hudMinimized.v1';
@@ -26,6 +27,7 @@ const MIN_CARD_HEIGHT = 170;
 const MIN_CANVAS_WIDTH = 930;
 const MIN_CANVAS_HEIGHT = 0;
 const CONNECTION_ANCHORS: RelevantExperienceConnectionAnchor[] = ['top', 'right', 'bottom', 'left'];
+const easeSmooth: Easing = [0.12, 0.7, 0.63, 0.9];
 
 function readLocalStorageJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -310,7 +312,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
   );
 }
 
-export function RelevantExperiences({ editorEnabled = false }: RelevantExperiencesProps) {
+export function RelevantExperiences({ editorEnabled = false, shouldAnimate = false }: RelevantExperiencesProps) {
   const laneRef = useRef<HTMLDivElement | null>(null);
   const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(MIN_CANVAS_WIDTH);
@@ -780,76 +782,84 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
   ) : null;
 
   return (
-    <Section className="relevant-experiences-section relative z-10 mt-24 text-[rgb(247,247,217)]">
-      <div className="relevant-experiences-shell">
-        <div className="relevant-experiences-shell__layer relevant-experiences-shell__layer--diagonal" />
-        <div className="relevant-experiences-shell__layer relevant-experiences-shell__layer--vertical" />
-        <div className="relevant-experiences-shell__layer relevant-experiences-shell__layer--inner-shadow" />
-        <SectionContent className="relevant-experiences-shell__content relative z-[1]">
-          {statusBody ?? (
-            <>
-              <div className="relevant-experiences-intro text-center"><h2 className="relevant-experiences-intro__title font-anta">Relevant Experiences</h2></div>
-              <div ref={laneRef} className="relevant-experiences-editor-lane">
-                {layoutMode === 'desktop' ? (
-                  <div className="relevant-experiences-map" style={{ height: `${displayCanvasHeight * scale}px` }}>
-                    <div ref={handleCanvasRef} className="relevant-experiences-map__canvas" style={{ width: `${activeCanvasWidth}px`, height: `${displayCanvasHeight}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }} onPointerDown={editorEnabled ? handleClearSelection : undefined}>
-                      {editorEnabled ? <div className="relevant-experiences-editor-grid" /> : null}
-                      <RelevantExperienceConnections
-                        canvasHeight={displayCanvasHeight}
-                        canvasWidth={activeCanvasWidth}
-                        connections={displayConnections}
-                        nodes={displayNodes}
-                        measuredNodeLayouts={measuredNodeLayoutsById}
-                        editorEnabled={editorEnabled}
-                        isAddCornerMode={isAddCornerMode}
-                        selectedConnectionId={activeSelectedConnectionId}
-                        selectedViaIndex={activeSelectedViaIndex}
-                        onSelectConnection={handleSelectConnection}
-                        onSelectViaPoint={handleSelectViaPoint}
-                      />
-                      {displayNodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={activeSelectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relevant-experiences-responsive relevant-experiences-responsive--linear">
-                    {parentNodes.map((parent) => {
-                      const childNodes = childNodesByParentId.get(parent.id) ?? [];
+    <>
+      <motion.div
+        initial={{ y: '100vh' }}
+        animate={{ y: shouldAnimate ? 0 : '100vh' }}
+        transition={{ duration: 1.7, ease: easeSmooth, delay: 0.11 }}
+      >
+        <Section className="relevant-experiences-section relative z-10 mt-24 text-[rgb(247,247,217)]">
+          <div className="relevant-experiences-shell">
+            <div className="relevant-experiences-shell__layer relevant-experiences-shell__layer--diagonal" />
+            <div className="relevant-experiences-shell__layer relevant-experiences-shell__layer--vertical" />
+            <div className="relevant-experiences-shell__layer relevant-experiences-shell__layer--inner-shadow" />
+            <SectionContent className="relevant-experiences-shell__content relative z-[1]">
+              {statusBody ?? (
+                <>
+                  <div className="relevant-experiences-intro text-center"><h2 className="relevant-experiences-intro__title font-anta">Relevant Experiences</h2></div>
+                  <div ref={laneRef} className="relevant-experiences-editor-lane">
+                    {layoutMode === 'desktop' ? (
+                      <div className="relevant-experiences-map" style={{ height: `${displayCanvasHeight * scale}px` }}>
+                        <div ref={handleCanvasRef} className="relevant-experiences-map__canvas" style={{ width: `${activeCanvasWidth}px`, height: `${displayCanvasHeight}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }} onPointerDown={editorEnabled ? handleClearSelection : undefined}>
+                          {editorEnabled ? <div className="relevant-experiences-editor-grid" /> : null}
+                          <RelevantExperienceConnections
+                            canvasHeight={displayCanvasHeight}
+                            canvasWidth={activeCanvasWidth}
+                            connections={displayConnections}
+                            nodes={displayNodes}
+                            measuredNodeLayouts={measuredNodeLayoutsById}
+                            editorEnabled={editorEnabled}
+                            isAddCornerMode={isAddCornerMode}
+                            selectedConnectionId={activeSelectedConnectionId}
+                            selectedViaIndex={activeSelectedViaIndex}
+                            onSelectConnection={handleSelectConnection}
+                            onSelectViaPoint={handleSelectViaPoint}
+                          />
+                          {displayNodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={activeSelectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relevant-experiences-responsive relevant-experiences-responsive--linear">
+                        {parentNodes.map((parent) => {
+                          const childNodes = childNodesByParentId.get(parent.id) ?? [];
 
-                      return (
-                        <section key={parent.id} className="relevant-experiences-group">
-                          <div className="relevant-experiences-group__parent relevant-experiences-card-shell">
-                            <RelevantExperienceCardContent node={parent} />
-                          </div>
-                          {childNodes.length > 0 ? (
+                          return (
+                            <section key={parent.id} className="relevant-experiences-group">
+                              <div className="relevant-experiences-group__parent relevant-experiences-card-shell">
+                                <RelevantExperienceCardContent node={parent} />
+                              </div>
+                              {childNodes.length > 0 ? (
+                                <div className="relevant-experiences-group__children relevant-experiences-group__children--linear">
+                                  {childNodes.map((child) => (
+                                    <div key={child.id} className="relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell">
+                                      <RelevantExperienceCardContent node={child} />
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </section>
+                          );
+                        })}
+                        {(childNodesByParentId.get('orphans') ?? []).length > 0 ? (
+                          <section className="relevant-experiences-group relevant-experiences-group--orphans">
                             <div className="relevant-experiences-group__children relevant-experiences-group__children--linear">
-                              {childNodes.map((child) => (
+                              {(childNodesByParentId.get('orphans') ?? []).map((child) => (
                                 <div key={child.id} className="relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell">
                                   <RelevantExperienceCardContent node={child} />
                                 </div>
                               ))}
                             </div>
-                          ) : null}
-                        </section>
-                      );
-                    })}
-                    {(childNodesByParentId.get('orphans') ?? []).length > 0 ? (
-                      <section className="relevant-experiences-group relevant-experiences-group--orphans">
-                        <div className="relevant-experiences-group__children relevant-experiences-group__children--linear">
-                          {(childNodesByParentId.get('orphans') ?? []).map((child) => (
-                            <div key={child.id} className="relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell">
-                              <RelevantExperienceCardContent node={child} />
-                            </div>
-                          ))}
-                        </div>
-                      </section>
-                    ) : null}
+                          </section>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </>
-          )}
-        </SectionContent>
-      </div>
+                </>
+              )}
+            </SectionContent>
+          </div>
+        </Section>
+      </motion.div>
       {editorEnabled && content && typeof document !== 'undefined' ? createPortal(
         <div className={`relevant-experiences-editor-hud ${hudMinimized ? 'relevant-experiences-editor-hud--minimized' : ''}`} style={{ transform: `translate(${hudPos.x}px, ${hudPos.y}px)` }}>
           <div className="relevant-experiences-editor-hud__drag-grip" onPointerDown={handleHudPointerDown} aria-label="Drag relevant experiences editor panel" role="presentation" />
@@ -1018,6 +1028,6 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
         </div>,
         document.body,
       ) : null}
-    </Section>
+    </>
   );
 }
