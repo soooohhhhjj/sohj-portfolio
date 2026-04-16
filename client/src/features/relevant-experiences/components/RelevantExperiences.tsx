@@ -22,7 +22,8 @@ const HUD_MINIMIZED_STORAGE_KEY = 'sohj.debug.relevantExperiences.hudMinimized.v
 const MIN_CARD_WIDTH = 200;
 const MIN_CARD_HEIGHT = 170;
 const MIN_CANVAS_WIDTH = 930;
-const MIN_CANVAS_HEIGHT = 1840;
+const MIN_CANVAS_HEIGHT = 0;
+const CANVAS_BOTTOM_PADDING = 160;
 const CONNECTION_ANCHORS: RelevantExperienceConnectionAnchor[] = ['top', 'right', 'bottom', 'left'];
 
 function readLocalStorageJson<T>(key: string, fallback: T): T {
@@ -39,22 +40,30 @@ function resolveAssetPath(path?: string) {
   return path ? `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}` : undefined;
 }
 
-function clampNodeLayoutToCanvas(layout: RelevantExperienceNodeLayout) {
+function resolveCanvasHeight(nodes: RelevantExperienceNode[]) {
+  const furthestBottom = nodes.reduce((maxBottom, node) => (
+    Math.max(maxBottom, node.layout.y + node.layout.height)
+  ), 0);
+
+  return Math.max(MIN_CANVAS_HEIGHT, furthestBottom + CANVAS_BOTTOM_PADDING);
+}
+
+function clampNodeLayoutToCanvas(layout: RelevantExperienceNodeLayout, canvasHeight: number) {
   const width = Math.min(Math.max(MIN_CARD_WIDTH, layout.width), MIN_CANVAS_WIDTH);
-  const height = Math.min(Math.max(MIN_CARD_HEIGHT, layout.height), MIN_CANVAS_HEIGHT);
+  const height = Math.min(Math.max(MIN_CARD_HEIGHT, layout.height), Math.max(MIN_CARD_HEIGHT, canvasHeight));
 
   return {
     x: Math.min(Math.max(0, layout.x), Math.max(0, MIN_CANVAS_WIDTH - width)),
-    y: Math.min(Math.max(0, layout.y), Math.max(0, MIN_CANVAS_HEIGHT - height)),
+    y: Math.min(Math.max(0, layout.y), Math.max(0, canvasHeight - height)),
     width,
     height,
   };
 }
 
-function clampCanvasPoint(point: RelevantExperienceConnectionPoint) {
+function clampCanvasPoint(point: RelevantExperienceConnectionPoint, canvasHeight: number) {
   return {
     x: Math.min(Math.max(0, Math.round(point.x)), MIN_CANVAS_WIDTH),
-    y: Math.min(Math.max(0, Math.round(point.y)), MIN_CANVAS_HEIGHT),
+    y: Math.min(Math.max(0, Math.round(point.y)), canvasHeight),
   };
 }
 
@@ -84,6 +93,10 @@ function RelevantExperienceIconGlyph({ icon }: { icon?: RelevantExperienceNode['
   return null;
 }
 
+function ChildCardTag({ label }: { label: string }) {
+  return <span className="relevant-experiences-card__tag font-jura">{label}</span>;
+}
+
 function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, onMeasure, onSelect, onMove, onResize }: {
   node: RelevantExperienceNode;
   selected: boolean;
@@ -96,58 +109,81 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
 }) {
   const layout = node.layout;
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const parentSurfaceRef = useRef<HTMLElement | null>(null);
-  const dragStateRef = useRef<{ pointerId: number; startX: number; startY: number; startLeft: number; startTop: number } | null>(null);
+  const dragStateRef = useRef<{ pointerId: number; startX: number; startY: number; startLeft: number; startTop: number; scaleX: number; scaleY: number } | null>(null);
   const resizeStateRef = useRef<{ pointerId: number; handle: 'nw' | 'ne' | 'sw' | 'se'; startX: number; startY: number; startLeft: number; startTop: number; startWidth: number; startHeight: number } | null>(null);
 
   useLayoutEffect(() => {
     const canvas = canvasElement;
     const card = cardRef.current;
-    const surface = node.type === 'parent' ? parentSurfaceRef.current : card;
-    if (!canvas || !card || !surface) {
+    if (!canvas || !card) {
       return;
     }
 
     const measure = () => {
       const canvasRect = canvas.getBoundingClientRect();
-      const surfaceRect = surface.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
       const scaleX = canvas.offsetWidth > 0 ? canvasRect.width / canvas.offsetWidth : 1;
       const scaleY = canvas.offsetHeight > 0 ? canvasRect.height / canvas.offsetHeight : 1;
 
       onMeasure(node.id, {
-        x: Math.round((surfaceRect.left - canvasRect.left) / (scaleX || 1)),
-        y: Math.round((surfaceRect.top - canvasRect.top) / (scaleY || 1)),
-        width: Math.round(surfaceRect.width / (scaleX || 1)),
-        height: Math.round(surfaceRect.height / (scaleY || 1)),
+        x: Math.round((cardRect.left - canvasRect.left) / (scaleX || 1)),
+        y: Math.round((cardRect.top - canvasRect.top) / (scaleY || 1)),
+        width: Math.round(cardRect.width / (scaleX || 1)),
+        height: Math.round(cardRect.height / (scaleY || 1)),
       });
     };
 
     measure();
 
     const resizeObserver = new ResizeObserver(measure);
-    resizeObserver.observe(surface);
+    resizeObserver.observe(card);
     window.addEventListener('resize', measure);
 
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [canvasElement, layout.height, layout.width, layout.x, layout.y, node.details, node.id, node.title, node.type, onMeasure]);
+  }, [canvasElement, layout.height, layout.width, layout.x, layout.y, node.details, node.id, node.tags, node.title, node.type, onMeasure]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if (!editorEnabled || event.button !== 0) return;
     event.preventDefault();
-    dragStateRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startLeft: layout.x, startTop: layout.y };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    const canvas = canvasElement;
+    const canvasRect = canvas?.getBoundingClientRect();
+    const scaleX = canvas && canvas.offsetWidth > 0 && canvasRect ? canvasRect.width / canvas.offsetWidth : 1;
+    const scaleY = canvas && canvas.offsetHeight > 0 && canvasRect ? canvasRect.height / canvas.offsetHeight : 1;
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: layout.x,
+      startTop: layout.y,
+      scaleX: scaleX || 1,
+      scaleY: scaleY || 1,
+    };
     onSelect(node.id);
-  };
-  const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    const dragState = dragStateRef.current;
-    if (!dragState || dragState.pointerId !== event.pointerId) return;
-    onMove(node.id, { x: Math.round(dragState.startLeft + event.clientX - dragState.startX), y: Math.round(dragState.startTop + event.clientY - dragState.startY) });
-  };
-  const handlePointerUp = (event: ReactPointerEvent<HTMLElement>) => {
-    if (dragStateRef.current?.pointerId === event.pointerId) dragStateRef.current = null;
+
+    const move = (moveEvent: PointerEvent) => {
+      const dragState = dragStateRef.current;
+      if (!dragState || dragState.pointerId !== moveEvent.pointerId) return;
+      onMove(node.id, {
+        x: Math.round(dragState.startLeft + (moveEvent.clientX - dragState.startX) / dragState.scaleX),
+        y: Math.round(dragState.startTop + (moveEvent.clientY - dragState.startY) / dragState.scaleY),
+      });
+    };
+
+    const up = (upEvent: PointerEvent) => {
+      if (dragStateRef.current?.pointerId === upEvent.pointerId) {
+        dragStateRef.current = null;
+      }
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   };
   const handleResizePointerDown = (handle: 'nw' | 'ne' | 'sw' | 'se', event: ReactPointerEvent<HTMLSpanElement>) => {
     if (!editorEnabled || event.button !== 0) return;
@@ -180,7 +216,17 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
   };
   const imageSrc = resolveAssetPath(node.image);
   return (
-    <div ref={cardRef} className={`relevant-experiences-card relevant-experiences-card--${node.type} ${node.type === 'parent' ? 'memory-node' : 'journey-map-card journey-showcase__card journey-showcase__card--child'} ${editorEnabled ? 'relevant-experiences-card--editable' : ''} ${selected ? 'relevant-experiences-card--selected' : ''}`} style={{ left: `${layout.x}px`, top: `${layout.y}px`, width: `${layout.width}px`, height: `${layout.height}px` }} role="button" tabIndex={0} aria-label={`${node.title} card`} onClick={() => onSelect(node.id)} onKeyDown={handleKeyDown} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
+    <div
+      ref={cardRef}
+      className={`relevant-experiences-card relevant-experiences-card--${node.type} ${editorEnabled ? 'relevant-experiences-card--editable' : ''} ${selected ? 'relevant-experiences-card--selected' : ''}`}
+      style={{ left: `${layout.x}px`, top: `${layout.y}px`, width: `${layout.width}px`, height: `${layout.height}px` }}
+      role="button"
+      tabIndex={0}
+      aria-label={`${node.title} card`}
+      onClick={() => onSelect(node.id)}
+      onKeyDown={handleKeyDown}
+      onPointerDown={handlePointerDown}
+    >
       {editorEnabled ? (
         <>
           <span className="relevant-experiences-resize-handle relevant-experiences-resize-handle--nw" onPointerDown={(event) => handleResizePointerDown('nw', event)} onPointerMove={handleResizePointerMove} onPointerUp={handleResizePointerUp} />
@@ -190,7 +236,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
         </>
       ) : null}
       {node.type === 'parent' && node.icon ? (
-        <article ref={parentSurfaceRef} className="journey-memory-parent-card journey-map-card journey-showcase__card journey-showcase__card--parent">
+        <article className="relevant-experiences-card__surface relevant-experiences-card__surface--parent journey-map-card journey-showcase__card journey-showcase__card--parent">
           <div className="journey-map-card__parent-header">
             <div className="journey-map-card__icon-shell"><RelevantExperienceIconGlyph icon={node.icon} /></div>
             <h3 className="journey-map-card__title font-jura">{node.title}</h3>
@@ -198,11 +244,22 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
           <TruncatedText text={node.details} className="journey-map-card__details journey-map-card__details--truncate font-jura text-sm leading-relaxed" />
         </article>
       ) : (
-        <>
-          {imageSrc ? <GlassCard width="w-full" corner="rounded-[2px]" shadow="" className="overflow-hidden journey-map-card__media"><img src={imageSrc} alt={node.title} className="journey-map-card__image" loading="lazy" draggable={false} /></GlassCard> : null}
-          <h4 className="journey-map-card__child-title font-jura">{node.title}</h4>
-          <div className="ml-1 flex flex-col gap-0 font-jura text-xs base-text-color"><div className="mt-1 flex items-center leading-none"><span className="mb-1 select-none opacity-55">L</span><TruncatedText as="span" text={node.details} className="ml-1 truncate opacity-70" /></div></div>
-        </>
+        <article className="relevant-experiences-card__surface relevant-experiences-card__surface--child journey-map-card journey-showcase__card journey-showcase__card--child">
+          {imageSrc ? (
+            <GlassCard width="w-full" corner="rounded-[2px]" shadow="" className="overflow-hidden journey-map-card__media">
+              <img src={imageSrc} alt={node.title} className="journey-map-card__image" loading="lazy" draggable={false} />
+            </GlassCard>
+          ) : null}
+          <div className="relevant-experiences-card__body">
+            <h4 className="journey-map-card__child-title font-jura">{node.title}</h4>
+            <p className="journey-map-card__child-details font-jura">{node.details}</p>
+            {node.tags?.length ? (
+              <div className="relevant-experiences-card__tags" aria-label={`${node.title} tags`}>
+                {node.tags.map((tag) => <ChildCardTag key={`${node.id}-${tag}`} label={tag} />)}
+              </div>
+            ) : null}
+          </div>
+        </article>
       )}
     </div>
   );
@@ -210,7 +267,6 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
 
 export function RelevantExperiences({ editorEnabled = false }: RelevantExperiencesProps) {
   const laneRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLDivElement | null>(null);
   const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(MIN_CANVAS_WIDTH);
   const [measuredNodeLayouts, setMeasuredNodeLayouts] = useState<Record<string, RelevantExperienceNodeLayout>>({});
@@ -277,11 +333,22 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
   ), [nodes, selectedNode]);
   const baseCanvasWidth = MIN_CANVAS_WIDTH;
   const scale = useMemo(() => (canvasWidth ? canvasWidth / baseCanvasWidth : 1), [baseCanvasWidth, canvasWidth]);
-  const canvasHeight = MIN_CANVAS_HEIGHT;
+  const canvasHeight = useMemo(() => resolveCanvasHeight(nodes), [nodes]);
 
   const updateNodeLayout = useCallback((nodeId: string, transform: (layout: RelevantExperienceNodeLayout) => RelevantExperienceNodeLayout) => {
-    updateNode(nodeId, (node) => ({ ...node, layout: clampNodeLayoutToCanvas(transform(node.layout)) }));
-  }, [updateNode]);
+    updateNode(nodeId, (node) => {
+      const nextLayout = transform(node.layout);
+      const nextCanvasHeight = Math.max(
+        canvasHeight,
+        nextLayout.y + Math.max(MIN_CARD_HEIGHT, nextLayout.height) + CANVAS_BOTTOM_PADDING,
+      );
+
+      return {
+        ...node,
+        layout: clampNodeLayoutToCanvas(nextLayout, nextCanvasHeight),
+      };
+    });
+  }, [canvasHeight, updateNode]);
 
   const handleMoveNode = useCallback((nodeId: string, next: { x: number; y: number }) => {
     updateNodeLayout(nodeId, (layout) => ({ ...layout, x: next.x, y: next.y }));
@@ -312,19 +379,19 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
   }, []);
 
   const getCanvasPointFromPointer = useCallback((clientX: number, clientY: number) => {
-    const lane = laneRef.current;
-    if (!lane) {
+    const canvas = canvasElement;
+    if (!canvas) {
       return { x: 0, y: 0 };
     }
 
-    const rect = lane.getBoundingClientRect();
-    const nextScale = rect.width > 0 ? rect.width / baseCanvasWidth : scale || 1;
+    const rect = canvas.getBoundingClientRect();
+    const nextScale = canvas.offsetWidth > 0 ? rect.width / canvas.offsetWidth : scale || 1;
 
     return clampCanvasPoint({
       x: (clientX - rect.left) / nextScale,
       y: (clientY - rect.top) / nextScale,
-    });
-  }, [baseCanvasWidth, scale]);
+    }, canvasHeight);
+  }, [canvasElement, canvasHeight, scale]);
 
   const handleSelectNode = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
@@ -333,7 +400,6 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
   }, []);
 
   const handleCanvasRef = useCallback((node: HTMLDivElement | null) => {
-    canvasRef.current = node;
     setCanvasElement(node);
   }, []);
 
@@ -403,7 +469,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
             ? clampCanvasPoint({
               x: startPoint.x + (nextPointer.x - startPointer.x),
               y: startPoint.y + (nextPointer.y - startPointer.y),
-            })
+            }, canvasHeight)
             : point
         )),
       }));
@@ -416,7 +482,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
 
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up, { once: true });
-  }, [connections, getCanvasPointFromPointer, updateConnection]);
+  }, [canvasHeight, connections, getCanvasPointFromPointer, updateConnection]);
 
   const handleAddConnection = useCallback(() => {
     if (!selectedNode || selectedNode.type !== 'parent') {
@@ -461,10 +527,10 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
     updateConnection(selectedConnection.id, (connection) => {
       const nextPoint = connection.viaPoints.length > 0
         ? connection.viaPoints[connection.viaPoints.length - 1]
-        : { x: MIN_CANVAS_WIDTH / 2, y: MIN_CANVAS_HEIGHT / 2 };
+        : { x: MIN_CANVAS_WIDTH / 2, y: canvasHeight / 2 };
       const nextViaPoints = [
         ...connection.viaPoints,
-        clampCanvasPoint({ x: nextPoint.x + 32, y: nextPoint.y + 32 }),
+        clampCanvasPoint({ x: nextPoint.x + 32, y: nextPoint.y + 32 }, canvasHeight),
       ];
       setSelectedViaIndex(nextViaPoints.length - 1);
       return {
@@ -472,7 +538,7 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
         viaPoints: nextViaPoints,
       };
     });
-  }, [selectedConnection, updateConnection]);
+  }, [canvasHeight, selectedConnection, updateConnection]);
 
   const handleRemoveSelectedViaPoint = useCallback(() => {
     if (!selectedConnection || selectedViaIndex === null) {
@@ -546,7 +612,6 @@ export function RelevantExperiences({ editorEnabled = false }: RelevantExperienc
                 <div className="relevant-experiences-map" style={{ height: `${canvasHeight * scale}px` }}>
                   <div ref={handleCanvasRef} className="relevant-experiences-map__canvas" style={{ width: `${baseCanvasWidth}px`, height: `${canvasHeight}px`, transform: `scale(${scale})`, transformOrigin: 'top left' }} onPointerDown={editorEnabled ? handleClearSelection : undefined}>
                     {editorEnabled ? <div className="relevant-experiences-editor-grid" /> : null}
-                    {editorEnabled ? <div className="relevant-experiences-editor-guides" /> : null}
                     <RelevantExperienceConnections
                       canvasHeight={canvasHeight}
                       canvasWidth={baseCanvasWidth}
