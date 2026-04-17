@@ -17,7 +17,10 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
   return {
     nodes: content.nodes.map((node) => ({
       ...node,
-      ...(node.tags ? { tags: [...node.tags] } : {}),
+      ...(node.previewTags ? { previewTags: [...node.previewTags] } : {}),
+      ...(node.modalTags ? { modalTags: [...node.modalTags] } : {}),
+      ...(node.modalOverview ? { modalOverview: [...node.modalOverview] } : {}),
+      ...(node.modalWhatIDid ? { modalWhatIDid: [...node.modalWhatIDid] } : {}),
       layout: { ...node.layout },
     })),
     connections: content.connections.map((connection) => ({
@@ -84,6 +87,7 @@ function mergeLayoutNode(
 
 export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExperiencesLayoutKey) {
   const persistedStateRef = useRef<RelevantExperiencesContentState | null>(null);
+  const contentRef = useRef<RelevantExperiencesContentState | null>(null);
   const [content, setContent] = useState<RelevantExperiencesContentState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -101,6 +105,7 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
 
         const clonedContent = cloneContentState(nextContent);
         persistedStateRef.current = clonedContent;
+        contentRef.current = clonedContent;
         setContent(clonedContent);
         setLoadError(false);
       })
@@ -110,6 +115,7 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
         }
 
         persistedStateRef.current = null;
+        contentRef.current = null;
         setContent(null);
         setLoadError(true);
       })
@@ -170,7 +176,7 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
       const mergedNode = mergeLayoutNode(currentNode, layoutNodesById);
       const nextNode = transform(mergedNode);
 
-      return {
+      const nextState = {
         ...prev,
         nodes: prev.nodes.map((node) => (
           node.id === nodeId
@@ -179,8 +185,13 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
                 type: nextNode.type,
                 parentId: nextNode.parentId,
                 title: nextNode.title,
+                subtitle: nextNode.subtitle,
                 details: nextNode.details,
-                tags: nextNode.tags,
+                modalOverview: nextNode.modalOverview,
+                modalWhatIDid: nextNode.modalWhatIDid,
+                modalHighlight: nextNode.modalHighlight,
+                previewTags: nextNode.previewTags,
+                modalTags: nextNode.modalTags,
                 image: nextNode.image,
                 icon: nextNode.icon,
                 layout: activeLayoutKey === 'lg' ? { ...nextNode.layout } : node.layout,
@@ -200,6 +211,9 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
             }
           : {}),
       };
+
+      contentRef.current = nextState;
+      return nextState;
     });
   }, [activeLayoutKey, getActiveLayoutState]);
 
@@ -218,19 +232,25 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
       ));
 
       if (activeLayoutKey === 'lg') {
-        return {
+        const nextState = {
           ...prev,
           connections: nextConnections,
         };
+
+        contentRef.current = nextState;
+        return nextState;
       }
 
-      return {
+      const nextState = {
         ...prev,
         mdLayout: {
           nodes: activeLayout.nodes,
           connections: nextConnections,
         },
       };
+
+      contentRef.current = nextState;
+      return nextState;
     });
   }, [activeLayoutKey, getActiveLayoutState]);
 
@@ -244,19 +264,25 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
       const nextConnections = [...activeLayout.connections, connection];
 
       if (activeLayoutKey === 'lg') {
-        return {
+        const nextState = {
           ...prev,
           connections: nextConnections,
         };
+
+        contentRef.current = nextState;
+        return nextState;
       }
 
-      return {
+      const nextState = {
         ...prev,
         mdLayout: {
           nodes: activeLayout.nodes,
           connections: nextConnections,
         },
       };
+
+      contentRef.current = nextState;
+      return nextState;
     });
   }, [activeLayoutKey, getActiveLayoutState]);
 
@@ -270,19 +296,25 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
       const nextConnections = activeLayout.connections.filter((connection) => connection.id !== connectionId);
 
       if (activeLayoutKey === 'lg') {
-        return {
+        const nextState = {
           ...prev,
           connections: nextConnections,
         };
+
+        contentRef.current = nextState;
+        return nextState;
       }
 
-      return {
+      const nextState = {
         ...prev,
         mdLayout: {
           nodes: activeLayout.nodes,
           connections: nextConnections,
         },
       };
+
+      contentRef.current = nextState;
+      return nextState;
     });
   }, [activeLayoutKey, getActiveLayoutState]);
 
@@ -312,12 +344,23 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
       return;
     }
 
-    setContent(cloneContentState(persistedState));
+    const clonedState = cloneContentState(persistedState);
+    contentRef.current = clonedState;
+    setContent(clonedState);
+    setSaveFeedback('idle');
+  }, []);
+
+  const replaceContent = useCallback((nextContent: RelevantExperiencesContentState) => {
+    const clonedState = cloneContentState(nextContent);
+    contentRef.current = clonedState;
+    setContent(clonedState);
     setSaveFeedback('idle');
   }, []);
 
   const save = useCallback(async () => {
-    if (!content) {
+    const stateToSave = contentRef.current;
+
+    if (!stateToSave) {
       return;
     }
 
@@ -325,9 +368,10 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
     setSaveFeedback('idle');
 
     try {
-      const nextState = await saveRelevantExperiencesContent(content);
+      const nextState = await saveRelevantExperiencesContent(stateToSave);
       const clonedState = cloneContentState(nextState);
       persistedStateRef.current = clonedState;
+      contentRef.current = clonedState;
       setContent(clonedState);
       setSaveFeedback('success');
     } catch {
@@ -336,7 +380,7 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
       setIsSaving(false);
       window.setTimeout(() => setSaveFeedback('idle'), 1800);
     }
-  }, [content]);
+  }, []);
 
   return {
     content: mergedContent,
@@ -348,6 +392,7 @@ export function useRelevantExperiencesEditorState(activeLayoutKey: RelevantExper
     updateConnection,
     addConnection,
     removeConnection,
+    replaceContent,
     resetNodeToPersisted,
     resetToPersisted,
     save,

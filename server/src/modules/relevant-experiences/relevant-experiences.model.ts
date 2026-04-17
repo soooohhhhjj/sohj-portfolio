@@ -36,7 +36,13 @@ const relevantExperiencesNodeSchema = new Schema(
     type: { type: String, required: true, enum: ['parent', 'child'] },
     parentId: { type: String, trim: true, default: undefined },
     title: { type: String, required: true, trim: true },
+    subtitle: { type: String, trim: true, default: undefined },
     details: { type: String, required: true, trim: true },
+    modalOverview: { type: [String], default: undefined },
+    modalWhatIDid: { type: [String], default: undefined },
+    modalHighlight: { type: String, trim: true, default: undefined },
+    previewTags: { type: [String], default: undefined },
+    modalTags: { type: [String], default: undefined },
     tags: { type: [String], default: undefined },
     image: { type: String, trim: true, default: undefined },
     icon: {

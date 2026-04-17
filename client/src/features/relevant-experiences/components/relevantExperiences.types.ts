@@ -15,8 +15,13 @@ export type RelevantExperienceNode = {
   type: RelevantExperienceNodeType;
   parentId?: string;
   title: string;
+  subtitle?: string;
   details: string;
-  tags?: string[];
+  modalOverview?: string[];
+  modalWhatIDid?: string[];
+  modalHighlight?: string;
+  previewTags?: string[];
+  modalTags?: string[];
   image?: string;
   icon?: RelevantExperienceIcon;
   layout: RelevantExperienceNodeLayout;

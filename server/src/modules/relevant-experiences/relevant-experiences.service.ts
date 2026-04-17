@@ -29,8 +29,13 @@ export type RelevantExperienceNode = {
   type: RelevantExperienceNodeType;
   parentId?: string;
   title: string;
+  subtitle?: string;
   details: string;
-  tags?: string[];
+  modalOverview?: string[];
+  modalWhatIDid?: string[];
+  modalHighlight?: string;
+  previewTags?: string[];
+  modalTags?: string[];
   image?: string;
   icon?: RelevantExperienceIcon;
   layout: RelevantExperienceNodeLayout;
@@ -88,7 +93,10 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
   return {
     nodes: content.nodes.map((node) => ({
       ...node,
-      ...(node.tags ? { tags: [...node.tags] } : {}),
+      ...(node.previewTags ? { previewTags: [...node.previewTags] } : {}),
+      ...(node.modalTags ? { modalTags: [...node.modalTags] } : {}),
+      ...(node.modalOverview ? { modalOverview: [...node.modalOverview] } : {}),
+      ...(node.modalWhatIDid ? { modalWhatIDid: [...node.modalWhatIDid] } : {}),
       layout: { ...node.layout },
     })),
     connections: content.connections.map((connection) => ({
@@ -173,13 +181,38 @@ function sanitizeNode(input: unknown) {
   const id = typeof node.id === 'string' ? node.id.trim() : '';
   const type = node.type === 'parent' || node.type === 'child' ? node.type : null;
   const title = typeof node.title === 'string' ? node.title.trim() : '';
+  const subtitle = typeof node.subtitle === 'string' ? node.subtitle.trim() : '';
   const details = typeof node.details === 'string' ? node.details.trim() : '';
   const layout = sanitizeNodeLayout(node.layout);
-  const tags = Array.isArray(node.tags)
+  const legacyTags = Array.isArray(node.tags)
     ? node.tags
         .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
         .filter((tag): tag is string => Boolean(tag))
     : [];
+  const previewTags = Array.isArray(node.previewTags)
+    ? node.previewTags
+        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter((tag): tag is string => Boolean(tag))
+    : legacyTags;
+  const modalTags = Array.isArray(node.modalTags)
+    ? node.modalTags
+        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter((tag): tag is string => Boolean(tag))
+    : legacyTags;
+  const modalOverview = Array.isArray(node.modalOverview)
+    ? node.modalOverview
+        .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+        .filter((entry): entry is string => Boolean(entry))
+    : [];
+  const modalWhatIDid = Array.isArray(node.modalWhatIDid)
+    ? node.modalWhatIDid
+        .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+        .filter((entry): entry is string => Boolean(entry))
+    : [];
+  const modalHighlight =
+    typeof node.modalHighlight === 'string' && node.modalHighlight.trim()
+      ? node.modalHighlight.trim()
+      : undefined;
 
   if (!id || !type || !title || !details || !layout) {
     return null;
@@ -196,8 +229,13 @@ function sanitizeNode(input: unknown) {
     type,
     ...(parentId ? { parentId } : {}),
     title,
+    ...(subtitle ? { subtitle } : {}),
     details,
-    ...(tags.length > 0 ? { tags } : {}),
+    ...(modalOverview.length > 0 ? { modalOverview } : {}),
+    ...(modalWhatIDid.length > 0 ? { modalWhatIDid } : {}),
+    ...(modalHighlight ? { modalHighlight } : {}),
+    ...(previewTags.length > 0 ? { previewTags } : {}),
+    ...(modalTags.length > 0 ? { modalTags } : {}),
     ...(image ? { image } : {}),
     ...(icon ? { icon } : {}),
     layout,
@@ -331,25 +369,6 @@ function sanitizeContentState(input: unknown): RelevantExperiencesContentState |
   };
 }
 
-function applySeedNodeDefaults(content: RelevantExperiencesContentState): RelevantExperiencesContentState {
-  const seedNodesById = new Map(relevantExperiencesSeedState.nodes.map((node) => [node.id, node]));
-
-  return {
-    ...content,
-    nodes: content.nodes.map((node) => {
-      const seedNode = seedNodesById.get(node.id);
-      if (!seedNode?.tags?.length || node.tags?.length) {
-        return node;
-      }
-
-      return {
-        ...node,
-        tags: [...seedNode.tags],
-      };
-    }),
-  };
-}
-
 function scaleLayout(layout: RelevantExperienceNodeLayout, scale: number): RelevantExperienceNodeLayout {
   return {
     x: Math.max(0, Math.round(layout.x * scale)),
@@ -412,11 +431,9 @@ function buildStateFromLegacyDocument(document: StoredContentState) {
 function toState(document: StoredContentState) {
   const sanitizedState = sanitizeContentState(document);
   if (sanitizedState) {
-    const contentWithDefaults = applySeedNodeDefaults(sanitizedState);
-
     return {
-      ...contentWithDefaults,
-      mdLayout: contentWithDefaults.mdLayout ?? buildMdLayoutFromBase(contentWithDefaults),
+      ...sanitizedState,
+      mdLayout: sanitizedState.mdLayout ?? buildMdLayoutFromBase(sanitizedState),
     };
   }
 
