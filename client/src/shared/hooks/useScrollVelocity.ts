@@ -15,6 +15,9 @@ export function useScrollVelocity(enabled = true) {
       lerp: 0.1,
       wheelMultiplier: 1,
       touchMultiplier: 1,
+      prevent: (node) => (
+        node.closest('[data-lenis-prevent], [data-lenis-prevent-wheel], [data-lenis-prevent-touch]') !== null
+      ),
     });
 
     let lastScrollY = window.scrollY;
