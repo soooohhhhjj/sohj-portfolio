@@ -30,6 +30,7 @@ const MIN_CANVAS_WIDTH = 930;
 const MIN_CANVAS_HEIGHT = 0;
 const CONNECTION_ANCHORS: RelevantExperienceConnectionAnchor[] = ['top', 'right', 'bottom', 'left'];
 const easeSmooth: Easing = [0.12, 0.7, 0.63, 0.9];
+const RE_MODAL_ANIMATION_DURATION_MS = 220;
 
 function readLocalStorageJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -316,6 +317,7 @@ function ChildCardTag({ label }: { label: string }) {
 function RelevantExperienceModal({
   node,
   editorEnabled = false,
+  useVerticalMobileAnimation = false,
   onUpdateNode,
   onSave,
   isSaving = false,
@@ -323,11 +325,14 @@ function RelevantExperienceModal({
 }: {
   node: RelevantExperienceNode | null;
   editorEnabled?: boolean;
+  useVerticalMobileAnimation?: boolean;
   onUpdateNode?: (nodeId: string, transform: (node: RelevantExperienceNode) => RelevantExperienceNode) => void;
   onSave?: () => Promise<void> | void;
   isSaving?: boolean;
   onClose: () => void;
 }) {
+  const closeTimeoutRef = useRef<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(true);
   const [editingSection, setEditingSection] = useState<EditableModalSection>(null);
   const [overviewDraft, setOverviewDraft] = useState(() => formatMultilineEntries(node?.modalOverview));
   const [whatIDidDraft, setWhatIDidDraft] = useState(() => createItemDraft(node?.modalWhatIDid));
@@ -339,6 +344,43 @@ function RelevantExperienceModal({
   const whatIDid = node?.modalWhatIDid ?? [];
   const highlight = node?.modalHighlight ?? '';
   const techStack = node?.modalTags ?? [];
+  const modalOriginStyle = useMemo(() => {
+    if (!node) {
+      return undefined;
+    }
+
+    const normalizedX = ((node.layout.x + (node.layout.width / 2)) / MIN_CANVAS_WIDTH) * 100;
+    const normalizedY = ((node.layout.y + (node.layout.height / 2)) / Math.max(node.layout.y + node.layout.height, 1)) * 100;
+
+    return {
+      transformOrigin: `${Math.min(Math.max(normalizedX, 18), 82)}% ${Math.min(Math.max(normalizedY, 18), 82)}%`,
+    };
+  }, [node]);
+
+  const modalGrowInitial = useMemo(() => {
+    if (useVerticalMobileAnimation) {
+      return {
+        opacity: 1,
+        scale: 0.88,
+        x: 0,
+        y: 56,
+      };
+    }
+
+    if (!node) {
+      return { scale: 0.88, y: 0 };
+    }
+
+    const nodeCenterX = node.layout.x + (node.layout.width / 2);
+    const xOffset = ((nodeCenterX / MIN_CANVAS_WIDTH) - 0.5) * 28;
+
+    return {
+      opacity: 1,
+      scale: 0.88,
+      x: xOffset,
+      y: 0,
+    };
+  }, [node, useVerticalMobileAnimation]);
 
   const handleToggleSectionEditor = useCallback((section: Exclude<EditableModalSection, null>) => {
     setEditingSection((prev) => {
@@ -420,14 +462,32 @@ function RelevantExperienceModal({
     });
   }, []);
 
+  useEffect(() => () => {
+    if (closeTimeoutRef.current !== null) {
+      window.clearTimeout(closeTimeoutRef.current);
+    }
+  }, []);
+
+  const handleRequestClose = useCallback(() => {
+    if (closeTimeoutRef.current !== null) {
+      return;
+    }
+
+    setIsModalOpen(false);
+    closeTimeoutRef.current = window.setTimeout(() => {
+      closeTimeoutRef.current = null;
+      onClose();
+    }, RE_MODAL_ANIMATION_DURATION_MS);
+  }, [onClose]);
+
   if (!node) {
     return null;
   }
 
   return (
     <OverlayModal
-      isOpen={Boolean(node)}
-      onClose={onClose}
+      isOpen={isModalOpen}
+      onClose={handleRequestClose}
       rootClassName="relevant-experiences-modal"
       backdropClassName="relevant-experiences-modal__backdrop"
       dialogClassName="relevant-experiences-modal__dialog"
@@ -435,6 +495,11 @@ function RelevantExperienceModal({
       titleId="relevant-experiences-modal-title"
       rootKey={node.id}
       ease={easeSmooth}
+      dialogInitial={modalGrowInitial}
+      dialogAnimate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+      dialogExit={{ ...modalGrowInitial, opacity: 0 }}
+      dialogDuration={RE_MODAL_ANIMATION_DURATION_MS / 1000}
+      dialogStyle={modalOriginStyle}
       header={(
           <div className="relevant-experiences-modal__header">
             <div className="relevant-experiences-modal__header-copy">
@@ -449,7 +514,7 @@ function RelevantExperienceModal({
               type="button"
               className="relevant-experiences-modal__close"
               aria-label="Close modal"
-              onClick={onClose}
+              onClick={handleRequestClose}
             >
               <X size={18} strokeWidth={1.8} />
             </button>
@@ -1555,6 +1620,7 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
           key={modalNodeId ?? 'closed'}
           node={modalNode}
           editorEnabled={editorEnabled}
+          useVerticalMobileAnimation={viewportWidth < BREAKPOINTS.lg}
           onUpdateNode={updateNode}
           onSave={save}
           isSaving={isSaving}
