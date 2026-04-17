@@ -282,6 +282,11 @@
     user-select: none;
   }
 
+  .relevant-experiences-card--interactive,
+  .relevant-experiences-card-shell--interactive {
+    cursor: pointer;
+  }
+
   .relevant-experiences-card--editable:active {
     cursor: grabbing;
   }
@@ -345,6 +350,46 @@
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   }
 
+  .relevant-experiences-card--interactive .journey-showcase__card,
+  .relevant-experiences-card-shell--interactive .journey-showcase__card,
+  .relevant-experiences-card--interactive .journey-map-card,
+  .relevant-experiences-card-shell--interactive .journey-map-card {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .relevant-experiences-card--interactive:hover .journey-showcase__card,
+  .relevant-experiences-card--interactive:hover .journey-map-card,
+  .relevant-experiences-card--interactive:focus-visible .journey-showcase__card,
+  .relevant-experiences-card--interactive:focus-visible .journey-map-card,
+  .relevant-experiences-card-shell--interactive:hover .journey-showcase__card,
+  .relevant-experiences-card-shell--interactive:hover .journey-map-card,
+  .relevant-experiences-card-shell--interactive:focus-visible .journey-showcase__card,
+  .relevant-experiences-card-shell--interactive:focus-visible .journey-map-card {
+    transform: translateY(-2px);
+    box-shadow:
+      0 18px 30px rgba(0, 0, 0, 0.24),
+      0 0 0 1px rgba(247, 247, 217, 0.14);
+  }
+
+  .relevant-experiences-card--interactive:hover .relevant-experiences-card__surface--framed::before,
+  .relevant-experiences-card--interactive:focus-visible .relevant-experiences-card__surface--framed::before,
+  .relevant-experiences-card-shell--interactive:hover .relevant-experiences-card__surface--framed::before,
+  .relevant-experiences-card-shell--interactive:focus-visible .relevant-experiences-card__surface--framed::before {
+    opacity: 1;
+    background:
+      linear-gradient(to right, var(--base-text-color) 0%, transparent 100%) top left / 100% 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.35rem no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) top right / 1.35rem 1px no-repeat,
+      linear-gradient(to bottom, var(--base-text-color) 0%, transparent 100%) top right / 1px 100% no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom left / 1.35rem 1px no-repeat,
+      linear-gradient(to top, var(--base-text-color) 0%, transparent 100%) bottom left / 1px 100% no-repeat,
+      linear-gradient(to left, var(--base-text-color) 0%, transparent 100%) bottom right / 100% 1px no-repeat,
+      linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.35rem no-repeat;
+  }
+
   .relevant-experiences-card .journey-showcase__card--parent,
   .relevant-experiences-card-shell .journey-showcase__card--parent {
     padding: 1.1rem;
@@ -361,6 +406,13 @@
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   }
 
+  .relevant-experiences-card .journey-showcase__card.relevant-experiences-card__surface--framed,
+  .relevant-experiences-card .journey-map-card.relevant-experiences-card__surface--framed,
+  .relevant-experiences-card-shell .journey-showcase__card.relevant-experiences-card__surface--framed,
+  .relevant-experiences-card-shell .journey-map-card.relevant-experiences-card__surface--framed {
+    overflow: visible;
+  }
+
   .relevant-experiences-card .relevant-experiences-card__surface--framed::before,
   .relevant-experiences-card .relevant-experiences-card__surface--framed::after,
   .relevant-experiences-card-shell .relevant-experiences-card__surface--framed::before,
@@ -374,6 +426,7 @@
 
   .relevant-experiences-card .relevant-experiences-card__surface--framed::before,
   .relevant-experiences-card-shell .relevant-experiences-card__surface--framed::before {
+    inset: -2px;
     background:
       linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1.35rem 1px no-repeat,
       linear-gradient(var(--base-text-color), var(--base-text-color)) top left / 1px 1.35rem no-repeat,
@@ -384,6 +437,9 @@
       linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1.35rem 1px no-repeat,
       linear-gradient(var(--base-text-color), var(--base-text-color)) bottom right / 1px 1.35rem no-repeat;
     opacity: 0.75;
+    transition:
+      background-size 480ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms ease;
   }
 
   .relevant-experiences-card .relevant-experiences-card__surface--framed::after,
@@ -404,14 +460,14 @@
   .relevant-experiences-card--selected .relevant-experiences-card__surface--framed::before {
     opacity: 1;
     background:
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1.35rem 1px no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1px 1.35rem no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1.35rem 1px no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1px 1.35rem no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1.35rem 1px no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1px 1.35rem no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1.35rem 1px no-repeat,
-      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1px 1.35rem no-repeat;
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1.35rem 1.5px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top left / 1.5px 1.35rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1.35rem 1.5px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) top right / 1.5px 1.35rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1.35rem 1.5px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom left / 1.5px 1.35rem no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1.35rem 1.5px no-repeat,
+      linear-gradient(rgba(52, 211, 153, 0.92), rgba(52, 211, 153, 0.92)) bottom right / 1.5px 1.35rem no-repeat;
   }
 
   .relevant-experiences-card--selected .relevant-experiences-card__surface--framed::after {
@@ -604,6 +660,438 @@
   }
   /* #endregion */
 
+  /* #region Relevant Experiences Modal */
+  .relevant-experiences-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 140;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .relevant-experiences-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(8px);
+  }
+
+  .relevant-experiences-modal__dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(100%, 52rem);
+    max-height: min(88vh, 58rem);
+    overflow: hidden;
+    border: 1px solid rgba(247, 247, 217, 0.18);
+    background:
+      linear-gradient(
+        180deg,
+        rgba(8, 10, 14, 0.98) 0%,
+        rgba(12, 15, 20, 0.98) 100%
+      );
+    box-shadow:
+      0 28px 80px rgba(0, 0, 0, 0.48),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .relevant-experiences-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.4rem 1.4rem 1rem;
+    border-bottom: 1px solid rgba(247, 247, 217, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .relevant-experiences-modal__header-copy {
+    min-width: 0;
+  }
+
+  .relevant-experiences-modal__title {
+    margin: 0;
+    color: var(--base-text-color);
+    font-size: 1.55rem;
+    line-height: 1.1;
+  }
+
+  .relevant-experiences-modal__subtitle {
+    margin: 0.35rem 0 0;
+    color: rgba(247, 247, 217, 0.62);
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .relevant-experiences-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(247, 247, 217, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(247, 247, 217, 0.8);
+    transition:
+      background 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease;
+  }
+
+  .relevant-experiences-modal__close:hover,
+  .relevant-experiences-modal__close:focus-visible {
+    border-color: rgba(247, 247, 217, 0.28);
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(247, 247, 217, 0.98);
+  }
+
+  .relevant-experiences-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.4rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .relevant-experiences-modal__body::-webkit-scrollbar {
+    display: none;
+  }
+
+  .relevant-experiences-modal__section + .relevant-experiences-modal__section {
+    margin-top: 1.25rem;
+  }
+
+  .relevant-experiences-modal__empty {
+    color: rgba(247, 247, 217, 0.6);
+    font-size: 0.84rem;
+    line-height: 1.6;
+  }
+
+  .relevant-experiences-modal__empty {
+    margin: 0.7rem 0 0;
+  }
+
+  .relevant-experiences-modal__label {
+    margin: 0;
+    color: rgba(247, 247, 217, 0.56);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .relevant-experiences-modal__section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .relevant-experiences-modal__section-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(247, 247, 217, 0.78);
+  }
+
+  .relevant-experiences-modal__input-row {
+    margin-top: 0.7rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: start;
+  }
+
+  .relevant-experiences-modal__input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.2);
+    color: rgba(247, 247, 217, 0.9);
+    font-size: 0.84rem;
+    line-height: 1.6;
+    padding: 0.7rem 0.8rem;
+    resize: vertical;
+    outline: none;
+  }
+
+  .relevant-experiences-modal__input:focus {
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+  }
+
+  .relevant-experiences-modal__item-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .relevant-experiences-modal__item-row {
+    display: grid;
+    grid-template-columns: 4.2rem minmax(0, 1fr);
+    gap: 0.55rem;
+    align-items: center;
+  }
+
+  .relevant-experiences-modal__item-label {
+    color: rgba(247, 247, 217, 0.62);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .relevant-experiences-modal__item-input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.2);
+    color: rgba(247, 247, 217, 0.9);
+    font-size: 0.84rem;
+    line-height: 1.3;
+    padding: 0.65rem 0.75rem;
+    outline: none;
+  }
+
+  .relevant-experiences-modal__item-input:focus {
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+  }
+
+  .relevant-experiences-modal__confirm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid rgba(52, 211, 153, 0.42);
+    background: rgba(52, 211, 153, 0.12);
+    color: rgba(195, 255, 232, 0.96);
+  }
+
+  .relevant-experiences-modal__media {
+    border: 1px solid rgba(247, 247, 217, 0.12);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .relevant-experiences-modal__image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .relevant-experiences-modal__copy {
+    margin-top: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    color: rgba(247, 247, 217, 0.8);
+    font-size: 0.92rem;
+    line-height: 1.75;
+  }
+
+  .relevant-experiences-modal__copy p {
+    margin: 0;
+  }
+
+  .relevant-experiences-modal__list {
+    margin: 0.7rem 0 0;
+    padding-left: 1.15rem;
+    color: rgba(247, 247, 217, 0.9);
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+
+  .relevant-experiences-modal__list li + li {
+    margin-top: 0.45rem;
+  }
+
+  .relevant-experiences-modal__highlight {
+    margin: 0.7rem 0 0;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(247, 247, 217, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(247, 247, 217, 0.92);
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+
+  .relevant-experiences-modal__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.7rem;
+  }
+
+  .relevant-experiences-edit-menu {
+    position: fixed;
+    z-index: 150;
+    min-width: 9rem;
+    padding: 0.35rem;
+    border: 1px solid rgba(247, 247, 217, 0.14);
+    background: rgba(8, 10, 14, 0.96);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+    transform: translate(8px, 8px);
+  }
+
+  .relevant-experiences-edit-menu__action {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.55rem 0.7rem;
+    background: transparent;
+    color: rgba(247, 247, 217, 0.86);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+  }
+
+  .relevant-experiences-raw-editor {
+    position: fixed;
+    inset: 0;
+    z-index: 160;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .relevant-experiences-raw-editor__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.84);
+    backdrop-filter: blur(8px);
+  }
+
+  .relevant-experiences-raw-editor__dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(100%, 70rem);
+    max-height: min(90vh, 60rem);
+    border: 1px solid rgba(247, 247, 217, 0.16);
+    background: rgba(9, 12, 16, 0.98);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+  }
+
+  .relevant-experiences-raw-editor__header,
+  .relevant-experiences-raw-editor__actions {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid rgba(247, 247, 217, 0.1);
+  }
+
+  .relevant-experiences-raw-editor__actions {
+    justify-content: flex-end;
+    align-items: center;
+    border-top: 1px solid rgba(247, 247, 217, 0.1);
+    border-bottom: none;
+  }
+
+  .relevant-experiences-raw-editor__title {
+    margin: 0;
+    color: var(--base-text-color);
+    font-size: 1.4rem;
+    line-height: 1.1;
+  }
+
+  .relevant-experiences-raw-editor__subtitle {
+    margin: 0.35rem 0 0;
+    color: rgba(247, 247, 217, 0.6);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .relevant-experiences-raw-editor__close,
+  .relevant-experiences-raw-editor__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(247, 247, 217, 0.82);
+  }
+
+  .relevant-experiences-raw-editor__close {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+  }
+
+  .relevant-experiences-raw-editor__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 1rem 1.1rem;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .relevant-experiences-raw-editor__body::-webkit-scrollbar {
+    display: none;
+  }
+
+  .relevant-experiences-raw-editor__textarea {
+    display: block;
+    width: 100%;
+    min-height: 28rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.22);
+    color: rgba(247, 247, 217, 0.9);
+    font-size: 0.84rem;
+    line-height: 1.65;
+    padding: 0.95rem 1rem;
+    overflow: hidden;
+    resize: none;
+    outline: none;
+    white-space: pre-wrap;
+  }
+
+  .relevant-experiences-raw-editor__textarea:focus {
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+  }
+
+  .relevant-experiences-raw-editor__error {
+    margin: 0.75rem 0 0;
+    color: rgb(255 153 153 / 0.96);
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .relevant-experiences-raw-editor__button {
+    padding: 0.55rem 0.9rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .relevant-experiences-raw-editor__button--primary {
+    border-color: rgba(52, 211, 153, 0.42);
+    background: rgba(52, 211, 153, 0.12);
+    color: rgba(195, 255, 232, 0.96);
+  }
+  /* #endregion */
+
   /* #region Relevant Experiences HUD */
   .relevant-experiences-editor-hud {
     position: fixed;
@@ -776,6 +1264,22 @@
     display: flex;
     gap: 0.55rem;
     flex-wrap: wrap;
+  }
+
+  @media (max-width: 767.98px) {
+    .relevant-experiences-modal {
+      padding: 1rem;
+    }
+
+    .relevant-experiences-modal__header,
+    .relevant-experiences-modal__body {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .relevant-experiences-modal__title {
+      font-size: 1.25rem;
+    }
   }
 
   .relevant-experiences-editor-hud__card-actions button,

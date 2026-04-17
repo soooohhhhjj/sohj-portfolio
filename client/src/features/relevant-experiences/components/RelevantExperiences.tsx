@@ -1,8 +1,10 @@
-import { createPortal } from 'react-dom';
 import { motion, type Easing } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
-import { BriefcaseBusiness, FolderKanban } from 'lucide-react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
+import { BriefcaseBusiness, Check, FolderKanban, Pencil, X } from 'lucide-react';
 import { GlassCard } from '../../../shared/components/GlassCard';
+import { OverlayModal } from '../../../shared/components/OverlayModal/OverlayModal';
 import { Section, SectionContent } from '../../../shared/components/Container';
 import { BREAKPOINTS, CONTENT_MAX_WIDTH } from '../../../shared/constants/breakpoints';
 import { useRelevantExperiencesEditorState } from '../hooks/useRelevantExperiencesEditorState';
@@ -99,6 +101,192 @@ function parseTagsFromEditor(value: string) {
   return nextTags.length > 0 ? nextTags : undefined;
 }
 
+function formatMultilineEntries(entries?: string[]) {
+  return entries?.join('\n') ?? '';
+}
+
+function parseMultilineEntries(value: string) {
+  const nextEntries = value
+    .split('\n')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return nextEntries.length > 0 ? nextEntries : undefined;
+}
+
+function createItemDraft(entries?: string[]) {
+  return entries?.length ? [...entries] : [''];
+}
+
+function sanitizeItemDraft(entries: string[]) {
+  const nextEntries = entries
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return nextEntries.length > 0 ? nextEntries : undefined;
+}
+
+type EditableModalSection = 'overview' | 'whatIDid' | 'highlight' | 'techStack' | null;
+type RawEditorParseResult =
+  | { ok: true; content: RelevantExperienceNode[] }
+  | { ok: false; error: string };
+
+const RAW_NODE_SEPARATOR = '---';
+
+function formatRawList(items?: string[]) {
+  return items?.length ? items.map((item) => `- ${item}`).join('\n') : '';
+}
+
+function formatRawSectionDivider(label: string) {
+  return `# ===== ${label} =====`;
+}
+
+function formatRawTextContent(nodes: RelevantExperienceNode[]) {
+  return nodes.map((node) => [
+    `${node.type === 'parent' ? 'Parent' : 'Child'} - ${node.id}`,
+    '',
+    formatRawSectionDivider('Preview Card'),
+    `Title: ${node.title}`,
+    node.subtitle ? `Subtitle: ${node.subtitle}` : 'Subtitle:',
+    `${node.type === 'parent' ? 'Preview Summary' : 'Preview Details'}:`,
+    node.details,
+    '',
+    formatRawSectionDivider('Modal Content'),
+    'Modal Overview:',
+    formatRawList(node.modalOverview),
+    'Modal What I Did:',
+    formatRawList(node.modalWhatIDid),
+    'Modal Highlight:',
+    node.modalHighlight ?? '',
+    '',
+    formatRawSectionDivider('Tags'),
+    'Preview Tags:',
+    formatRawList(node.previewTags),
+    'Modal Tags:',
+    formatRawList(node.modalTags),
+  ].join('\n')).join(`\n\n${RAW_NODE_SEPARATOR}\n\n`);
+}
+
+function normalizeRawList(lines: string[]) {
+  const nextItems = lines
+    .map((line) => line.replace(/^-\s*/, '').trim())
+    .filter(Boolean);
+
+  return nextItems.length > 0 ? nextItems : undefined;
+}
+
+function isIgnoredRawEditorLine(line: string) {
+  const trimmed = line.trim();
+
+  return /^#\s*=+.+={2,}\s*$/.test(trimmed);
+}
+
+function parseRawTextContent(rawText: string, nodes: RelevantExperienceNode[]): RawEditorParseResult {
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const blocks = rawText
+    .split(new RegExp(`\\n\\s*${RAW_NODE_SEPARATOR}\\s*\\n`, 'g'))
+    .map((block) => block.trim())
+    .filter(Boolean);
+
+  if (blocks.length !== nodes.length) {
+    return { ok: false, error: `Expected ${nodes.length} card blocks, but found ${blocks.length}.` };
+  }
+
+  const parsedNodes: RelevantExperienceNode[] = [];
+
+  for (const block of blocks) {
+    const lines = block.split('\n');
+    const header = lines[0]?.trim() ?? '';
+    const headerMatch = /^(Parent|Child)\s*-\s*(.+)$/.exec(header);
+
+    if (!headerMatch) {
+      return { ok: false, error: `Invalid block header: "${header}". Use "Parent - id" or "Child - id".` };
+    }
+
+    const [, blockType, blockId] = headerMatch;
+    const sourceNode = nodesById.get(blockId.trim());
+
+    if (!sourceNode) {
+      return { ok: false, error: `Unknown node id "${blockId.trim()}".` };
+    }
+
+    if ((blockType.toLowerCase() as RelevantExperienceNode['type']) !== sourceNode.type) {
+      return { ok: false, error: `Node "${sourceNode.id}" type does not match its header.` };
+    }
+
+    const sections = new Map<string, string[]>();
+    let currentLabel: string | null = null;
+
+    for (const line of lines.slice(1)) {
+      const labelMatch = /^(Title|Subtitle|Summary|Details|Preview Summary|Preview Details|Overview|Modal Overview|What I Did|Modal What I Did|Highlight|Modal Highlight|Preview Tags|Tags|Modal Tags):(.*)$/.exec(line);
+      if (labelMatch) {
+        currentLabel = labelMatch[1];
+        sections.set(currentLabel, []);
+        const inlineValue = labelMatch[2].trim();
+        if (inlineValue) {
+          sections.get(currentLabel)?.push(inlineValue);
+        }
+        continue;
+      }
+
+      if (isIgnoredRawEditorLine(line)) {
+        continue;
+      }
+
+      if (!line.trim()) {
+        if (!currentLabel) {
+          continue;
+        }
+
+        sections.get(currentLabel)?.push('');
+        continue;
+      }
+
+      if (!currentLabel) {
+        return { ok: false, error: `Unexpected content before a section label in "${sourceNode.id}".` };
+      }
+
+      sections.get(currentLabel)?.push(line);
+    }
+
+    const legacyDetailsLabel = sourceNode.type === 'parent' ? 'Summary' : 'Details';
+    const previewDetailsLabel = sourceNode.type === 'parent' ? 'Preview Summary' : 'Preview Details';
+    const title = (sections.get('Title') ?? []).join('\n').trim();
+    const subtitle = (sections.get('Subtitle') ?? []).join('\n').trim();
+    const details = (
+      sections.get(previewDetailsLabel)
+      ?? sections.get(legacyDetailsLabel)
+      ?? []
+    ).join('\n').trim();
+
+    if (!title) {
+      return { ok: false, error: `Title is required for "${sourceNode.id}".` };
+    }
+
+    if (!details) {
+      return { ok: false, error: `${previewDetailsLabel} is required for "${sourceNode.id}".` };
+    }
+
+    parsedNodes.push({
+      ...sourceNode,
+      title,
+      subtitle: subtitle || undefined,
+      details,
+      modalOverview: normalizeRawList(sections.get('Modal Overview') ?? sections.get('Overview') ?? []),
+      modalWhatIDid: normalizeRawList(sections.get('Modal What I Did') ?? sections.get('What I Did') ?? []),
+      modalHighlight: (
+        sections.get('Modal Highlight')
+        ?? sections.get('Highlight')
+        ?? []
+      ).join('\n').trim() || undefined,
+      previewTags: normalizeRawList(sections.get('Preview Tags') ?? []),
+      modalTags: normalizeRawList(sections.get('Modal Tags') ?? sections.get('Tags') ?? []),
+    });
+  }
+
+  return { ok: true, content: parsedNodes };
+}
+
 function TruncatedText({ as = 'p', text, className }: { as?: 'p' | 'span'; text: string; className: string }) {
   const textRef = useRef<HTMLParagraphElement | HTMLSpanElement | null>(null);
   useLayoutEffect(() => {
@@ -123,6 +311,352 @@ function RelevantExperienceIconGlyph({ icon }: { icon?: RelevantExperienceNode['
 
 function ChildCardTag({ label }: { label: string }) {
   return <span className="relevant-experiences-card__tag font-jura">{label}</span>;
+}
+
+function RelevantExperienceModal({
+  node,
+  editorEnabled = false,
+  onUpdateNode,
+  onSave,
+  isSaving = false,
+  onClose,
+}: {
+  node: RelevantExperienceNode | null;
+  editorEnabled?: boolean;
+  onUpdateNode?: (nodeId: string, transform: (node: RelevantExperienceNode) => RelevantExperienceNode) => void;
+  onSave?: () => Promise<void> | void;
+  isSaving?: boolean;
+  onClose: () => void;
+}) {
+  const [editingSection, setEditingSection] = useState<EditableModalSection>(null);
+  const [overviewDraft, setOverviewDraft] = useState(() => formatMultilineEntries(node?.modalOverview));
+  const [whatIDidDraft, setWhatIDidDraft] = useState(() => createItemDraft(node?.modalWhatIDid));
+  const [highlightDraft, setHighlightDraft] = useState(() => node?.modalHighlight ?? '');
+  const [techStackDraft, setTechStackDraft] = useState(() => formatTagsForEditor(node?.modalTags));
+
+  const imageSrc = resolveAssetPath(node?.image);
+  const overview = node?.modalOverview ?? [];
+  const whatIDid = node?.modalWhatIDid ?? [];
+  const highlight = node?.modalHighlight ?? '';
+  const techStack = node?.modalTags ?? [];
+
+  const handleToggleSectionEditor = useCallback((section: Exclude<EditableModalSection, null>) => {
+    setEditingSection((prev) => {
+      if (prev === section) {
+        return null;
+      }
+
+      if (section === 'overview') {
+        setOverviewDraft(formatMultilineEntries(node?.modalOverview));
+      }
+
+      if (section === 'whatIDid') {
+        setWhatIDidDraft(createItemDraft(node?.modalWhatIDid));
+      }
+
+      if (section === 'highlight') {
+        setHighlightDraft(node?.modalHighlight ?? '');
+      }
+
+      if (section === 'techStack') {
+        setTechStackDraft(formatTagsForEditor(node?.modalTags));
+      }
+
+      return section;
+    });
+  }, [node]);
+
+  const handleSaveSection = useCallback(async (section: Exclude<EditableModalSection, null>) => {
+    if (!node || !onUpdateNode) {
+      return;
+    }
+
+    if (section === 'overview') {
+      onUpdateNode(node.id, (currentNode) => ({
+        ...currentNode,
+        modalOverview: parseMultilineEntries(overviewDraft),
+      }));
+    }
+
+    if (section === 'whatIDid') {
+      onUpdateNode(node.id, (currentNode) => ({
+        ...currentNode,
+        modalWhatIDid: sanitizeItemDraft(whatIDidDraft),
+      }));
+    }
+
+    if (section === 'highlight') {
+      onUpdateNode(node.id, (currentNode) => ({
+        ...currentNode,
+        modalHighlight: highlightDraft.trim() || undefined,
+      }));
+    }
+
+    if (section === 'techStack') {
+      onUpdateNode(node.id, (currentNode) => ({
+        ...currentNode,
+        modalTags: parseTagsFromEditor(techStackDraft),
+      }));
+    }
+
+    await onSave?.();
+    setEditingSection(null);
+  }, [node, onSave, onUpdateNode, overviewDraft, whatIDidDraft, highlightDraft, techStackDraft]);
+
+  const handleWhatIDidItemChange = useCallback((index: number, value: string) => {
+    setWhatIDidDraft((prev) => {
+      const next = [...prev];
+      next[index] = value;
+
+      if (index === next.length - 1 && value.trim()) {
+        next.push('');
+      }
+
+      while (next.length > 1 && !next[next.length - 1].trim() && !next[next.length - 2].trim()) {
+        next.pop();
+      }
+
+      return next;
+    });
+  }, []);
+
+  if (!node) {
+    return null;
+  }
+
+  return (
+    <OverlayModal
+      isOpen={Boolean(node)}
+      onClose={onClose}
+      rootClassName="relevant-experiences-modal"
+      backdropClassName="relevant-experiences-modal__backdrop"
+      dialogClassName="relevant-experiences-modal__dialog"
+      bodyClassName="relevant-experiences-modal__body"
+      titleId="relevant-experiences-modal-title"
+      rootKey={node.id}
+      ease={easeSmooth}
+      header={(
+          <div className="relevant-experiences-modal__header">
+            <div className="relevant-experiences-modal__header-copy">
+              <h3 id="relevant-experiences-modal-title" className="relevant-experiences-modal__title font-anta">
+                {node.title}
+              </h3>
+              {node.subtitle ? (
+                <p className="relevant-experiences-modal__subtitle font-jura">{node.subtitle}</p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="relevant-experiences-modal__close"
+              aria-label="Close modal"
+              onClick={onClose}
+            >
+              <X size={18} strokeWidth={1.8} />
+            </button>
+          </div>
+      )}
+    >
+      {imageSrc ? (
+        <section className="relevant-experiences-modal__section">
+          <GlassCard
+            width="w-full"
+            corner="rounded-[3px]"
+            shadow=""
+            className="overflow-hidden relevant-experiences-modal__media"
+          >
+            <img
+              src={imageSrc}
+              alt={node.title}
+              className="relevant-experiences-modal__image"
+              loading="lazy"
+              draggable={false}
+            />
+          </GlassCard>
+        </section>
+      ) : null}
+
+      <section className="relevant-experiences-modal__section">
+        <div className="relevant-experiences-modal__section-header">
+          <p className="relevant-experiences-modal__label font-jura">Overview</p>
+          {editorEnabled ? (
+            <button
+              type="button"
+              className="relevant-experiences-modal__section-action"
+              aria-label="Edit overview"
+              onClick={() => handleToggleSectionEditor('overview')}
+            >
+              <Pencil size={14} strokeWidth={1.7} />
+            </button>
+          ) : null}
+        </div>
+        {editorEnabled && editingSection === 'overview' ? (
+          <div className="relevant-experiences-modal__input-row">
+            <textarea
+              className="relevant-experiences-modal__input font-jura"
+              rows={5}
+              value={overviewDraft}
+              onChange={(event) => setOverviewDraft(event.target.value)}
+            />
+            <button
+              type="button"
+              className="relevant-experiences-modal__confirm"
+              aria-label="Save overview"
+              onClick={() => void handleSaveSection('overview')}
+              disabled={isSaving}
+            >
+              <Check size={16} strokeWidth={2} />
+            </button>
+          </div>
+        ) : null}
+        {overview.length > 0 ? (
+          <div className="relevant-experiences-modal__copy">
+            {overview.map((paragraph, index) => (
+              <p key={`${node.id}-overview-${index}`} className="font-jura">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="relevant-experiences-modal__empty font-jura">No overview added yet.</p>
+        )}
+      </section>
+
+      <section className="relevant-experiences-modal__section">
+                <div className="relevant-experiences-modal__section-header">
+                  <p className="relevant-experiences-modal__label font-jura">What I Did</p>
+                  {editorEnabled ? (
+                    <button
+                      type="button"
+                      className="relevant-experiences-modal__section-action"
+                      aria-label="Edit what I did"
+                      onClick={() => handleToggleSectionEditor('whatIDid')}
+                    >
+                      <Pencil size={14} strokeWidth={1.7} />
+                    </button>
+                  ) : null}
+                </div>
+                {editorEnabled && editingSection === 'whatIDid' ? (
+                  <div className="relevant-experiences-modal__input-row">
+                    <div className="relevant-experiences-modal__item-editor">
+                      {whatIDidDraft.map((item, index) => (
+                        <label key={`${node.id}-what-i-did-input-${index}`} className="relevant-experiences-modal__item-row font-jura">
+                          <span className="relevant-experiences-modal__item-label">{`Item ${index + 1}`}</span>
+                          <input
+                            className="relevant-experiences-modal__item-input font-jura"
+                            type="text"
+                            value={item}
+                            onChange={(event) => handleWhatIDidItemChange(index, event.target.value)}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="relevant-experiences-modal__confirm"
+                      aria-label="Save what I did"
+                      onClick={() => void handleSaveSection('whatIDid')}
+                      disabled={isSaving}
+                    >
+                      <Check size={16} strokeWidth={2} />
+                    </button>
+                  </div>
+                ) : null}
+                {whatIDid.length > 0 ? (
+                  <ul className="relevant-experiences-modal__list">
+                    {whatIDid.map((item, index) => (
+                      <li key={`${node.id}-what-i-did-${index}`} className="font-jura">
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="relevant-experiences-modal__empty font-jura">No details added yet.</p>
+                )}
+      </section>
+
+      <section className="relevant-experiences-modal__section">
+                <div className="relevant-experiences-modal__section-header">
+                  <p className="relevant-experiences-modal__label font-jura">Highlight</p>
+                  {editorEnabled ? (
+                    <button
+                      type="button"
+                      className="relevant-experiences-modal__section-action"
+                      aria-label="Edit highlight"
+                      onClick={() => handleToggleSectionEditor('highlight')}
+                    >
+                      <Pencil size={14} strokeWidth={1.7} />
+                    </button>
+                  ) : null}
+                </div>
+                {editorEnabled && editingSection === 'highlight' ? (
+                  <div className="relevant-experiences-modal__input-row">
+                    <textarea
+                      className="relevant-experiences-modal__input font-jura"
+                      rows={3}
+                      value={highlightDraft}
+                      onChange={(event) => setHighlightDraft(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="relevant-experiences-modal__confirm"
+                      aria-label="Save highlight"
+                      onClick={() => void handleSaveSection('highlight')}
+                      disabled={isSaving}
+                    >
+                      <Check size={16} strokeWidth={2} />
+                    </button>
+                  </div>
+                ) : null}
+                {highlight ? (
+                  <p className="relevant-experiences-modal__highlight font-jura">{highlight}</p>
+                ) : (
+                  <p className="relevant-experiences-modal__empty font-jura">No highlight added yet.</p>
+                )}
+      </section>
+
+      <section className="relevant-experiences-modal__section">
+                <div className="relevant-experiences-modal__section-header">
+                  <p className="relevant-experiences-modal__label font-jura">Tags</p>
+                  {editorEnabled ? (
+                    <button
+                      type="button"
+                      className="relevant-experiences-modal__section-action"
+                      aria-label="Edit tags"
+                      onClick={() => handleToggleSectionEditor('techStack')}
+                    >
+                      <Pencil size={14} strokeWidth={1.7} />
+                    </button>
+                  ) : null}
+                </div>
+                {editorEnabled && editingSection === 'techStack' ? (
+                  <div className="relevant-experiences-modal__input-row">
+                    <textarea
+                      className="relevant-experiences-modal__input font-jura"
+                      rows={3}
+                      value={techStackDraft}
+                      onChange={(event) => setTechStackDraft(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="relevant-experiences-modal__confirm"
+                      aria-label="Save tags"
+                      onClick={() => void handleSaveSection('techStack')}
+                      disabled={isSaving}
+                    >
+                      <Check size={16} strokeWidth={2} />
+                    </button>
+                  </div>
+                ) : null}
+                {techStack.length > 0 ? (
+                  <div className="relevant-experiences-modal__tags">
+                    {techStack.map((tag) => <ChildCardTag key={`${node.id}-modal-${tag}`} label={tag} />)}
+                  </div>
+                ) : (
+                  <p className="relevant-experiences-modal__empty font-jura">No tags added yet.</p>
+                )}
+      </section>
+    </OverlayModal>
+  );
 }
 
 function RelevantExperienceCardContent({
@@ -160,9 +694,9 @@ function RelevantExperienceCardContent({
       <div className="relevant-experiences-card__body">
         <h4 className="journey-map-card__child-title font-jura">{node.title}</h4>
         <p className="journey-map-card__child-details font-jura">{node.details}</p>
-        {node.tags?.length ? (
+        {node.previewTags?.length ? (
           <div className="relevant-experiences-card__tags" aria-label={`${node.title} tags`}>
-            {node.tags.map((tag) => <ChildCardTag key={`${node.id}-${tag}`} label={tag} />)}
+            {node.previewTags.map((tag) => <ChildCardTag key={`${node.id}-${tag}`} label={tag} />)}
           </div>
         ) : null}
       </div>
@@ -170,13 +704,14 @@ function RelevantExperienceCardContent({
   );
 }
 
-function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, onMeasure, onSelect, onMove, onResize }: {
+function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, onMeasure, onActivate, onOpenEditMenu, onMove, onResize }: {
   node: RelevantExperienceNode;
   selected: boolean;
   editorEnabled: boolean;
   canvasElement: HTMLDivElement | null;
   onMeasure: (nodeId: string, layout: RelevantExperienceNodeLayout) => void;
-  onSelect: (nodeId: string) => void;
+  onActivate: (nodeId: string) => void;
+  onOpenEditMenu: (nodeId: string, position: { x: number; y: number }) => void;
   onMove: (nodeId: string, next: { x: number; y: number }) => void;
   onResize: (nodeId: string, next: { x: number; y: number; width: number; height: number }) => void;
 }) {
@@ -216,7 +751,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
       resizeObserver.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [canvasElement, layout.height, layout.width, layout.x, layout.y, node.details, node.id, node.tags, node.title, node.type, onMeasure]);
+  }, [canvasElement, layout.height, layout.width, layout.x, layout.y, node.details, node.id, node.previewTags, node.title, node.type, onMeasure]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     if (!editorEnabled || event.button !== 0) return;
@@ -234,7 +769,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
       scaleX: scaleX || 1,
       scaleY: scaleY || 1,
     };
-    onSelect(node.id);
+    onActivate(node.id);
 
     const move = (moveEvent: PointerEvent) => {
       const dragState = dragStateRef.current;
@@ -264,7 +799,7 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
     event.stopPropagation();
     resizeStateRef.current = { pointerId: event.pointerId, handle, startX: event.clientX, startY: event.clientY, startLeft: layout.x, startTop: layout.y, startWidth: layout.width, startHeight: layout.height };
     event.currentTarget.setPointerCapture(event.pointerId);
-    onSelect(node.id);
+    onActivate(node.id);
   };
   const handleResizePointerMove = (event: ReactPointerEvent<HTMLSpanElement>) => {
     const resizeState = resizeStateRef.current;
@@ -285,20 +820,30 @@ function RelevantExperienceCard({ node, selected, editorEnabled, canvasElement, 
     if (resizeStateRef.current?.pointerId === event.pointerId) resizeStateRef.current = null;
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(node.id); }
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onActivate(node.id); }
+  };
+  const handleContextMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!editorEnabled) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    onOpenEditMenu(node.id, { x: event.clientX, y: event.clientY });
   };
   return (
     <div
       ref={cardRef}
-      className={`relevant-experiences-card relevant-experiences-card--${node.type} ${editorEnabled ? 'relevant-experiences-card--editable' : ''} ${selected ? 'relevant-experiences-card--selected' : ''}`}
+      className={`relevant-experiences-card relevant-experiences-card--${node.type} ${editorEnabled ? 'relevant-experiences-card--editable' : 'relevant-experiences-card--interactive'} ${selected ? 'relevant-experiences-card--selected' : ''}`}
       style={{ left: `${layout.x}px`, top: `${layout.y}px`, width: `${layout.width}px`, height: `${layout.height}px` }}
       role="button"
       tabIndex={0}
-      aria-label={`${node.title} card`}
-      onClick={() => onSelect(node.id)}
-      onKeyDown={handleKeyDown}
-      onPointerDown={handlePointerDown}
-    >
+        aria-label={`${node.title} card`}
+        onClick={() => onActivate(node.id)}
+        onKeyDown={handleKeyDown}
+        onPointerDown={handlePointerDown}
+        onContextMenu={handleContextMenu}
+      >
       {editorEnabled ? (
         <>
           <span className="relevant-experiences-resize-handle relevant-experiences-resize-handle--nw" onPointerDown={(event) => handleResizePointerDown('nw', event)} onPointerMove={handleResizePointerMove} onPointerUp={handleResizePointerUp} />
@@ -326,14 +871,22 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
   const [pendingConnectionTargetId, setPendingConnectionTargetId] = useState<string>('');
   const [tagEditorDraft, setTagEditorDraft] = useState<{ nodeId: string | null; value: string }>({ nodeId: null, value: '' });
   const [copyFeedback, setCopyFeedback] = useState<'idle' | 'success' | 'error'>('idle');
+  const [modalNodeId, setModalNodeId] = useState<string | null>(null);
+  const [editMenuState, setEditMenuState] = useState<{ nodeId: string; x: number; y: number } | null>(null);
+  const [isRawEditorOpen, setIsRawEditorOpen] = useState(false);
+  const [rawEditorValue, setRawEditorValue] = useState('');
+  const [rawEditorError, setRawEditorError] = useState<string | null>(null);
+  const rawEditorTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [viewportWidth, setViewportWidth] = useState<number>(
     typeof window === 'undefined' ? BREAKPOINTS.lg : window.innerWidth,
   );
   const activeLayoutKey = viewportWidth >= BREAKPOINTS.lg ? 'lg' : 'md';
   const {
     content,
+    rawContent,
     isLoading,
     loadError,
+    replaceContent,
     updateNode,
     updateConnection,
     addConnection,
@@ -379,11 +932,14 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
   const activeSelectedConnectionId = editorEnabled ? selectedConnectionId : null;
   const activeSelectedViaIndex = editorEnabled ? selectedViaIndex : null;
   const selectedNode = useMemo(() => nodes.find((node) => node.id === activeSelectedNodeId) ?? null, [activeSelectedNodeId, nodes]);
+  const modalNode = useMemo(() => (
+    editorEnabled && !modalNodeId ? null : nodes.find((node) => node.id === modalNodeId) ?? null
+  ), [editorEnabled, modalNodeId, nodes]);
   const selectedConnection = useMemo(() => connections.find((connection) => connection.id === activeSelectedConnectionId) ?? null, [activeSelectedConnectionId, connections]);
   const selectedNodeLayout = selectedNode?.layout ?? null;
   const measuredNodeLayoutsById = useMemo(() => new Map(Object.entries(measuredNodeLayouts)), [measuredNodeLayouts]);
   const tagEditorValue = selectedNode?.type === 'child'
-    ? (tagEditorDraft.nodeId === selectedNode.id ? tagEditorDraft.value : formatTagsForEditor(selectedNode.tags))
+    ? (tagEditorDraft.nodeId === selectedNode.id ? tagEditorDraft.value : formatTagsForEditor(selectedNode.previewTags))
     : '';
   const availableConnectionTargets = useMemo(() => (
     selectedNode
@@ -522,6 +1078,16 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
     setTagEditorDraft((prev) => (prev.nodeId === nodeId ? prev : { nodeId: null, value: '' }));
   }, []);
 
+  const handleActivateNode = useCallback((nodeId: string) => {
+    setEditMenuState(null);
+    if (editorEnabled) {
+      handleSelectNode(nodeId);
+      return;
+    }
+
+    setModalNodeId(nodeId);
+  }, [editorEnabled, handleSelectNode]);
+
   const handleCanvasRef = useCallback((node: HTMLDivElement | null) => {
     setCanvasElement(node);
   }, []);
@@ -537,6 +1103,40 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
     setIsAddCornerMode(false);
     setTagEditorDraft({ nodeId: null, value: '' });
   }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalNodeId(null);
+  }, []);
+
+  const handleOpenEditMenu = useCallback((nodeId: string, position: { x: number; y: number }) => {
+    setSelectedNodeId(nodeId);
+    setSelectedConnectionId(null);
+    setSelectedViaIndex(null);
+    setTagEditorDraft({ nodeId: null, value: '' });
+    setEditMenuState({ nodeId, ...position });
+  }, []);
+
+  const handleOpenModalFromEditMenu = useCallback(() => {
+    if (!editMenuState) {
+      return;
+    }
+
+    setModalNodeId(editMenuState.nodeId);
+    setEditMenuState(null);
+  }, [editMenuState]);
+
+  useEffect(() => {
+    if (!editMenuState) {
+      return;
+    }
+
+    const handlePointerDown = () => setEditMenuState(null);
+    window.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [editMenuState]);
 
   const handleSelectConnection = useCallback((connectionId: string, event: ReactPointerEvent<SVGPathElement>) => {
     event.stopPropagation();
@@ -769,6 +1369,51 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
     setTagEditorDraft({ nodeId: null, value: '' });
   }, [resetToPersisted]);
 
+  const handleOpenRawEditor = useCallback(() => {
+    if (!rawContent) {
+      return;
+    }
+
+    setRawEditorValue(formatRawTextContent(rawContent.nodes));
+    setRawEditorError(null);
+    setIsRawEditorOpen(true);
+  }, [rawContent]);
+
+  const handleCloseRawEditor = useCallback(() => {
+    setIsRawEditorOpen(false);
+    setRawEditorError(null);
+  }, []);
+
+  const handleApplyRawEditor = useCallback(async () => {
+    if (!rawContent) {
+      return;
+    }
+
+    const parsed = parseRawTextContent(rawEditorValue, rawContent.nodes);
+    if (!parsed.ok) {
+      setRawEditorError(parsed.error);
+      return;
+    }
+
+    replaceContent({
+      ...rawContent,
+      nodes: parsed.content,
+    });
+    setRawEditorError(null);
+    await save();
+    setIsRawEditorOpen(false);
+  }, [rawContent, rawEditorValue, replaceContent, save]);
+
+  useLayoutEffect(() => {
+    if (!isRawEditorOpen || !rawEditorTextareaRef.current) {
+      return;
+    }
+
+    const textarea = rawEditorTextareaRef.current;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.max(textarea.scrollHeight, 448)}px`;
+  }, [isRawEditorOpen, rawEditorValue]);
+
   const statusBody = isLoading ? (
     <div className="relevant-experiences-intro text-center">
       <h2 className="relevant-experiences-intro__title font-anta">Relevant Experiences</h2>
@@ -815,7 +1460,7 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
                             onSelectConnection={handleSelectConnection}
                             onSelectViaPoint={handleSelectViaPoint}
                           />
-                          {displayNodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={activeSelectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onSelect={handleSelectNode} onMove={handleMoveNode} onResize={handleResizeNode} />)}
+                          {displayNodes.map((node) => <RelevantExperienceCard key={node.id} node={node} selected={activeSelectedNodeId === node.id} editorEnabled={editorEnabled} canvasElement={canvasElement} onMeasure={handleMeasureNode} onActivate={handleActivateNode} onOpenEditMenu={handleOpenEditMenu} onMove={handleMoveNode} onResize={handleResizeNode} />)}
                         </div>
                       </div>
                     ) : (
@@ -825,13 +1470,50 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
 
                           return (
                             <section key={parent.id} className="relevant-experiences-group">
-                              <div className="relevant-experiences-group__parent relevant-experiences-card-shell">
+                              <div
+                                className={`relevant-experiences-group__parent relevant-experiences-card-shell ${editorEnabled ? '' : 'relevant-experiences-card-shell--interactive'}`}
+                                  role="button"
+                                  tabIndex={0}
+                                  aria-label={`${parent.title} card`}
+                                  onClick={() => handleActivateNode(parent.id)}
+                                  onContextMenu={(event) => {
+                                    if (!editorEnabled) return;
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    handleOpenEditMenu(parent.id, { x: event.clientX, y: event.clientY });
+                                  }}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                      event.preventDefault();
+                                    handleActivateNode(parent.id);
+                                  }
+                                }}
+                              >
                                 <RelevantExperienceCardContent node={parent} />
                               </div>
                               {childNodes.length > 0 ? (
                                 <div className="relevant-experiences-group__children relevant-experiences-group__children--linear">
                                   {childNodes.map((child) => (
-                                    <div key={child.id} className="relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell">
+                                    <div
+                                      key={child.id}
+                                      className={`relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell ${editorEnabled ? '' : 'relevant-experiences-card-shell--interactive'}`}
+                                      role="button"
+                                        tabIndex={0}
+                                        aria-label={`${child.title} card`}
+                                        onClick={() => handleActivateNode(child.id)}
+                                        onContextMenu={(event) => {
+                                          if (!editorEnabled) return;
+                                          event.preventDefault();
+                                          event.stopPropagation();
+                                          handleOpenEditMenu(child.id, { x: event.clientX, y: event.clientY });
+                                        }}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                          handleActivateNode(child.id);
+                                        }
+                                      }}
+                                    >
                                       <RelevantExperienceCardContent node={child} />
                                     </div>
                                   ))}
@@ -843,11 +1525,20 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
                         {(childNodesByParentId.get('orphans') ?? []).length > 0 ? (
                           <section className="relevant-experiences-group relevant-experiences-group--orphans">
                             <div className="relevant-experiences-group__children relevant-experiences-group__children--linear">
-                              {(childNodesByParentId.get('orphans') ?? []).map((child) => (
-                                <div key={child.id} className="relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell">
-                                  <RelevantExperienceCardContent node={child} />
-                                </div>
-                              ))}
+                                {(childNodesByParentId.get('orphans') ?? []).map((child) => (
+                                  <div
+                                    key={child.id}
+                                    className="relevant-experiences-responsive-card relevant-experiences-responsive-card--child relevant-experiences-card-shell"
+                                    onContextMenu={(event) => {
+                                      if (!editorEnabled) return;
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      handleOpenEditMenu(child.id, { x: event.clientX, y: event.clientY });
+                                    }}
+                                  >
+                                    <RelevantExperienceCardContent node={child} />
+                                  </div>
+                                ))}
                             </div>
                           </section>
                         ) : null}
@@ -860,41 +1551,118 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
           </div>
         </Section>
       </motion.div>
-      {editorEnabled && content && typeof document !== 'undefined' ? createPortal(
-        <div className={`relevant-experiences-editor-hud ${hudMinimized ? 'relevant-experiences-editor-hud--minimized' : ''}`} style={{ transform: `translate(${hudPos.x}px, ${hudPos.y}px)` }}>
-          <div className="relevant-experiences-editor-hud__drag-grip" onPointerDown={handleHudPointerDown} aria-label="Drag relevant experiences editor panel" role="presentation" />
-          <div className="relevant-experiences-editor-hud__title-row">
-            <div className="relevant-experiences-editor-hud__title">Relevant Experiences Edit Mode</div>
+        <RelevantExperienceModal
+          key={modalNodeId ?? 'closed'}
+          node={modalNode}
+          editorEnabled={editorEnabled}
+          onUpdateNode={updateNode}
+          onSave={save}
+          isSaving={isSaving}
+          onClose={handleCloseModal}
+        />
+        {editorEnabled && editMenuState && typeof document !== 'undefined' ? createPortal(
+          <div
+            className="relevant-experiences-edit-menu"
+            style={{ left: `${editMenuState.x}px`, top: `${editMenuState.y}px` }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <button type="button" className="relevant-experiences-edit-menu__action font-jura" onClick={handleOpenModalFromEditMenu}>
+              Edit Details
+            </button>
+            </div>,
+          document.body,
+        ) : null}
+        {editorEnabled ? (
+          <OverlayModal
+            isOpen={isRawEditorOpen}
+            onClose={handleCloseRawEditor}
+            rootClassName="relevant-experiences-raw-editor"
+            backdropClassName="relevant-experiences-raw-editor__backdrop"
+            dialogClassName="relevant-experiences-raw-editor__dialog"
+            bodyClassName="relevant-experiences-raw-editor__body"
+            titleId="relevant-experiences-raw-editor-title"
+            rootKey="relevant-experiences-raw-editor"
+            header={(
+              <div className="relevant-experiences-raw-editor__header">
+                <div>
+                  <h3 id="relevant-experiences-raw-editor-title" className="relevant-experiences-raw-editor__title font-anta">Raw Content Editor</h3>
+                  <p className="relevant-experiences-raw-editor__subtitle font-jura">
+                    Preview and modal fields are grouped separately here. Extra spacing and `# ===== section =====` divider lines are safe to keep when you paste edits back in.
+                  </p>
+                </div>
+                <button type="button" className="relevant-experiences-raw-editor__close" onClick={handleCloseRawEditor}>
+                  <X size={18} strokeWidth={1.8} />
+                </button>
+              </div>
+            )}
+            footer={(
+              <div className="relevant-experiences-raw-editor__actions">
+                <button type="button" className="relevant-experiences-raw-editor__button" onClick={handleCloseRawEditor}>
+                  Cancel
+                </button>
+                <button type="button" className="relevant-experiences-raw-editor__button" onClick={() => setRawEditorValue(rawContent ? formatRawTextContent(rawContent.nodes) : '')}>
+                  Reset Text
+                </button>
+                <button type="button" className="relevant-experiences-raw-editor__button relevant-experiences-raw-editor__button--primary" onClick={() => void handleApplyRawEditor()} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Apply & Save'}
+                </button>
+              </div>
+            )}
+          >
+            <textarea
+              ref={rawEditorTextareaRef}
+              className="relevant-experiences-raw-editor__textarea font-jura"
+              value={rawEditorValue}
+              onChange={(event) => setRawEditorValue(event.target.value)}
+              spellCheck={false}
+            />
+            {rawEditorError ? (
+              <p className="relevant-experiences-raw-editor__error font-jura">{rawEditorError}</p>
+            ) : null}
+          </OverlayModal>
+        ) : null}
+        {editorEnabled && content && typeof document !== 'undefined' ? createPortal(
+          <div className={`relevant-experiences-editor-hud ${hudMinimized ? 'relevant-experiences-editor-hud--minimized' : ''}`} style={{ transform: `translate(${hudPos.x}px, ${hudPos.y}px)` }}>
+            <div className="relevant-experiences-editor-hud__drag-grip" onPointerDown={handleHudPointerDown} aria-label="Drag relevant experiences editor panel" role="presentation" />
+            <div className="relevant-experiences-editor-hud__title-row">
+              <div className="relevant-experiences-editor-hud__title">Relevant Experiences Edit Mode</div>
             <div className="relevant-experiences-editor-hud__title-actions">
               <button type="button" className="relevant-experiences-editor-hud__mini-toggle" onClick={save} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save'}</button>
-              <button type="button" className="relevant-experiences-editor-hud__mini-toggle" onClick={() => setHudMinimized((prev) => !prev)}>{hudMinimized ? 'Expand' : 'Minimize'}</button>
+                <button type="button" className="relevant-experiences-editor-hud__mini-toggle" onClick={() => setHudMinimized((prev) => !prev)}>{hudMinimized ? 'Expand' : 'Minimize'}</button>
+              </div>
             </div>
-          </div>
-          {hudMinimized && selectedConnection ? (
+          {hudMinimized ? (
             <div className="relevant-experiences-editor-hud__mini-actions">
-              <button
-                type="button"
-                className={`relevant-experiences-editor-hud__mini-toggle ${isAddCornerMode ? 'relevant-experiences-editor-hud__mini-toggle--active' : ''}`}
-                onClick={() => setIsAddCornerMode((prev) => !prev)}
-              >
-                {isAddCornerMode ? 'Pick Line...' : 'Add Corner'}
+              <button type="button" className="relevant-experiences-editor-hud__mini-toggle" onClick={handleOpenRawEditor}>
+                Raw Content
               </button>
-              <button
-                type="button"
-                className="relevant-experiences-editor-hud__mini-toggle"
-                onClick={handleOrthogonalizeSelectedConnection}
-                disabled={selectedConnection.viaPoints.length === 0}
-              >
-                Ortho
-              </button>
-              <button
-                type="button"
-                className="relevant-experiences-editor-hud__mini-toggle"
-                onClick={handleClearSelectedConnectionCorners}
-                disabled={selectedConnection.viaPoints.length === 0}
-              >
-                Remove Corners
-              </button>
+              {selectedConnection ? (
+                <>
+                  <button
+                    type="button"
+                    className={`relevant-experiences-editor-hud__mini-toggle ${isAddCornerMode ? 'relevant-experiences-editor-hud__mini-toggle--active' : ''}`}
+                    onClick={() => setIsAddCornerMode((prev) => !prev)}
+                  >
+                    {isAddCornerMode ? 'Pick Line...' : 'Add Corner'}
+                  </button>
+                  <button
+                    type="button"
+                    className="relevant-experiences-editor-hud__mini-toggle"
+                    onClick={handleOrthogonalizeSelectedConnection}
+                    disabled={selectedConnection.viaPoints.length === 0}
+                  >
+                    Ortho
+                  </button>
+                  <button
+                    type="button"
+                    className="relevant-experiences-editor-hud__mini-toggle"
+                    onClick={handleClearSelectedConnectionCorners}
+                    disabled={selectedConnection.viaPoints.length === 0}
+                  >
+                    Remove Corners
+                  </button>
+                </>
+              ) : null}
             </div>
           ) : null}
           {!hudMinimized ? <div className="relevant-experiences-editor-hud__meta"><span>canvas: {Math.round(activeCanvasWidth)} x {displayCanvasHeight}</span><span>scale: {scale.toFixed(3)}</span><span>card: {selectedNode?.id ?? 'none'}</span><span>connector: {selectedConnection?.id ?? 'none'}</span></div> : null}
@@ -905,7 +1673,7 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
                 <div className="relevant-experiences-editor-hud__field"><label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-card-details">{selectedNode.type === 'parent' ? 'Summary' : 'Details'}</label><textarea id="relevant-experiences-editor-card-details" className="relevant-experiences-editor-hud__textarea" rows={selectedNode.type === 'parent' ? 4 : 3} value={selectedNode.details} onChange={(event) => updateNode(selectedNode.id, (node) => ({ ...node, details: event.target.value }))} /></div>
                 {selectedNode.type === 'child' ? (
                   <div className="relevant-experiences-editor-hud__field">
-                    <label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-card-tags">Tags</label>
+                    <label className="relevant-experiences-editor-hud__label" htmlFor="relevant-experiences-editor-card-tags">Preview Tags</label>
                     <textarea
                       id="relevant-experiences-editor-card-tags"
                       className="relevant-experiences-editor-hud__textarea"
@@ -914,7 +1682,7 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
                       onChange={(event) => {
                         const nextValue = event.target.value;
                         setTagEditorDraft({ nodeId: selectedNode.id, value: nextValue });
-                        updateNode(selectedNode.id, (node) => ({ ...node, tags: parseTagsFromEditor(nextValue) }));
+                        updateNode(selectedNode.id, (node) => ({ ...node, previewTags: parseTagsFromEditor(nextValue) }));
                       }}
                     />
                   </div>
