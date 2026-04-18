@@ -2,7 +2,8 @@ import { motion, type Easing } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { BriefcaseBusiness, Check, FolderKanban, Pencil, X } from 'lucide-react';
+import { BriefcaseBusiness, Check, FolderKanban, Pencil } from 'lucide-react';
+import { AnimatedCloseIcon } from '../../../shared/components/AnimatedCloseIcon/AnimatedCloseIcon';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { OverlayModal } from '../../../shared/components/OverlayModal/OverlayModal';
 import { Section, SectionContent } from '../../../shared/components/Container';
@@ -102,19 +103,6 @@ function parseTagsFromEditor(value: string) {
   return nextTags.length > 0 ? nextTags : undefined;
 }
 
-function formatMultilineEntries(entries?: string[]) {
-  return entries?.join('\n') ?? '';
-}
-
-function parseMultilineEntries(value: string) {
-  const nextEntries = value
-    .split('\n')
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-
-  return nextEntries.length > 0 ? nextEntries : undefined;
-}
-
 function createItemDraft(entries?: string[]) {
   return entries?.length ? [...entries] : [''];
 }
@@ -127,7 +115,7 @@ function sanitizeItemDraft(entries: string[]) {
   return nextEntries.length > 0 ? nextEntries : undefined;
 }
 
-type EditableModalSection = 'overview' | 'whatIDid' | 'highlight' | 'techStack' | null;
+type EditableModalSection = 'whatIDid' | 'techStack' | null;
 type RawEditorParseResult =
   | { ok: true; content: RelevantExperienceNode[] }
   | { ok: false; error: string };
@@ -153,12 +141,8 @@ function formatRawTextContent(nodes: RelevantExperienceNode[]) {
     node.details,
     '',
     formatRawSectionDivider('Modal Content'),
-    'Modal Overview:',
-    formatRawList(node.modalOverview),
     'Modal What I Did:',
     formatRawList(node.modalWhatIDid),
-    'Modal Highlight:',
-    node.modalHighlight ?? '',
     '',
     formatRawSectionDivider('Tags'),
     'Preview Tags:',
@@ -219,7 +203,7 @@ function parseRawTextContent(rawText: string, nodes: RelevantExperienceNode[]): 
     let currentLabel: string | null = null;
 
     for (const line of lines.slice(1)) {
-      const labelMatch = /^(Title|Subtitle|Summary|Details|Preview Summary|Preview Details|Overview|Modal Overview|What I Did|Modal What I Did|Highlight|Modal Highlight|Preview Tags|Tags|Modal Tags):(.*)$/.exec(line);
+      const labelMatch = /^(Title|Subtitle|Summary|Details|What I Did|Modal What I Did|Preview Tags|Tags|Modal Tags):(.*)$/.exec(line);
       if (labelMatch) {
         currentLabel = labelMatch[1];
         sections.set(currentLabel, []);
@@ -273,13 +257,7 @@ function parseRawTextContent(rawText: string, nodes: RelevantExperienceNode[]): 
       title,
       subtitle: subtitle || undefined,
       details,
-      modalOverview: normalizeRawList(sections.get('Modal Overview') ?? sections.get('Overview') ?? []),
       modalWhatIDid: normalizeRawList(sections.get('Modal What I Did') ?? sections.get('What I Did') ?? []),
-      modalHighlight: (
-        sections.get('Modal Highlight')
-        ?? sections.get('Highlight')
-        ?? []
-      ).join('\n').trim() || undefined,
       previewTags: normalizeRawList(sections.get('Preview Tags') ?? []),
       modalTags: normalizeRawList(sections.get('Modal Tags') ?? sections.get('Tags') ?? []),
     });
@@ -334,15 +312,11 @@ function RelevantExperienceModal({
   const closeTimeoutRef = useRef<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [editingSection, setEditingSection] = useState<EditableModalSection>(null);
-  const [overviewDraft, setOverviewDraft] = useState(() => formatMultilineEntries(node?.modalOverview));
   const [whatIDidDraft, setWhatIDidDraft] = useState(() => createItemDraft(node?.modalWhatIDid));
-  const [highlightDraft, setHighlightDraft] = useState(() => node?.modalHighlight ?? '');
   const [techStackDraft, setTechStackDraft] = useState(() => formatTagsForEditor(node?.modalTags));
 
   const imageSrc = resolveAssetPath(node?.image);
-  const overview = node?.modalOverview ?? [];
   const whatIDid = node?.modalWhatIDid ?? [];
-  const highlight = node?.modalHighlight ?? '';
   const techStack = node?.modalTags ?? [];
   const modalOriginStyle = useMemo(() => {
     if (!node) {
@@ -388,16 +362,8 @@ function RelevantExperienceModal({
         return null;
       }
 
-      if (section === 'overview') {
-        setOverviewDraft(formatMultilineEntries(node?.modalOverview));
-      }
-
       if (section === 'whatIDid') {
         setWhatIDidDraft(createItemDraft(node?.modalWhatIDid));
-      }
-
-      if (section === 'highlight') {
-        setHighlightDraft(node?.modalHighlight ?? '');
       }
 
       if (section === 'techStack') {
@@ -413,24 +379,10 @@ function RelevantExperienceModal({
       return;
     }
 
-    if (section === 'overview') {
-      onUpdateNode(node.id, (currentNode) => ({
-        ...currentNode,
-        modalOverview: parseMultilineEntries(overviewDraft),
-      }));
-    }
-
     if (section === 'whatIDid') {
       onUpdateNode(node.id, (currentNode) => ({
         ...currentNode,
         modalWhatIDid: sanitizeItemDraft(whatIDidDraft),
-      }));
-    }
-
-    if (section === 'highlight') {
-      onUpdateNode(node.id, (currentNode) => ({
-        ...currentNode,
-        modalHighlight: highlightDraft.trim() || undefined,
       }));
     }
 
@@ -443,7 +395,7 @@ function RelevantExperienceModal({
 
     await onSave?.();
     setEditingSection(null);
-  }, [node, onSave, onUpdateNode, overviewDraft, whatIDidDraft, highlightDraft, techStackDraft]);
+  }, [node, onSave, onUpdateNode, whatIDidDraft, techStackDraft]);
 
   const handleWhatIDidItemChange = useCallback((index: number, value: string) => {
     setWhatIDidDraft((prev) => {
@@ -512,11 +464,11 @@ function RelevantExperienceModal({
             </div>
             <button
               type="button"
-              className="relevant-experiences-modal__close"
+              className="group relevant-experiences-modal__close"
               aria-label="Close modal"
               onClick={handleRequestClose}
             >
-              <X size={18} strokeWidth={1.8} />
+              <AnimatedCloseIcon size={18} strokeWidth={1.8} />
             </button>
           </div>
       )}
@@ -541,54 +493,8 @@ function RelevantExperienceModal({
       ) : null}
 
       <section className="relevant-experiences-modal__section">
-        <div className="relevant-experiences-modal__section-header">
-          <p className="relevant-experiences-modal__label font-jura">Overview</p>
-          {editorEnabled ? (
-            <button
-              type="button"
-              className="relevant-experiences-modal__section-action"
-              aria-label="Edit overview"
-              onClick={() => handleToggleSectionEditor('overview')}
-            >
-              <Pencil size={14} strokeWidth={1.7} />
-            </button>
-          ) : null}
-        </div>
-        {editorEnabled && editingSection === 'overview' ? (
-          <div className="relevant-experiences-modal__input-row">
-            <textarea
-              className="relevant-experiences-modal__input font-jura"
-              rows={5}
-              value={overviewDraft}
-              onChange={(event) => setOverviewDraft(event.target.value)}
-            />
-            <button
-              type="button"
-              className="relevant-experiences-modal__confirm"
-              aria-label="Save overview"
-              onClick={() => void handleSaveSection('overview')}
-              disabled={isSaving}
-            >
-              <Check size={16} strokeWidth={2} />
-            </button>
-          </div>
-        ) : null}
-        {overview.length > 0 ? (
-          <div className="relevant-experiences-modal__copy">
-            {overview.map((paragraph, index) => (
-              <p key={`${node.id}-overview-${index}`} className="font-jura">
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        ) : (
-          <p className="relevant-experiences-modal__empty font-jura">No overview added yet.</p>
-        )}
-      </section>
-
-      <section className="relevant-experiences-modal__section">
                 <div className="relevant-experiences-modal__section-header">
-                  <p className="relevant-experiences-modal__label font-jura">What I Did</p>
+                  <p className="relevant-experiences-modal__label relevant-experiences-modal__label--primary font-jura">What I Did</p>
                   {editorEnabled ? (
                     <button
                       type="button"
@@ -629,53 +535,16 @@ function RelevantExperienceModal({
                 {whatIDid.length > 0 ? (
                   <ul className="relevant-experiences-modal__list">
                     {whatIDid.map((item, index) => (
-                      <li key={`${node.id}-what-i-did-${index}`} className="font-jura">
-                        {item}
+                      <li key={`${node.id}-what-i-did-${index}`} className="relevant-experiences-modal__list-item font-jura">
+                        <span className="relevant-experiences-modal__list-bullet">
+                          &bull;
+                        </span>
+                        <span className="relevant-experiences-modal__list-text">{item}</span>
                       </li>
                     ))}
                   </ul>
                 ) : (
                   <p className="relevant-experiences-modal__empty font-jura">No details added yet.</p>
-                )}
-      </section>
-
-      <section className="relevant-experiences-modal__section">
-                <div className="relevant-experiences-modal__section-header">
-                  <p className="relevant-experiences-modal__label font-jura">Highlight</p>
-                  {editorEnabled ? (
-                    <button
-                      type="button"
-                      className="relevant-experiences-modal__section-action"
-                      aria-label="Edit highlight"
-                      onClick={() => handleToggleSectionEditor('highlight')}
-                    >
-                      <Pencil size={14} strokeWidth={1.7} />
-                    </button>
-                  ) : null}
-                </div>
-                {editorEnabled && editingSection === 'highlight' ? (
-                  <div className="relevant-experiences-modal__input-row">
-                    <textarea
-                      className="relevant-experiences-modal__input font-jura"
-                      rows={3}
-                      value={highlightDraft}
-                      onChange={(event) => setHighlightDraft(event.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="relevant-experiences-modal__confirm"
-                      aria-label="Save highlight"
-                      onClick={() => void handleSaveSection('highlight')}
-                      disabled={isSaving}
-                    >
-                      <Check size={16} strokeWidth={2} />
-                    </button>
-                  </div>
-                ) : null}
-                {highlight ? (
-                  <p className="relevant-experiences-modal__highlight font-jura">{highlight}</p>
-                ) : (
-                  <p className="relevant-experiences-modal__empty font-jura">No highlight added yet.</p>
                 )}
       </section>
 
@@ -723,7 +592,6 @@ function RelevantExperienceModal({
     </OverlayModal>
   );
 }
-
 function RelevantExperienceCardContent({
   node,
   truncateParentDetails = false,
@@ -1656,8 +1524,8 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
                     Preview and modal fields are grouped separately here. Extra spacing and `# ===== section =====` divider lines are safe to keep when you paste edits back in.
                   </p>
                 </div>
-                <button type="button" className="relevant-experiences-raw-editor__close" onClick={handleCloseRawEditor}>
-                  <X size={18} strokeWidth={1.8} />
+                <button type="button" className="group relevant-experiences-raw-editor__close" onClick={handleCloseRawEditor}>
+                  <AnimatedCloseIcon size={18} strokeWidth={1.8} />
                 </button>
               </div>
             )}

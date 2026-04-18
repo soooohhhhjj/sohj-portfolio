@@ -31,9 +31,7 @@ export type RelevantExperienceNode = {
   title: string;
   subtitle?: string;
   details: string;
-  modalOverview?: string[];
   modalWhatIDid?: string[];
-  modalHighlight?: string;
   previewTags?: string[];
   modalTags?: string[];
   image?: string;
@@ -95,7 +93,6 @@ function cloneContentState(content: RelevantExperiencesContentState): RelevantEx
       ...node,
       ...(node.previewTags ? { previewTags: [...node.previewTags] } : {}),
       ...(node.modalTags ? { modalTags: [...node.modalTags] } : {}),
-      ...(node.modalOverview ? { modalOverview: [...node.modalOverview] } : {}),
       ...(node.modalWhatIDid ? { modalWhatIDid: [...node.modalWhatIDid] } : {}),
       layout: { ...node.layout },
     })),
@@ -199,20 +196,11 @@ function sanitizeNode(input: unknown) {
         .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
         .filter((tag): tag is string => Boolean(tag))
     : legacyTags;
-  const modalOverview = Array.isArray(node.modalOverview)
-    ? node.modalOverview
-        .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
-        .filter((entry): entry is string => Boolean(entry))
-    : [];
   const modalWhatIDid = Array.isArray(node.modalWhatIDid)
     ? node.modalWhatIDid
         .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
         .filter((entry): entry is string => Boolean(entry))
     : [];
-  const modalHighlight =
-    typeof node.modalHighlight === 'string' && node.modalHighlight.trim()
-      ? node.modalHighlight.trim()
-      : undefined;
 
   if (!id || !type || !title || !details || !layout) {
     return null;
@@ -231,9 +219,7 @@ function sanitizeNode(input: unknown) {
     title,
     ...(subtitle ? { subtitle } : {}),
     details,
-    ...(modalOverview.length > 0 ? { modalOverview } : {}),
     ...(modalWhatIDid.length > 0 ? { modalWhatIDid } : {}),
-    ...(modalHighlight ? { modalHighlight } : {}),
     ...(previewTags.length > 0 ? { previewTags } : {}),
     ...(modalTags.length > 0 ? { modalTags } : {}),
     ...(image ? { image } : {}),

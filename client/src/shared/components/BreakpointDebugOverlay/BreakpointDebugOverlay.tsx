@@ -8,8 +8,8 @@ import {
   SlidersHorizontal,
   Star,
   StarOff,
-  X,
 } from 'lucide-react';
+import { AnimatedCloseIcon } from '../AnimatedCloseIcon/AnimatedCloseIcon';
 import { BREAKPOINTS, CONTENT_MAX_WIDTH } from '../../constants/breakpoints';
 
 type ActiveBreakpoint = 'mobile' | 'dinosaur' | 'xxsm' | 'xsm' | 'sm' | 'md' | 'lg' | 'xl';
@@ -247,11 +247,11 @@ export function BreakpointDebugOverlay({
 
         <button
           type="button"
-          className={`breakpoint-debug__toggle ${getLabelClass(thresholdInfo.threshold)}`}
+          className={`group breakpoint-debug__toggle ${getLabelClass(thresholdInfo.threshold)}`}
           onClick={() => setIsPanelOpen((prev) => !prev)}
           aria-label={isPanelOpen ? 'Close debug controls' : 'Open debug controls'}
         >
-          {isPanelOpen ? <X className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
+          {isPanelOpen ? <AnimatedCloseIcon className="h-4 w-4" /> : <SlidersHorizontal className="h-4 w-4" />}
         </button>
       </div>
     </div>

@@ -17,9 +17,7 @@ export type RelevantExperienceNode = {
   title: string;
   subtitle?: string;
   details: string;
-  modalOverview?: string[];
   modalWhatIDid?: string[];
-  modalHighlight?: string;
   previewTags?: string[];
   modalTags?: string[];
   image?: string;
