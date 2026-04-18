@@ -915,6 +915,34 @@
     background: rgba(255, 255, 255, 0.02);
   }
 
+  .relevant-experiences-modal__dvd-shell {
+    position: relative;
+    width: 100%;
+    min-height: 15.5rem;
+    overflow: hidden;
+  }
+
+  .relevant-experiences-modal__dvd-logo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: clamp(8.5rem, 24%, 11rem);
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(126, 185, 255, 0.18));
+    will-change: transform;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .relevant-experiences-modal__dvd-shell--preview {
+    min-height: 8.4rem;
+  }
+
+  .relevant-experiences-modal__dvd-logo--preview {
+    width: clamp(5.25rem, 34%, 7.2rem);
+  }
+
   .relevant-experiences-modal__image {
     display: block;
     width: 100%;

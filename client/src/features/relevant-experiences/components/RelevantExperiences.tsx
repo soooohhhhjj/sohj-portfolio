@@ -32,6 +32,112 @@ const MIN_CANVAS_HEIGHT = 0;
 const CONNECTION_ANCHORS: RelevantExperienceConnectionAnchor[] = ['top', 'right', 'bottom', 'left'];
 const easeSmooth: Easing = [0.12, 0.7, 0.63, 0.9];
 const RE_MODAL_ANIMATION_DURATION_MS = 220;
+const TRANSFER_IT_NODE_ID = 'transfer-it-internship';
+
+function BouncingLogoDisplay({
+  src,
+  alt,
+  className,
+  logoClassName,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  logoClassName?: string;
+}) {
+  const frameRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number | null>(null);
+  const positionRef = useRef({ x: 0, y: 0 });
+  const velocityRef = useRef({ x: 0.07, y: 0.065 });
+  const boundsRef = useRef({ width: 0, height: 0, logoWidth: 0, logoHeight: 0 });
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const logoRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    const shell = shellRef.current;
+    const logo = logoRef.current;
+    if (!shell || !logo) {
+      return;
+    }
+
+    const updateBounds = () => {
+      const nextBounds = {
+        width: shell.clientWidth,
+        height: shell.clientHeight,
+        logoWidth: logo.clientWidth,
+        logoHeight: logo.clientHeight,
+      };
+
+      boundsRef.current = nextBounds;
+      positionRef.current = {
+        x: Math.max(0, Math.min(positionRef.current.x, nextBounds.width - nextBounds.logoWidth)),
+        y: Math.max(0, Math.min(positionRef.current.y, nextBounds.height - nextBounds.logoHeight)),
+      };
+      logo.style.transform = `translate(${positionRef.current.x}px, ${positionRef.current.y}px)`;
+    };
+
+    const step = (time: number) => {
+      if (lastTimeRef.current === null) {
+        lastTimeRef.current = time;
+      }
+
+      const delta = Math.min(32, time - lastTimeRef.current);
+      lastTimeRef.current = time;
+
+      const { width, height, logoWidth, logoHeight } = boundsRef.current;
+      const maxX = Math.max(0, width - logoWidth);
+      const maxY = Math.max(0, height - logoHeight);
+
+      if (maxX > 0 || maxY > 0) {
+        let nextX = positionRef.current.x + (velocityRef.current.x * delta);
+        let nextY = positionRef.current.y + (velocityRef.current.y * delta);
+
+        if (nextX <= 0 || nextX >= maxX) {
+          velocityRef.current.x *= -1;
+          nextX = Math.max(0, Math.min(nextX, maxX));
+        }
+
+        if (nextY <= 0 || nextY >= maxY) {
+          velocityRef.current.y *= -1;
+          nextY = Math.max(0, Math.min(nextY, maxY));
+        }
+
+        positionRef.current = { x: nextX, y: nextY };
+        logo.style.transform = `translate(${nextX}px, ${nextY}px)`;
+      }
+
+      frameRef.current = window.requestAnimationFrame(step);
+    };
+
+    const resizeObserver = new ResizeObserver(updateBounds);
+    resizeObserver.observe(shell);
+    resizeObserver.observe(logo);
+    updateBounds();
+
+    frameRef.current = window.requestAnimationFrame(step);
+
+    return () => {
+      resizeObserver.disconnect();
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+      }
+      lastTimeRef.current = null;
+    };
+  }, []);
+
+  return (
+    <div ref={shellRef} className={`relevant-experiences-modal__dvd-shell${className ? ` ${className}` : ''}`}>
+      <img
+        ref={logoRef}
+        src={src}
+        alt={alt}
+        className={`relevant-experiences-modal__dvd-logo${logoClassName ? ` ${logoClassName}` : ''}`}
+        loading="lazy"
+        draggable={false}
+      />
+    </div>
+  );
+}
 
 function readLocalStorageJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -322,6 +428,7 @@ function RelevantExperienceModal({
   const imageSrc = resolveAssetPath(node?.image);
   const whatIDid = node?.modalWhatIDid ?? [];
   const techStack = node?.modalTags ?? [];
+  const isTransferItNode = node?.id === TRANSFER_IT_NODE_ID;
   const modalOriginStyle = useMemo(() => {
     if (!node) {
       return undefined;
@@ -529,13 +636,17 @@ function RelevantExperienceModal({
             shadow=""
             className="overflow-hidden relevant-experiences-modal__media"
           >
-            <img
-              src={imageSrc}
-              alt={node.title}
-              className="relevant-experiences-modal__image"
-              loading="lazy"
-              draggable={false}
-            />
+            {isTransferItNode ? (
+              <BouncingLogoDisplay src={imageSrc} alt={node.title} />
+            ) : (
+              <img
+                src={imageSrc}
+                alt={node.title}
+                className="relevant-experiences-modal__image"
+                loading="lazy"
+                draggable={false}
+              />
+            )}
           </GlassCard>
         </section>
       ) : null}
@@ -650,6 +761,7 @@ function RelevantExperienceCardContent({
   truncateParentDetails?: boolean;
 }) {
   const imageSrc = resolveAssetPath(node.image);
+  const isTransferItNode = node.id === TRANSFER_IT_NODE_ID;
 
   if (node.type === 'parent' && node.icon) {
     return (
@@ -671,7 +783,16 @@ function RelevantExperienceCardContent({
     <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--child journey-map-card journey-showcase__card journey-showcase__card--child">
       {imageSrc ? (
         <GlassCard width="w-full" corner="rounded-[2px]" shadow="" className="overflow-hidden journey-map-card__media">
-          <img src={imageSrc} alt={node.title} className="journey-map-card__image" loading="lazy" draggable={false} />
+          {isTransferItNode ? (
+            <BouncingLogoDisplay
+              src={imageSrc}
+              alt={node.title}
+              className="relevant-experiences-modal__dvd-shell--preview"
+              logoClassName="relevant-experiences-modal__dvd-logo--preview"
+            />
+          ) : (
+            <img src={imageSrc} alt={node.title} className="journey-map-card__image" loading="lazy" draggable={false} />
+          )}
         </GlassCard>
       ) : null}
       <div className="relevant-experiences-card__body">
