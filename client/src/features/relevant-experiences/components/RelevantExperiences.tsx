@@ -294,19 +294,23 @@ function ChildCardTag({ label }: { label: string }) {
 
 function RelevantExperienceModal({
   node,
+  childNodes = [],
   editorEnabled = false,
   useVerticalMobileAnimation = false,
   onUpdateNode,
   onSave,
   isSaving = false,
+  onSelectNode,
   onClose,
 }: {
   node: RelevantExperienceNode | null;
+  childNodes?: RelevantExperienceNode[];
   editorEnabled?: boolean;
   useVerticalMobileAnimation?: boolean;
   onUpdateNode?: (nodeId: string, transform: (node: RelevantExperienceNode) => RelevantExperienceNode) => void;
   onSave?: () => Promise<void> | void;
   isSaving?: boolean;
+  onSelectNode?: (nodeId: string) => void;
   onClose: () => void;
 }) {
   const closeTimeoutRef = useRef<number | null>(null);
@@ -436,6 +440,8 @@ function RelevantExperienceModal({
     return null;
   }
 
+  const isParentNode = node.type === 'parent';
+
   return (
     <OverlayModal
       isOpen={isModalOpen}
@@ -473,6 +479,48 @@ function RelevantExperienceModal({
           </div>
       )}
     >
+      {isParentNode ? (
+        <>
+          <section className="relevant-experiences-modal__section relevant-experiences-modal__section--parent-intro">
+            <div className="relevant-experiences-modal__section-header">
+              <p className="relevant-experiences-modal__label relevant-experiences-modal__label--primary font-jura">Overview</p>
+            </div>
+            <p className="relevant-experiences-modal__intro font-jura">{node.details}</p>
+          </section>
+
+          <section className="relevant-experiences-modal__section">
+            <div className="relevant-experiences-modal__section-header">
+              <p className="relevant-experiences-modal__label relevant-experiences-modal__label--primary font-jura">Included Work</p>
+            </div>
+            {childNodes.length > 0 ? (
+              <div className="relevant-experiences-modal__child-grid">
+                {childNodes.map((child) => (
+                  <button
+                    key={child.id}
+                    type="button"
+                    className="relevant-experiences-modal__child-card"
+                    onClick={() => onSelectNode?.(child.id)}
+                  >
+                    <div className="relevant-experiences-modal__child-card-copy">
+                      <h4 className="relevant-experiences-modal__child-card-title font-jura">{child.title}</h4>
+                      <p className="relevant-experiences-modal__child-card-details font-jura">{child.details}</p>
+                      {child.previewTags?.length ? (
+                        <div className="relevant-experiences-modal__child-card-tags" aria-label={`${child.title} tags`}>
+                          {child.previewTags.map((tag) => <ChildCardTag key={`${child.id}-parent-modal-${tag}`} label={tag} />)}
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="relevant-experiences-modal__child-card-hint font-jura">Open</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="relevant-experiences-modal__empty font-jura">No child items added yet.</p>
+            )}
+          </section>
+        </>
+      ) : (
+        <>
       {imageSrc ? (
         <section className="relevant-experiences-modal__section">
           <GlassCard
@@ -589,6 +637,8 @@ function RelevantExperienceModal({
                   <p className="relevant-experiences-modal__empty font-jura">No tags added yet.</p>
                 )}
       </section>
+        </>
+      )}
     </OverlayModal>
   );
 }
@@ -1487,11 +1537,13 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
         <RelevantExperienceModal
           key={modalNodeId ?? 'closed'}
           node={modalNode}
+          childNodes={modalNode?.type === 'parent' ? (childNodesByParentId.get(modalNode.id) ?? []) : []}
           editorEnabled={editorEnabled}
           useVerticalMobileAnimation={viewportWidth < BREAKPOINTS.lg}
           onUpdateNode={updateNode}
           onSave={save}
           isSaving={isSaving}
+          onSelectNode={setModalNodeId}
           onClose={handleCloseModal}
         />
         {editorEnabled && editMenuState && typeof document !== 'undefined' ? createPortal(
