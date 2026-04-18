@@ -765,7 +765,7 @@ function RelevantExperienceCardContent({
 
   if (node.type === 'parent' && node.icon) {
     return (
-      <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--parent journey-map-card journey-showcase__card journey-showcase__card--parent">
+      <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--glass relevant-experiences-card__surface--parent journey-map-card journey-showcase__card journey-showcase__card--parent">
         <div className="journey-map-card__parent-header">
           <div className="journey-map-card__icon-shell"><RelevantExperienceIconGlyph icon={node.icon} /></div>
           <h3 className="journey-map-card__title font-jura">{node.title}</h3>
@@ -780,7 +780,7 @@ function RelevantExperienceCardContent({
   }
 
   return (
-    <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--child journey-map-card journey-showcase__card journey-showcase__card--child">
+    <article className="relevant-experiences-card__surface relevant-experiences-card__surface--framed relevant-experiences-card__surface--glass relevant-experiences-card__surface--child journey-map-card journey-showcase__card journey-showcase__card--child">
       {imageSrc ? (
         <GlassCard width="w-full" corner="rounded-[2px]" shadow="" className="overflow-hidden journey-map-card__media">
           {isTransferItNode ? (

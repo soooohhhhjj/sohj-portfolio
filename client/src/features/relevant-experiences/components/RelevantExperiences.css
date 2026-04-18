@@ -13,15 +13,15 @@
     background:
       linear-gradient(
         180deg,
-        rgba(8, 10, 14, 0.98) 0%,
-        rgba(14, 17, 23, 0.96) 18%,
-        rgba(6, 7, 10, 0.99) 52%,
-        rgba(13, 16, 22, 0.96) 78%,
-        rgba(7, 9, 12, 0.99) 100%
+        rgba(5, 6, 9, 1) 0%,
+        rgba(7, 8, 12, 1) 24%,
+        rgba(4, 5, 8, 1) 52%,
+        rgba(7, 8, 12, 1) 78%,
+        rgba(5, 6, 9, 1) 100%
       );
     box-shadow:
       0 24px 60px rgba(0, 0, 0, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .relevant-experiences-shell__layer {
@@ -32,29 +32,30 @@
 
   .relevant-experiences-shell__layer--diagonal {
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0, transparent 14%, transparent 86%, rgba(255, 255, 255, 0.03) 100%);
-    opacity: 0.55;
+      linear-gradient(rgba(247, 247, 217, 0.11) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(247, 247, 217, 0.11) 1px, transparent 1px);
+    background-size: 56px 56px;
+    background-position: center;
+    opacity: 0.24;
   }
 
   .relevant-experiences-shell__layer--vertical {
     background:
       linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.035) 18%,
-        transparent 36%,
-        rgba(255, 255, 255, 0.02) 52%,
-        transparent 70%,
-        rgba(255, 255, 255, 0.03) 100%
+        180deg,
+        rgba(247, 247, 217, 0.03) 0%,
+        rgba(247, 247, 217, 0) 22%,
+        rgba(247, 247, 217, 0) 78%,
+        rgba(247, 247, 217, 0.02) 100%
       );
-    opacity: 0.35;
+    opacity: 0.24;
   }
 
   .relevant-experiences-shell__layer--inner-shadow {
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.16),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.12),
-      inset 0 0 36px rgba(255, 255, 255, 0.05);
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 0 28px rgba(255, 255, 255, 0.025);
   }
 
   .relevant-experiences-shell__content {
@@ -345,9 +346,27 @@
     width: 100%;
     overflow: hidden;
     border: 1px solid var(--base-text-color);
-    --journey-card-surface: rgba(255, 255, 255, 0.012);
+    --journey-card-surface: rgba(0, 0, 0, 0.82);
     background: var(--journey-card-surface);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .relevant-experiences-card .relevant-experiences-card__surface--glass,
+  .relevant-experiences-card-shell .relevant-experiences-card__surface--glass {
+    --journey-card-surface: rgba(0, 0, 0, 0.84);
+    background:
+      linear-gradient(
+        to top right,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.015) 36%,
+        rgba(255, 255, 255, 0.055)
+      ),
+      var(--journey-card-surface);
+    box-shadow:
+      0 14px 30px rgba(0, 0, 0, 0.2),
+      inset 0 0 15px rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .relevant-experiences-card--interactive .journey-showcase__card,
@@ -402,7 +421,6 @@
     padding: 1rem;
     border: none;
     overflow: hidden;
-    --journey-card-surface: rgba(255, 255, 255, 0.012);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   }
 
