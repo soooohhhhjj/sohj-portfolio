@@ -245,6 +245,7 @@ export async function saveSkillsContentState(input: unknown) {
         title: sanitizedContent.title,
         intro: sanitizedContent.intro,
         cards: sanitizedContent.cards,
+        mdLayout: sanitizedContent.mdLayout,
       },
     },
     {

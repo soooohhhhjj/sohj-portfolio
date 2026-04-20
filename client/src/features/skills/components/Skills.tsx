@@ -138,7 +138,42 @@ function readLocalStorageJson<T>(key: string, fallback: T): T {
   }
 }
 
-function SkillsStackItem({ icon, name }: { icon: string; name: string }) {
+function SkillsAnimatedText({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) {
+  return (
+    <span className={className}>
+      {text.split('').map((char, index) => (
+        <span
+          key={`${text}-${index}`}
+          className={`skills-flicker-char ${
+            index % 7 === 0
+              ? 'skills-flicker-char--strong'
+              : index % 5 === 0
+                ? 'skills-flicker-char--medium'
+                : index % 3 === 0
+                  ? 'skills-flicker-char--light'
+                  : ''
+          }`}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function SkillsStackItem({
+  icon,
+  name,
+}: {
+  icon: string;
+  name: string;
+}) {
   const Icon = iconMap[icon];
 
   return (
@@ -166,17 +201,26 @@ function SkillsStackItem({ icon, name }: { icon: string; name: string }) {
 
 function SkillsPanelContent({ card }: { card: SkillsCard }) {
   const HeaderIcon = cardIconMap[card.id];
+  const [animationKey, setAnimationKey] = useState(0);
 
   return (
-    <GlassCard className="skills-panel relative flex h-full flex-col rounded-[2px] px-4 py-5 md:px-5 md:py-6">
+    <GlassCard
+      className="skills-panel relative flex h-full cursor-pointer flex-col rounded-[2px] px-4 py-5 md:px-5 md:py-6"
+      onMouseEnter={() => setAnimationKey((previous) => previous + 1)}
+      onClick={() => setAnimationKey((previous) => previous + 1)}
+    >
       <div className="skills-panel__title-wrap flex flex-col gap-[0.55rem]">
         <div className="flex items-center justify-between gap-4 px-[2px]">
           <h3 className="skills-panel__title font-bruno text-[17px] font-semibold tracking-[0.8px] sm:text-[18px]">
-            {card.title}
+            <span key={`title-${card.id}-${animationKey}`} className="skills-flicker-text skills-panel__title-text">
+              <SkillsAnimatedText text={card.title} />
+            </span>
           </h3>
           {HeaderIcon ? (
             <span className="skills-panel__header-icon" aria-hidden="true">
-              <HeaderIcon className={cardIconClassMap[card.id] ?? 'h-[16px] w-[16px]'} />
+              <span key={`header-${card.id}-${animationKey}`} className="skills-flicker-icon">
+                <HeaderIcon className={cardIconClassMap[card.id] ?? 'h-[16px] w-[16px]'} />
+              </span>
             </span>
           ) : null}
         </div>
@@ -188,7 +232,11 @@ function SkillsPanelContent({ card }: { card: SkillsCard }) {
           <div className="flex w-full flex-col items-start">
             <div className="skills-group__list flex flex-wrap gap-x-[1.4rem] gap-y-[0.95rem] px-[2px]">
               {card.previousStacks.map((stack) => (
-                <SkillsStackItem key={stack.id} icon={stack.icon} name={stack.name} />
+                <SkillsStackItem
+                  key={stack.id}
+                  icon={stack.icon}
+                  name={stack.name}
+                />
               ))}
             </div>
             <div className="skills-group__heading inline-flex w-full flex-col items-start">
@@ -204,7 +252,11 @@ function SkillsPanelContent({ card }: { card: SkillsCard }) {
           <div className="flex w-full flex-col items-end">
             <div className="skills-group__list flex flex-wrap justify-end gap-x-[1.4rem] gap-y-[0.95rem] px-[2px]">
               {card.currentStacks.map((stack) => (
-                <SkillsStackItem key={stack.id} icon={stack.icon} name={stack.name} />
+                <SkillsStackItem
+                  key={stack.id}
+                  icon={stack.icon}
+                  name={stack.name}
+                />
               ))}
             </div>
             <div className="skills-group__heading inline-flex w-full flex-col items-end">
@@ -235,7 +287,7 @@ function SkillsEditorCard({
   editorEnabled: boolean;
   canvasElement: HTMLDivElement | null;
   shouldAnimate: boolean;
-  onActivate: (cardId: string) => void;
+  onActivate: (cardId: string, toggleSelection?: boolean) => void;
   onMove: (cardId: string, next: { x: number; y: number }) => void;
   onResize: (cardId: string, next: SkillsCardLayout) => void;
 }) {
@@ -393,7 +445,7 @@ function SkillsEditorCard({
       initial={{ opacity: 0, y: 30 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ duration: 0.55, ease: [0.12, 0.7, 0.63, 0.9] }}
-      onClick={() => onActivate(card.id)}
+      onClick={() => onActivate(card.id, true)}
       onPointerDown={handlePointerDown}
     >
       {editorEnabled ? (
@@ -546,6 +598,12 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     window.addEventListener('pointerup', handleUp, { once: true });
   };
 
+  const handleActivateCard = (cardId: string, toggleSelection = false) => {
+    setSelectedCardId((previous) => (
+      toggleSelection && previous === cardId ? null : cardId
+    ));
+  };
+
   if (isLoading) {
     return null;
   }
@@ -555,7 +613,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
       <Section className="section-style relative z-10 mt-16 text-[rgb(247,247,217)] md:mt-20 lg:mt-24">
         <SectionContent>
           <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
-            <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-white sm:text-[38px] lg:text-5xl">
+            <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-white md:text-5xl">
               Skills &amp; Tools
             </h2>
             {error ? (
@@ -579,7 +637,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
         <section id="skills-section" className="skills-section relative w-full pb-4">
           <SectionContent>
             <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
-              <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-white sm:text-[38px] lg:text-5xl">
+              <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-white md:text-5xl">
                 Skills &amp; Tools
               </h2>
             </div>
@@ -620,7 +678,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                         editorEnabled={editorEnabled}
                         canvasElement={canvasElement}
                         shouldAnimate={shouldAnimate}
-                        onActivate={setSelectedCardId}
+                        onActivate={handleActivateCard}
                         onMove={(cardId, next) => {
                           const currentCard = orderedCards.find((item) => item.id === cardId);
 
