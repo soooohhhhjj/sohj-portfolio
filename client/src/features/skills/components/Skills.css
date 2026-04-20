@@ -61,7 +61,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.96);
+    color: var(--base-text-color);
     line-height: 1;
     opacity: 1;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.62);
@@ -220,7 +220,7 @@
     font-size: 11px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.82);
+    color: color-mix(in srgb, var(--base-text-color) 82%, transparent);
     margin-bottom: 12px;
   }
 
@@ -241,14 +241,14 @@
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.54);
+    color: color-mix(in srgb, var(--base-text-color) 54%, transparent);
   }
 
   .skills-editor-hud__input {
     width: 100%;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.9);
+    color: color-mix(in srgb, var(--base-text-color) 90%, transparent);
     font-family: 'Jura', sans-serif;
     font-size: 12px;
     padding: 7px 8px;
@@ -266,7 +266,7 @@
   .skills-editor-hud__actions button {
     border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.88);
+    color: color-mix(in srgb, var(--base-text-color) 88%, transparent);
     font-family: 'Jura', sans-serif;
     font-size: 11px;
     letter-spacing: 0.08em;
@@ -278,23 +278,32 @@
     font-family: 'Jura', sans-serif;
     font-size: 11px;
     line-height: 1.5;
-    color: rgba(255, 255, 255, 0.56);
+    color: color-mix(in srgb, var(--base-text-color) 56%, transparent);
   }
   /* #endregion */
 
   /* #region Skills Stack Effects */
   .skills-stack-item__icon {
-    color: rgba(255, 248, 197, 0.98);
+    color: var(--base-text-color);
     filter: drop-shadow(0 0 12px rgba(255, 248, 197, 0.15));
   }
 
   .skills-stack-item__icon--empty {
-    color: rgba(255, 255, 255, 0.54);
+    color: color-mix(in srgb, var(--base-text-color) 54%, transparent);
     filter: none;
   }
 
   .skills-stack-item__name {
+    color: color-mix(in srgb, var(--base-text-color) 90%, transparent);
     text-shadow: 0 0 7px rgba(255, 255, 255, 0.18);
+  }
+
+  .skills-group__label {
+    color: color-mix(in srgb, var(--base-text-color) 50%, transparent);
+  }
+
+  .skills-error-copy {
+    color: color-mix(in srgb, var(--base-text-color) 70%, transparent);
   }
   /* #endregion */
 }

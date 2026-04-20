@@ -192,7 +192,7 @@ function SkillsStackItem({
       >
         {Icon ? <Icon /> : null}
       </span>
-      <span className="skills-stack-item__name text-[12px] tracking-[0.3px] text-white/90">
+      <span className="skills-stack-item__name text-[12px] tracking-[0.3px]">
         {name}
       </span>
     </div>
@@ -241,7 +241,7 @@ function SkillsPanelContent({ card }: { card: SkillsCard }) {
             </div>
             <div className="skills-group__heading inline-flex w-full flex-col items-start">
               <span className="skills-group__line" aria-hidden="true" />
-              <p className="skills-group__label m-0 px-[2px] font-jura text-[10px] tracking-[0.2px] text-white/50 sm:text-[11px]">
+              <p className="skills-group__label m-0 px-[2px] font-jura text-[10px] tracking-[0.2px] sm:text-[11px]">
                 {card.backLabel}
               </p>
             </div>
@@ -261,7 +261,7 @@ function SkillsPanelContent({ card }: { card: SkillsCard }) {
             </div>
             <div className="skills-group__heading inline-flex w-full flex-col items-end">
               <span className="skills-group__line" aria-hidden="true" />
-              <p className="skills-group__label m-0 px-[2px] text-right font-jura text-[10px] tracking-[0.2px] text-white/50 sm:text-[11px]">
+              <p className="skills-group__label m-0 px-[2px] text-right font-jura text-[10px] tracking-[0.2px] sm:text-[11px]">
                 {card.frontLabel}
               </p>
             </div>
@@ -610,14 +610,14 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
 
   if (!content) {
     return (
-      <Section className="section-style relative z-10 mt-16 text-[rgb(247,247,217)] md:mt-20 lg:mt-24">
+      <Section className="section-style relative z-10 mt-16 text-[var(--base-text-color)] md:mt-20 lg:mt-24">
         <SectionContent>
           <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
-            <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-white md:text-5xl">
+            <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl">
               Skills &amp; Tools
             </h2>
             {error ? (
-              <p className="relevant-experiences-intro__copy mt-3 font-jura text-[13px] tracking-[0.3px] text-white/70 sm:text-[16px] lg:text-[17px]">
+              <p className="skills-error-copy relevant-experiences-intro__copy mt-3 font-jura text-[13px] tracking-[0.3px] sm:text-[16px] lg:text-[17px]">
                 {error}
               </p>
             ) : null}
@@ -633,11 +633,11 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
       animate={{ y: shouldAnimate ? 0 : '100vh' }}
       transition={{ duration: 1.7, ease: [0.12, 0.7, 0.63, 0.9], delay: 0.14 }}
     >
-      <Section className="section-style skills-shell relative z-10 mt-16 text-[rgb(247,247,217)] md:mt-20 lg:mt-32">
+      <Section className="section-style skills-shell relative z-10 mt-16 text-[var(--base-text-color)] md:mt-20 lg:mt-32">
         <section id="skills-section" className="skills-section relative w-full pb-4">
           <SectionContent>
             <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
-              <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-white md:text-5xl">
+              <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl">
                 Skills &amp; Tools
               </h2>
             </div>
