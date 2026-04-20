@@ -31,6 +31,8 @@ interface BreakpointDebugOverlayProps {
   onReplayIntro: () => void;
   isRelevantExperiencesEditorEnabled: boolean;
   onToggleRelevantExperiencesEditor: () => void;
+  isSkillsEditorEnabled: boolean;
+  onToggleSkillsEditor: () => void;
   onLogout: () => void;
 }
 
@@ -122,6 +124,8 @@ export function BreakpointDebugOverlay({
   onReplayIntro,
   isRelevantExperiencesEditorEnabled,
   onToggleRelevantExperiencesEditor,
+  isSkillsEditorEnabled,
+  onToggleSkillsEditor,
   onLogout,
 }: BreakpointDebugOverlayProps) {
   const [viewportWidth, setViewportWidth] = useState<number>(
@@ -231,6 +235,21 @@ export function BreakpointDebugOverlay({
             >
               <span className="text-[10px] font-jura tracking-[1px] text-white/80">
                 {isRelevantExperiencesEditorEnabled ? 'RE' : 're'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="breakpoint-debug__panel-btn"
+              onClick={onToggleSkillsEditor}
+              aria-label={
+                isSkillsEditorEnabled
+                  ? 'Disable skills edit mode'
+                  : 'Enable skills edit mode'
+              }
+            >
+              <span className="text-[10px] font-jura tracking-[1px] text-white/80">
+                {isSkillsEditorEnabled ? 'SK' : 'sk'}
               </span>
             </button>
 

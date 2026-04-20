@@ -1,0 +1,250 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* #region Skills Containers */
+  .skills-panel {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+      rgba(10, 12, 18, 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 0 34px rgba(255, 255, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 20px 40px rgba(0, 0, 0, 0.18);
+  }
+
+  .skills-map-card--selected .skills-panel {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.18),
+      0 0 42px rgba(255, 255, 255, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+  /* #endregion */
+
+  /* #region Skills Typography */
+  .skills-section__title {
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.48);
+  }
+
+  .skills-panel__title {
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.48);
+  }
+
+  .skills-panel__header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.96);
+    line-height: 1;
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.62);
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.34));
+  }
+
+  .skills-panel__header-line {
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+  /* #endregion */
+
+  /* #region Skills Lines */
+  .skills-group__line {
+    display: block;
+    width: 100%;
+    min-width: 52px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.18);
+  }
+  /* #endregion */
+
+  /* #region Skills Editor */
+  .skills-map--editable {
+    cursor: default;
+  }
+
+  .skills-map__grid {
+    position: absolute;
+    inset: 0;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+
+  .skills-map-card {
+    z-index: 1;
+  }
+
+  .skills-map-card--editable {
+    cursor: grab;
+  }
+
+  .skills-map-card--editable:active {
+    cursor: grabbing;
+  }
+
+  .skills-resize-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    background: rgba(7, 10, 16, 0.92);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.08);
+    z-index: 3;
+  }
+
+  .skills-resize-handle--nw {
+    top: -6px;
+    left: -6px;
+    cursor: nwse-resize;
+  }
+
+  .skills-resize-handle--ne {
+    top: -6px;
+    right: -6px;
+    cursor: nesw-resize;
+  }
+
+  .skills-resize-handle--sw {
+    bottom: -6px;
+    left: -6px;
+    cursor: nesw-resize;
+  }
+
+  .skills-resize-handle--se {
+    right: -6px;
+    bottom: -6px;
+    cursor: nwse-resize;
+  }
+
+  .skills-editor-hud {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 70;
+    width: 260px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+      rgba(7, 10, 16, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      0 12px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    padding: 14px;
+  }
+
+  .skills-editor-hud__drag-grip {
+    width: 100%;
+    height: 12px;
+    margin-bottom: 10px;
+    border-radius: 999px;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.16) 0,
+        rgba(255, 255, 255, 0.16) 10px,
+        transparent 10px,
+        transparent 16px
+      );
+    cursor: grab;
+  }
+
+  .skills-editor-hud__drag-grip:active {
+    cursor: grabbing;
+  }
+
+  .skills-editor-hud__title {
+    font-family: 'Jura', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.82);
+    margin-bottom: 12px;
+  }
+
+  .skills-editor-hud__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .skills-editor-hud__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .skills-editor-hud__label {
+    font-family: 'Jura', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.54);
+  }
+
+  .skills-editor-hud__input {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Jura', sans-serif;
+    font-size: 12px;
+    padding: 7px 8px;
+    outline: none;
+  }
+
+  .skills-editor-hud__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .skills-editor-hud__actions button {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.88);
+    font-family: 'Jura', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+  }
+
+  .skills-editor-hud__hint {
+    font-family: 'Jura', sans-serif;
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.56);
+  }
+  /* #endregion */
+
+  /* #region Skills Stack Effects */
+  .skills-stack-item__icon {
+    color: rgba(255, 248, 197, 0.98);
+    filter: drop-shadow(0 0 12px rgba(255, 248, 197, 0.15));
+  }
+
+  .skills-stack-item__icon--empty {
+    color: rgba(255, 255, 255, 0.54);
+    filter: none;
+  }
+
+  .skills-stack-item__name {
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.18);
+  }
+  /* #endregion */
+}

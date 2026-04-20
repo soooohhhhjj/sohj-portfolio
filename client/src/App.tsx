@@ -5,6 +5,7 @@ import { getAdminSession, logoutAdmin } from './features/admin-auth/services/adm
 import { Hero } from './features/hero/components/Hero';
 import { useIntroSequence } from './features/homepage/hooks/useIntroSequence';
 import { RelevantExperiences } from './features/relevant-experiences/components/RelevantExperiences';
+import { Skills } from './features/skills/components/Skills';
 import { Welcome } from './features/welcome/components/Welcome';
 import { BreakpointDebugOverlay } from './shared/components/BreakpointDebugOverlay';
 import { useResponsiveTokens } from './shared/hooks/useResponsiveTokens';
@@ -16,6 +17,7 @@ type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 
 const STARFIELD_ENABLED_STORAGE_KEY = 'sohj.debug.starfield.enabled';
 const PERF_LITE_ENABLED_STORAGE_KEY = 'sohj.debug.perfLite.enabled';
 const RELEVANT_EXPERIENCES_EDITOR_STORAGE_KEY = 'sohj.debug.relevantExperiences.editor.enabled';
+const SKILLS_EDITOR_STORAGE_KEY = 'sohj.debug.skills.editor.enabled';
 const ADMIN_LOGIN_KEY = 'l';
 const buildAdminLoginUrl = (redirectPath: string) =>
   `/admin/login?redirect=${encodeURIComponent(redirectPath)}`;
@@ -24,11 +26,13 @@ function PortfolioExperience({
   isStarfieldEnabled,
   isPerfLiteEnabled,
   isRelevantExperiencesEditorEnabled,
+  isSkillsEditorEnabled,
   replayKey,
 }: {
   isStarfieldEnabled: boolean;
   isPerfLiteEnabled: boolean;
   isRelevantExperiencesEditorEnabled: boolean;
+  isSkillsEditorEnabled: boolean;
   replayKey: number;
 }) {
   useResponsiveTokens();
@@ -71,6 +75,13 @@ function PortfolioExperience({
             shouldAnimate={hasWelcomeFinished}
           />
         </div>
+
+        <div className="relative z-[1]">
+          <Skills
+            editorEnabled={isSkillsEditorEnabled}
+            shouldAnimate={hasWelcomeFinished}
+          />
+        </div>
       </main>
     </div>
   );
@@ -94,6 +105,11 @@ export function App() {
       const saved = window.localStorage.getItem(RELEVANT_EXPERIENCES_EDITOR_STORAGE_KEY);
       return saved === null ? false : saved === 'true';
     });
+  const [isSkillsEditorEnabled, setIsSkillsEditorEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = window.localStorage.getItem(SKILLS_EDITOR_STORAGE_KEY);
+    return saved === null ? false : saved === 'true';
+  });
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [introReplayKey, setIntroReplayKey] = useState(0);
 
@@ -111,6 +127,10 @@ export function App() {
       String(isRelevantExperiencesEditorEnabled),
     );
   }, [isRelevantExperiencesEditorEnabled]);
+
+  useEffect(() => {
+    window.localStorage.setItem(SKILLS_EDITOR_STORAGE_KEY, String(isSkillsEditorEnabled));
+  }, [isSkillsEditorEnabled]);
 
   useEffect(() => {
     let isMounted = true;
@@ -178,6 +198,7 @@ export function App() {
         isRelevantExperiencesEditorEnabled={
           isAdminAuthenticated && isRelevantExperiencesEditorEnabled
         }
+        isSkillsEditorEnabled={isAdminAuthenticated && isSkillsEditorEnabled}
         replayKey={introReplayKey}
       />
       {isAdminAuthenticated ? (
@@ -191,6 +212,8 @@ export function App() {
           onToggleRelevantExperiencesEditor={() =>
             setIsRelevantExperiencesEditorEnabled((prev) => !prev)
           }
+          isSkillsEditorEnabled={isSkillsEditorEnabled}
+          onToggleSkillsEditor={() => setIsSkillsEditorEnabled((prev) => !prev)}
           onLogout={handleLogout}
         />
       ) : null}
