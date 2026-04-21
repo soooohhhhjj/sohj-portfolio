@@ -11,7 +11,7 @@ import { BreakpointDebugOverlay } from './shared/components/BreakpointDebugOverl
 import { useResponsiveTokens } from './shared/hooks/useResponsiveTokens';
 import { StarfieldBackground } from './shared/components/StarfieldBackground';
 import { useScrollVelocity } from './shared/hooks/useScrollVelocity';
-import { Navbar } from './shared/layouts';
+import { Footer, Navbar } from './shared/layouts';
 
 type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 'forward';
 const STARFIELD_ENABLED_STORAGE_KEY = 'sohj.debug.starfield.enabled';
@@ -82,6 +82,8 @@ function PortfolioExperience({
             shouldAnimate={hasWelcomeFinished}
           />
         </div>
+
+        <Footer />
       </main>
     </div>
   );

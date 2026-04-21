@@ -10,7 +10,8 @@
   font-family: 'Manrope', sans-serif;
   color: #e2e8f0;
   background: #000000;
-  --base-text-color: rgb(247, 247, 217);
+  --base-text-color-rgb: 247 247 217;
+  --base-text-color: rgb(var(--base-text-color-rgb));
   --bp-dinosaur: 350px;
   --bp-xxsm: 400px;
   --bp-xsm: 480px;
