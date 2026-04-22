@@ -199,15 +199,24 @@ function SkillsStackItem({
   );
 }
 
-function SkillsPanelContent({ card }: { card: SkillsCard }) {
+function SkillsPanelContent({
+  card,
+  editorEnabled = false,
+}: {
+  card: SkillsCard;
+  editorEnabled?: boolean;
+}) {
   const HeaderIcon = cardIconMap[card.id];
   const [animationKey, setAnimationKey] = useState(0);
+  const shouldAnimateInteractions = !editorEnabled;
 
   return (
     <GlassCard
-      className="skills-panel relative flex h-full cursor-pointer flex-col rounded-[2px] px-4 py-5 md:px-5 md:py-6"
-      onMouseEnter={() => setAnimationKey((previous) => previous + 1)}
-      onClick={() => setAnimationKey((previous) => previous + 1)}
+      className={`skills-panel relative flex h-full flex-col rounded-[2px] px-4 py-5 md:px-5 md:py-6 ${
+        shouldAnimateInteractions ? 'cursor-pointer' : ''
+      }`}
+      onMouseEnter={shouldAnimateInteractions ? () => setAnimationKey((previous) => previous + 1) : undefined}
+      onClick={shouldAnimateInteractions ? () => setAnimationKey((previous) => previous + 1) : undefined}
     >
       <div className="skills-panel__title-wrap flex flex-col gap-[0.55rem]">
         <div className="flex items-center justify-between gap-4 px-[2px]">
@@ -477,7 +486,7 @@ function SkillsEditorCard({
         </>
       ) : null}
 
-      <SkillsPanelContent card={card} />
+      <SkillsPanelContent card={card} editorEnabled={editorEnabled} />
     </motion.article>
   );
 }
@@ -717,7 +726,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                       ease: [0.12, 0.7, 0.63, 0.9],
                     }}
                   >
-                    <SkillsPanelContent card={card} />
+                    <SkillsPanelContent card={card} editorEnabled={editorEnabled} />
                   </motion.article>
                 ))}
               </div>
