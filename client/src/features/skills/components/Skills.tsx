@@ -581,6 +581,57 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     }));
   };
 
+  useEffect(() => {
+    if (!editorEnabled || layoutMode !== 'desktop' || !selectedCardId) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      const selected = orderedCards.find((card) => card.id === selectedCardId);
+
+      if (!selected) {
+        return;
+      }
+
+      let deltaX = 0;
+      let deltaY = 0;
+
+      if (event.key === 'ArrowLeft') deltaX = -1;
+      if (event.key === 'ArrowRight') deltaX = 1;
+      if (event.key === 'ArrowUp') deltaY = -1;
+      if (event.key === 'ArrowDown') deltaY = 1;
+
+      if (!deltaX && !deltaY) {
+        return;
+      }
+
+      event.preventDefault();
+
+      updateCardLayout(selected.id, {
+        ...selected.layout,
+        x: selected.layout.x + deltaX,
+        y: selected.layout.y + deltaY,
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [editorEnabled, layoutMode, orderedCards, selectedCardId]);
+
   const handleHudPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
       return;
