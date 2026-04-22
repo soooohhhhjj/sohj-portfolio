@@ -284,20 +284,29 @@ function SkillsPanelContent({
 function SkillsEditorCard({
   card,
   selected,
+  multiSelected,
   editorEnabled,
   canvasElement,
   shouldAnimate,
   onActivate,
+  onDragStart,
+  onDragEnd,
   onMove,
   onResize,
 }: {
   card: SkillsCard;
   selected: boolean;
+  multiSelected: boolean;
   editorEnabled: boolean;
   canvasElement: HTMLDivElement | null;
   shouldAnimate: boolean;
-  onActivate: (cardId: string, toggleSelection?: boolean) => void;
-  onMove: (cardId: string, next: { x: number; y: number }) => void;
+  onActivate: (
+    cardId: string,
+    options?: { toggleSelection?: boolean; preserveSelection?: boolean; additiveSelection?: boolean },
+  ) => void;
+  onDragStart: (cardId: string, preserveSelection: boolean) => void;
+  onDragEnd: () => void;
+  onMove: (cardId: string, delta: { x: number; y: number }) => void;
   onResize: (cardId: string, next: SkillsCardLayout) => void;
 }) {
   const dragStateRef = useRef<{
@@ -327,6 +336,13 @@ function SkillsEditorCard({
 
     event.preventDefault();
 
+    const isAdditiveSelection = event.ctrlKey || event.metaKey;
+
+    if (isAdditiveSelection) {
+      onActivate(card.id, { additiveSelection: true });
+      return;
+    }
+
     const canvasRect = canvasElement?.getBoundingClientRect();
     const scaleX = canvasElement && canvasRect && canvasElement.offsetWidth > 0
       ? canvasRect.width / canvasElement.offsetWidth
@@ -334,6 +350,8 @@ function SkillsEditorCard({
     const scaleY = canvasElement && canvasRect && canvasElement.offsetHeight > 0
       ? canvasRect.height / canvasElement.offsetHeight
       : 1;
+
+    const preserveSelection = selected && multiSelected;
 
     dragStateRef.current = {
       pointerId: event.pointerId,
@@ -345,7 +363,8 @@ function SkillsEditorCard({
       scaleY: scaleY || 1,
     };
 
-    onActivate(card.id);
+    onDragStart(card.id, preserveSelection);
+    onActivate(card.id, preserveSelection ? { preserveSelection: true } : undefined);
 
     const handleMove = (moveEvent: PointerEvent) => {
       const dragState = dragStateRef.current;
@@ -355,8 +374,8 @@ function SkillsEditorCard({
       }
 
       onMove(card.id, {
-        x: Math.round(dragState.startLeft + ((moveEvent.clientX - dragState.startX) / dragState.scaleX)),
-        y: Math.round(dragState.startTop + ((moveEvent.clientY - dragState.startY) / dragState.scaleY)),
+        x: Math.round((moveEvent.clientX - dragState.startX) / dragState.scaleX),
+        y: Math.round((moveEvent.clientY - dragState.startY) / dragState.scaleY),
       });
     };
 
@@ -365,6 +384,7 @@ function SkillsEditorCard({
         dragStateRef.current = null;
       }
 
+      onDragEnd();
       window.removeEventListener('pointermove', handleMove);
       window.removeEventListener('pointerup', handleUp);
       window.removeEventListener('pointercancel', handleUp);
@@ -454,7 +474,11 @@ function SkillsEditorCard({
       initial={{ opacity: 0, y: 30 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ duration: 0.55, ease: [0.12, 0.7, 0.63, 0.9] }}
-      onClick={() => onActivate(card.id, !editorEnabled)}
+      onClick={() => {
+        if (!editorEnabled) {
+      onActivate(card.id, { toggleSelection: true });
+        }
+      }}
       onPointerDown={handlePointerDown}
     >
       {editorEnabled ? (
@@ -509,10 +533,11 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   const laneRef = useRef<HTMLDivElement | null>(null);
   const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
   const [hudPos, setHudPos] = useState<{ x: number; y: number }>(() => (
     readLocalStorageJson(SKILLS_HUD_POS_STORAGE_KEY, { x: 0, y: 0 })
   ));
+  const groupDragStartLayoutsRef = useRef<Map<string, SkillsCardLayout> | null>(null);
 
   useEffect(() => {
     const handleResize = () => setViewportWidth(window.innerWidth);
@@ -562,7 +587,10 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     }, []);
   }, [content]);
 
-  const selectedCard = orderedCards.find((card) => card.id === selectedCardId) ?? null;
+  const selectedCards = orderedCards.filter((card) => selectedCardIds.includes(card.id));
+  const selectedCard = selectedCardIds.length === 1
+    ? orderedCards.find((card) => card.id === selectedCardIds[0]) ?? null
+    : null;
   const layoutMode = viewportWidth >= BREAKPOINTS.md ? 'desktop' : 'linear';
   const displayCanvasHeight = resolveCanvasHeight(orderedCards);
   const activeCanvasWidth = resolveCanvasWidth(orderedCards);
@@ -582,7 +610,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   };
 
   useEffect(() => {
-    if (!editorEnabled || layoutMode !== 'desktop' || !selectedCardId) {
+    if (!editorEnabled || layoutMode !== 'desktop' || selectedCardIds.length === 0) {
       return;
     }
 
@@ -598,9 +626,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
         return;
       }
 
-      const selected = orderedCards.find((card) => card.id === selectedCardId);
-
-      if (!selected) {
+      if (selectedCards.length === 0) {
         return;
       }
 
@@ -618,10 +644,12 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
 
       event.preventDefault();
 
-      updateCardLayout(selected.id, {
-        ...selected.layout,
-        x: selected.layout.x + deltaX,
-        y: selected.layout.y + deltaY,
+      selectedCards.forEach((selected) => {
+        updateCardLayout(selected.id, {
+          ...selected.layout,
+          x: selected.layout.x + deltaX,
+          y: selected.layout.y + deltaY,
+        });
       });
     };
 
@@ -630,7 +658,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [editorEnabled, layoutMode, orderedCards, selectedCardId]);
+  }, [editorEnabled, layoutMode, selectedCardIds, selectedCards]);
 
   const handleHudPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -658,10 +686,63 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     window.addEventListener('pointerup', handleUp, { once: true });
   };
 
-  const handleActivateCard = (cardId: string, toggleSelection = false) => {
-    setSelectedCardId((previous) => (
-      toggleSelection && previous === cardId ? null : cardId
-    ));
+  const handleActivateCard = (
+    cardId: string,
+    options?: { toggleSelection?: boolean; preserveSelection?: boolean; additiveSelection?: boolean },
+  ) => {
+    setSelectedCardIds((previous) => {
+      if (options?.preserveSelection) {
+        return previous.includes(cardId) ? previous : [cardId];
+      }
+
+      if (options?.additiveSelection) {
+        return previous.includes(cardId)
+          ? previous.filter((selectedId) => selectedId !== cardId)
+          : [...previous, cardId];
+      }
+
+      if (options?.toggleSelection) {
+        return previous.length === 1 && previous[0] === cardId ? [] : [cardId];
+      }
+
+      return [cardId];
+    });
+  };
+
+  const handleDragStart = (cardId: string, preserveSelection: boolean) => {
+    const cardIdsToMove = preserveSelection && selectedCardIds.includes(cardId)
+      ? selectedCardIds
+      : [cardId];
+
+    groupDragStartLayoutsRef.current = new Map(
+      orderedCards
+        .filter((card) => cardIdsToMove.includes(card.id))
+        .map((card) => [card.id, { ...card.layout }]),
+    );
+
+    if (!preserveSelection) {
+      setSelectedCardIds([cardId]);
+    }
+  };
+
+  const handleDragMove = (cardId: string, delta: { x: number; y: number }) => {
+    const startLayouts = groupDragStartLayoutsRef.current;
+
+    if (!startLayouts || !startLayouts.has(cardId)) {
+      return;
+    }
+
+    startLayouts.forEach((layout, selectedId) => {
+      updateCardLayout(selectedId, {
+        ...layout,
+        x: layout.x + delta.x,
+        y: layout.y + delta.y,
+      });
+    });
+  };
+
+  const handleDragEnd = () => {
+    groupDragStartLayoutsRef.current = null;
   };
 
   if (isLoading) {
@@ -725,7 +806,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                         return;
                       }
 
-                      setSelectedCardId(null);
+                      setSelectedCardIds([]);
                     }}
                   >
                     {editorEnabled ? <div className="skills-map__grid" /> : null}
@@ -734,24 +815,15 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                       <SkillsEditorCard
                         key={card.id}
                         card={card}
-                        selected={selectedCardId === card.id}
+                        selected={selectedCardIds.includes(card.id)}
+                        multiSelected={selectedCardIds.length > 1}
                         editorEnabled={editorEnabled}
                         canvasElement={canvasElement}
                         shouldAnimate={shouldAnimate}
                         onActivate={handleActivateCard}
-                        onMove={(cardId, next) => {
-                          const currentCard = orderedCards.find((item) => item.id === cardId);
-
-                          if (!currentCard) {
-                            return;
-                          }
-
-                          updateCardLayout(cardId, {
-                            ...currentCard.layout,
-                            x: next.x,
-                            y: next.y,
-                          });
-                        }}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onMove={handleDragMove}
                         onResize={updateCardLayout}
                       />
                     ))}
@@ -872,7 +944,11 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                 </div>
               </div>
             ) : (
-              <p className="skills-editor-hud__hint">Select a card to edit its layout.</p>
+              <p className="skills-editor-hud__hint">
+                {selectedCardIds.length > 1
+                  ? `${selectedCardIds.length} cards selected. Drag or use arrow keys to move them together.`
+                  : 'Select a card to edit its layout.'}
+              </p>
             )}
 
             <div className="skills-editor-hud__actions">
