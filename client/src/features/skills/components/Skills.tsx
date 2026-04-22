@@ -454,7 +454,7 @@ function SkillsEditorCard({
       initial={{ opacity: 0, y: 30 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ duration: 0.55, ease: [0.12, 0.7, 0.63, 0.9] }}
-      onClick={() => onActivate(card.id, true)}
+      onClick={() => onActivate(card.id, !editorEnabled)}
       onPointerDown={handlePointerDown}
     >
       {editorEnabled ? (
