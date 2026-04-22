@@ -1,7 +1,25 @@
+import { useEffect } from 'react';
+import './footer.css';
+
 const footerLinks = [
-  { label: 'Back to the top', sectionId: 'home-top' },
-  { label: 'Experience', sectionId: 'relevant-experiences-section' },
-  { label: 'Skills', sectionId: 'skills-section' },
+  {
+    label: 'Back to the top',
+    sectionId: 'home-top',
+    shortcutKey: '1',
+    shortcutLabel: 'or press Ctrl + 1',
+  },
+  {
+    label: 'Experience',
+    sectionId: 'relevant-experiences-section',
+    shortcutKey: '2',
+    shortcutLabel: 'or press Ctrl + 2',
+  },
+  {
+    label: 'Skills',
+    sectionId: 'skills-section',
+    shortcutKey: '3',
+    shortcutLabel: 'or press Ctrl + 3',
+  },
 ] as const;
 
 const socialLinks = [
@@ -19,9 +37,74 @@ const socialLinks = [
   },
 ] as const;
 
+const FOOTER_SCROLL_DURATION_MS = 1550;
+
+let activeFooterScrollFrame: number | null = null;
+
+function cubicBezier(progress: number, p1y: number, p2y: number) {
+  const inverse = 1 - progress;
+
+  return (
+    3 * inverse * inverse * progress * p1y +
+    3 * inverse * progress * progress * p2y +
+    progress * progress * progress
+  );
+}
+
+function easeFooterScroll(progress: number) {
+  const heroEase = cubicBezier(progress, 0.7, 0.9);
+
+  return 1 - (1 - heroEase) ** 1.35;
+}
+
+function animateScrollTo(targetY: number) {
+  if (activeFooterScrollFrame !== null) {
+    window.cancelAnimationFrame(activeFooterScrollFrame);
+    activeFooterScrollFrame = null;
+  }
+
+  const startY = window.scrollY;
+  const distance = targetY - startY;
+
+  if (Math.abs(distance) < 1) {
+    return;
+  }
+
+  const root = document.documentElement;
+  const previousScrollBehavior = root.style.scrollBehavior;
+  root.style.scrollBehavior = 'auto';
+
+  const startTime = performance.now();
+
+  const step = (currentTime: number) => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / FOOTER_SCROLL_DURATION_MS, 1);
+    const easedProgress = easeFooterScroll(progress);
+
+    window.scrollTo({
+      top: startY + distance * easedProgress,
+      behavior: 'auto',
+    });
+
+    if (progress < 1) {
+      activeFooterScrollFrame = window.requestAnimationFrame(step);
+      return;
+    }
+
+    root.style.scrollBehavior = previousScrollBehavior;
+    activeFooterScrollFrame = null;
+  };
+
+  window.scrollTo({
+    top: startY + distance * 0.01,
+    behavior: 'auto',
+  });
+  activeFooterScrollFrame = window.requestAnimationFrame(step);
+}
+
 function scrollToSection(sectionId: string) {
   if (sectionId === 'home-top') {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    animateScrollTo(0);
     return;
   }
 
@@ -31,12 +114,36 @@ function scrollToSection(sectionId: string) {
     return;
   }
 
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const targetY = window.scrollY + section.getBoundingClientRect().top;
+  animateScrollTo(targetY);
 }
 
 export function Footer() {
   const year = new Date().getFullYear();
   const resumeUrl = `${import.meta.env.BASE_URL}sohj-resume.pdf`;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.ctrlKey) {
+        return;
+      }
+
+      const targetLink = footerLinks.find((link) => link.shortcutKey === event.key);
+
+      if (!targetLink) {
+        return;
+      }
+
+      event.preventDefault();
+      scrollToSection(targetLink.sectionId);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <footer className="section-style relative z-10 mt-16 border-t border-white/10 bg-black/60 text-[var(--base-text-color)] md:mt-10">
@@ -55,17 +162,17 @@ export function Footer() {
             <div className="flex flex-col gap-8 md:hidden">
               <div className="flex items-start justify-between gap-10">
                 <div className="min-w-0">
-                  <div className="flex max-w-[360px] flex-col gap-3">
+                  <div className="flex max-w-[360px] flex-col gap-4">
                     <div>
                       <p className="font-bruno text-[18px] tracking-[2px] text-[var(--base-text-color)]">
                         sohj.abe
                       </p>
-                      <p className="font-jura text-[12px] leading-relaxed text-[rgb(var(--base-text-color-rgb)_/_0.55)]">
+                      <p className="font-jura text-[13px] leading-relaxed text-[rgb(var(--base-text-color-rgb)_/_0.55)] mt-2">
                         Building pixel-perfect interactive websites with a strong focus on clean
                         UI and thoughtful frontend detail.
                       </p>
                     </div>
-                    <p className="font-jura text-[12px] tracking-[0.35px] text-[rgb(var(--base-text-color-rgb)_/_0.55)]">
+                    <p className="font-jura text-[13px] tracking-[0.35px] text-[rgb(var(--base-text-color-rgb)_/_0.55)]">
                       Full-Stack Developer
                     </p>
                   </div>
@@ -73,20 +180,30 @@ export function Footer() {
 
                 <div className="shrink-0 flex justify-end">
                   <div className="text-left">
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-[7px]">
                       <p className="font-bruno mt-[6px] text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">
                         Navigate
                       </p>
-                      <div className="flex flex-col items-start gap-2">
+                      <div className="flex flex-col items-start gap-[6px]">
                         {footerLinks.map((link) => (
-                          <button
-                            key={link.label}
-                            type="button"
-                            onClick={() => scrollToSection(link.sectionId)}
-                            className="font-jura text-[12px] tracking-[0.3px] text-[rgb(var(--base-text-color-rgb)_/_0.65)] transition-colors duration-200 hover:text-[var(--base-text-color)]"
-                          >
-                            {link.label}
-                          </button>
+                          <div key={link.label} className="group relative">
+                            <button
+                              type="button"
+                              onClick={() => scrollToSection(link.sectionId)}
+                              className="font-jura text-[12px] tracking-[0.3px] text-[rgb(var(--base-text-color-rgb)_/_0.65)] transition-colors duration-200 hover:text-[var(--base-text-color)]"
+                            >
+                              {link.label}
+                            </button>
+
+                            <span
+                              className="footer-tooltip footer-tooltip--mobile"
+                            >
+                              or just press{' '}
+                              <span className="footer-tooltip__keybind">
+                                {`Ctrl + ${link.shortcutKey}`}
+                              </span>
+                            </span>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -143,31 +260,41 @@ export function Footer() {
                   <p className="font-bruno text-[18px] tracking-[2px] text-[var(--base-text-color)]">
                     sohj.abe
                   </p>
-                  <p className="font-jura text-[12px] leading-relaxed text-[rgb(var(--base-text-color-rgb)_/_0.55)]">
+                  <p className="font-jura text-[13px] leading-relaxed text-[rgb(var(--base-text-color-rgb)_/_0.55)] mt-1">
                     Building pixel-perfect interactive websites with a strong focus on clean
                     UI and thoughtful frontend detail.
                   </p>
                 </div>
-                <p className="font-jura text-[12px] tracking-[0.35px] text-[rgb(var(--base-text-color-rgb)_/_0.55)]">
+                <p className="font-jura text-[13px] tracking-[0.35px] text-[rgb(var(--base-text-color-rgb)_/_0.55)]">
                   Full-Stack Developer
                 </p>
               </div>
 
               <div className="flex flex-col gap-8 sm:flex-row sm:gap-12">
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   <p className="font-bruno text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">
                     Navigate
                   </p>
                   <div className="flex flex-col items-start gap-2">
                     {footerLinks.map((link) => (
-                      <button
-                        key={link.label}
-                        type="button"
-                        onClick={() => scrollToSection(link.sectionId)}
-                        className="font-jura text-[12px] tracking-[0.3px] text-[rgb(var(--base-text-color-rgb)_/_0.45)] transition-colors duration-200 hover:text-[var(--base-text-color)]"
-                      >
-                        {link.label}
-                      </button>
+                      <div key={link.label} className="group relative">
+                        <button
+                          type="button"
+                          onClick={() => scrollToSection(link.sectionId)}
+                          className="font-jura text-[12px] tracking-[0.3px] text-[rgb(var(--base-text-color-rgb)_/_0.45)] transition-colors duration-200 hover:text-[var(--base-text-color)]"
+                        >
+                          {link.label}
+                        </button>
+
+                        <span
+                          className="footer-tooltip footer-tooltip--desktop"
+                        >
+                          or just press{' '}
+                          <span className="footer-tooltip__keybind">
+                            {`Ctrl + ${link.shortcutKey}`}
+                          </span>
+                        </span>
+                      </div>
                     ))}
                   </div>
                 </div>
