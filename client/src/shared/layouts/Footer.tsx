@@ -42,7 +42,7 @@ export function Footer() {
     <footer className="section-style relative z-10 mt-16 border-t border-white/10 bg-black/60 text-[var(--base-text-color)] md:mt-10">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_115%)] opacity-60" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-      
+
       <div className="section-content responsiveness content-width content-width--lg">
         <div
           className="
@@ -50,8 +50,6 @@ export function Footer() {
             sm:pt-10 sm:pb-8
           "
         >
-          
-
           <div className="relative z-[1]">
             {/* < md: brand + navigate on the same row, connect below */}
             <div className="flex flex-col gap-8 md:hidden">
@@ -76,7 +74,9 @@ export function Footer() {
                 <div className="shrink-0 flex justify-end">
                   <div className="text-left">
                     <div className="flex flex-col gap-3">
-                      <p className="font-bruno mt-[7px] text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">Navigate</p>
+                      <p className="font-bruno mt-[6px] text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">
+                        Navigate
+                      </p>
                       <div className="flex flex-col items-start gap-2">
                         {footerLinks.map((link) => (
                           <button
@@ -95,7 +95,9 @@ export function Footer() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <p className="font-bruno text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">Connect</p>
+                <p className="font-bruno text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">
+                  Connect
+                </p>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   {socialLinks.map(({ label, href }) => (
                     <a
@@ -153,7 +155,9 @@ export function Footer() {
 
               <div className="flex flex-col gap-8 sm:flex-row sm:gap-12">
                 <div className="flex flex-col gap-3">
-                  <p className="font-bruno text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">Navigate</p>
+                  <p className="font-bruno text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">
+                    Navigate
+                  </p>
                   <div className="flex flex-col items-start gap-2">
                     {footerLinks.map((link) => (
                       <button
@@ -169,7 +173,9 @@ export function Footer() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <p className="font-bruno text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">Connect</p>
+                  <p className="font-bruno text-[12px] tracking-[1px] text-[rgb(var(--base-text-color-rgb)_/_0.9)]">
+                    Connect
+                  </p>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                     {socialLinks.map(({ label, href }) => (
                       <a
@@ -206,14 +212,15 @@ export function Footer() {
 
           <div className="mt-10 mb-6 h-px w-full bg-white/15" />
 
-          <div
-            className="
-              flex flex-row gap-2 font-jura text-[11px] tracking-[0.3px] text-[rgb(var(--base-text-color-rgb)_/_0.45)]
-              sm:items-center sm:justify-between
-            "
-          >
-            <span>{`© ${year} sohj.abe. All rights reserved.`}</span>
-            <span>Designed and built with React + Tailwind.</span>
+          <div className="font-jura text-[11px] tracking-[0.3px] text-[rgb(var(--base-text-color-rgb)_/_0.45)]">
+            <span className="block text-center sm:hidden">
+              Designed and built with React + Tailwind by sohj.abe
+            </span>
+
+            <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between">
+              <span>{`© ${year} sohj.abe. All rights reserved.`}</span>
+              <span>Designed and built with React + Tailwind.</span>
+            </div>
           </div>
         </div>
       </div>
