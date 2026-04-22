@@ -11,7 +11,8 @@ import { BreakpointDebugOverlay } from './shared/components/BreakpointDebugOverl
 import { useResponsiveTokens } from './shared/hooks/useResponsiveTokens';
 import { StarfieldBackground } from './shared/components/StarfieldBackground';
 import { useScrollVelocity } from './shared/hooks/useScrollVelocity';
-import { Footer, Navbar } from './shared/layouts';
+import { Footer } from './shared/layouts/Footer';
+import { Navbar } from './shared/layouts/Navbar';
 
 type StarMode = 'normal' | 'horizontal' | 'vertical' | 'paused' | 'cinematic' | 'forward';
 const STARFIELD_ENABLED_STORAGE_KEY = 'sohj.debug.starfield.enabled';
