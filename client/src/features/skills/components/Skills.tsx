@@ -285,9 +285,11 @@ function SkillsStackItem({
 function SkillsPanelContent({
   card,
   editorEnabled = false,
+  isActive = false,
 }: {
   card: SkillsCard;
   editorEnabled?: boolean;
+  isActive?: boolean;
 }) {
   const HeaderIcon = cardIconMap[card.id];
   const [animationKey, setAnimationKey] = useState(0);
@@ -296,10 +298,11 @@ function SkillsPanelContent({
   return (
     <GlassCard
       className={`skills-panel relative flex h-full flex-col rounded-[2px] px-4 py-5 md:px-5 md:py-6 ${
+        isActive ? 'skills-panel--active' : ''
+      } ${
         shouldAnimateInteractions ? 'cursor-pointer' : ''
       }`}
       onMouseEnter={shouldAnimateInteractions ? () => setAnimationKey((previous) => previous + 1) : undefined}
-      onClick={shouldAnimateInteractions ? () => setAnimationKey((previous) => previous + 1) : undefined}
     >
       <div className="skills-panel__title-wrap flex flex-col gap-[0.55rem]">
         <div className="flex items-center justify-between gap-4 px-[2px]">
@@ -557,9 +560,10 @@ function SkillsEditorCard({
       initial={{ opacity: 0, y: 30 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ duration: 0.55, ease: [0.12, 0.7, 0.63, 0.9] }}
-      onClick={() => {
+      onClick={(event) => {
+        event.stopPropagation();
         if (!editorEnabled) {
-      onActivate(card.id, { toggleSelection: true });
+          onActivate(card.id, { additiveSelection: true });
         }
       }}
       onPointerDown={handlePointerDown}
@@ -593,7 +597,7 @@ function SkillsEditorCard({
         </>
       ) : null}
 
-      <SkillsPanelContent card={card} editorEnabled={editorEnabled} />
+      <SkillsPanelContent card={card} editorEnabled={editorEnabled} isActive={selected} />
     </motion.article>
   );
 }
@@ -981,7 +985,7 @@ function SkillsEditorTitle({
     >
       <SkillsSectionTitle
         text={title}
-        className="skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl"
+        className="skills-section__title font-bruno text-[35px] font-bold text-[var(--base-text-color)] md:text-5xl"
       />
     </motion.div>
   );
@@ -1010,6 +1014,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
+  const [activeCardIds, setActiveCardIds] = useState<string[]>([]);
   const [titleObjectDimensions, setTitleObjectDimensions] = useState({ width: 320, height: 60 });
   const [hudPos, setHudPos] = useState<{ x: number; y: number }>(() => (
     readLocalStorageJson(SKILLS_HUD_POS_STORAGE_KEY, { x: 0, y: 0 })
@@ -1265,6 +1270,25 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     });
   };
 
+  const handleActivatePublicCard = (
+    cardId: string,
+    options?: { toggleSelection?: boolean; preserveSelection?: boolean; additiveSelection?: boolean },
+  ) => {
+    setActiveCardIds((previous) => {
+      if (options?.additiveSelection) {
+        return previous.includes(cardId)
+          ? previous.filter((selectedId) => selectedId !== cardId)
+          : [...previous, cardId];
+      }
+
+      if (options?.toggleSelection) {
+        return previous.length === 1 && previous[0] === cardId ? [] : [cardId];
+      }
+
+      return [cardId];
+    });
+  };
+
   const handleDragStart = (cardId: string, preserveSelection: boolean) => {
     const entityIdsToMove = preserveSelection && selectedCardIds.includes(cardId)
       ? selectedCardIds
@@ -1442,10 +1466,10 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
           <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
             <SkillsSectionTitle
               text={SKILLS_SECTION_TITLE}
-              className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl"
+              className="skills-section__title font-bruno text-[35px] font-bold text-[var(--base-text-color)] md:text-5xl"
             />
             {error ? (
-              <p className="skills-error-copy relevant-experiences-intro__copy mt-3 font-jura text-[13px] tracking-[0.3px] sm:text-[16px] lg:text-[17px]">
+              <p className="skills-error-copy relevant-experiences-intro__copy mt-3 font-jura text-[13px] sm:text-[16px] lg:text-[17px]">
                 {error}
               </p>
             ) : null}
@@ -1463,7 +1487,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
               <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
                 <SkillsSectionTitle
                   text={SKILLS_SECTION_TITLE}
-                  className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl"
+                  className="skills-section__title font-bruno text-[35px] font-bold text-[var(--base-text-color)] md:text-5xl"
                 />
               </div>
             ) : null}
@@ -1473,6 +1497,11 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                 <div
                   className={`skills-map-shell ${editorEnabled ? 'skills-map-shell--editable' : ''}`}
                   style={{ height: `${displayCanvasHeight * scale}px` }}
+                  onClick={() => {
+                    if (!editorEnabled) {
+                      setActiveCardIds([]);
+                    }
+                  }}
                 >
                   {editorEnabled ? <div className="skills-map-shell__center-guide" aria-hidden="true" /> : null}
 
@@ -1489,11 +1518,15 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                       transformOrigin: 'top center',
                     }}
                     onPointerDown={(event) => {
-                      if (!editorEnabled || event.target !== event.currentTarget) {
+                      if (event.target !== event.currentTarget) {
                         return;
                       }
 
-                      setSelectedCardIds([]);
+                      if (editorEnabled) {
+                        setSelectedCardIds([]);
+                      } else {
+                        setActiveCardIds([]);
+                      }
                     }}
                   >
                     <SkillsEditorTitle
@@ -1534,12 +1567,12 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                       <SkillsEditorCard
                         key={card.id}
                         card={card}
-                        selected={selectedCardIds.includes(card.id)}
+                        selected={editorEnabled ? selectedCardIds.includes(card.id) : activeCardIds.includes(card.id)}
                         multiSelected={selectedCardIds.length > 1}
                         editorEnabled={editorEnabled}
                         canvasElement={canvasElement}
                         shouldAnimate={shouldAnimate}
-                        onActivate={handleActivateCard}
+                        onActivate={editorEnabled ? handleActivateCard : handleActivatePublicCard}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                         onMove={handleDragMove}
@@ -1555,11 +1588,13 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                   skills-grid skills-grid--ordered relative z-[1] mt-[2.35rem] flex flex-col
                   gap-7 sm:gap-10 md:gap-4
                 "
+                onClick={() => setActiveCardIds([])}
               >
                 {orderedCards.map((card, index) => (
                   <motion.article
                     key={card.id}
                     className="relative w-full"
+                    onClick={(event) => event.stopPropagation()}
                     initial={{ opacity: 0, y: 30 }}
                     animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                     transition={{
@@ -1567,8 +1602,13 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                       delay: 0.1 + index * 0.09,
                       ease: [0.12, 0.7, 0.63, 0.9],
                     }}
+                    onPointerDown={() => handleActivatePublicCard(card.id, { additiveSelection: true })}
                   >
-                    <SkillsPanelContent card={card} editorEnabled={editorEnabled} />
+                    <SkillsPanelContent
+                      card={card}
+                      editorEnabled={editorEnabled}
+                      isActive={activeCardIds.includes(card.id)}
+                    />
                   </motion.article>
                 ))}
               </div>
