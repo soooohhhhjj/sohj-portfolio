@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { motion, type Easing } from 'framer-motion';
 import { BugOff, GraduationCap, LaptopMinimalCheck, Layers } from 'lucide-react';
-import { type ComponentType, type ReactNode, useEffect, useState } from 'react';
+import { type ComponentType, type MouseEvent, type ReactNode, useEffect, useState } from 'react';
 import { BREAKPOINTS } from '../../../shared/constants/breakpoints';
 
 const easeSmooth: Easing = [0.12, 0.7, 0.63, 0.9];
@@ -15,6 +15,8 @@ type HeroCardProps = {
   Icon: ComponentType<{ className?: string }>;
   title: string;
   subtitle: string;
+  isActive: boolean;
+  onClick: (event: MouseEvent<HTMLElement>) => void;
 };
 
 interface CardMotionWrapperProps {
@@ -50,14 +52,26 @@ function CardMotionWrapper({
   );
 }
 
-function HeroCard({ index, Icon, title, subtitle }: HeroCardProps) {
+function HeroCard({ index, Icon, title, subtitle, isActive, onClick }: HeroCardProps) {
   const isReversedOnMobile = index % 2 === 1;
 
   return (
     <>
-      <div className={clsx('hero-card-split md:hidden', isReversedOnMobile && 'hero-card-split--reverse')}>
-        <div className="hero-card-split__icon-card 
-        w-[85px] min-w-[85px] p-4 xsm:w-[74px] xsm:min-w-[74px] sm:w-[78px] sm:min-w-[78px]">
+      <button
+        type="button"
+        className={clsx(
+          'hero-card-split md:hidden',
+          isReversedOnMobile && 'hero-card-split--reverse',
+          isActive && 'hero-card-split--active',
+        )}
+        onClick={onClick}
+      >
+        <div
+          className="
+            hero-card-split__icon-card
+            w-[85px] min-w-[85px] p-4 xsm:w-[74px] xsm:min-w-[74px] sm:w-[78px] sm:min-w-[78px]
+          "
+        >
           <div className="hero-card-split__icon-wrap w-10 h-10 sm:w-10 sm:h-10">
             <Icon className="w-[22px] h-[22px] sm:w-[18px] sm:h-[18px]" />
           </div>
@@ -72,9 +86,13 @@ function HeroCard({ index, Icon, title, subtitle }: HeroCardProps) {
             {subtitle}
           </p>
         </div>
-      </div>
+      </button>
 
-      <div className="hero-card-shell hidden md:flex md:p-4 md:gap-2 lg:p-6 lg:gap-[10px]">
+      <button
+        type="button"
+        className={clsx('hero-card-shell hidden md:flex md:p-4 md:gap-2 lg:p-6 lg:gap-[10px]', isActive && 'hero-card-shell--active')}
+        onClick={onClick}
+      >
         <div className="hero-card-shell__border" />
         <div className="hero-card-shell__sheen" />
         <div className="hero-card-shell__hover-gradient" />
@@ -88,7 +106,7 @@ function HeroCard({ index, Icon, title, subtitle }: HeroCardProps) {
             </div>
           </div>
 
-          <div className="hero-card-shell__title-block flex flex-col gap-2">
+          <div className="hero-card-shell__title-block flex w-full flex-col gap-2">
             <h3 className="hero-card-shell__title hero-card-title font-bruno text-[11px] lg:text-[14px]">
               {title}
             </h3>
@@ -101,7 +119,7 @@ function HeroCard({ index, Icon, title, subtitle }: HeroCardProps) {
         </p>
 
         <div className="hero-card-shell__bottom-rule" />
-      </div>
+      </button>
     </>
   );
 }
@@ -110,6 +128,7 @@ export function HeroCards({ shouldAnimate }: HeroCardsProps) {
   const [isSmAndBelow, setIsSmAndBelow] = useState<boolean>(
     typeof window !== 'undefined' ? window.innerWidth <= BREAKPOINTS.sm : false,
   );
+  const [activeCardIndexes, setActiveCardIndexes] = useState<number[]>([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -124,6 +143,15 @@ export function HeroCards({ shouldAnimate }: HeroCardsProps) {
     };
   }, []);
 
+  const handleCardClick = (index: number) => (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setActiveCardIndexes((previous) => (
+      previous.includes(index)
+        ? previous.filter((activeIndex) => activeIndex !== index)
+        : [...previous, index]
+    ));
+  };
+
   return (
     <motion.div
       initial={{ y: '100vh' }}
@@ -133,12 +161,15 @@ export function HeroCards({ shouldAnimate }: HeroCardsProps) {
     >
       <div className="mt-10 mb-7 md:mt-0 md:mb-5">
         <p className="hero-card-section-title font-bruno text-center uppercase tracking-[1.3px] 
-        text-[13px] sm:text-[15px] md:text-start md:text-[12px] lg:text-[13px]">
+        text-[14px] sm:text-[16px] md:text-start md:text-[13px] lg:text-[14px]">
           Highlights
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-4 sm:gap-6 md:flex-nowrap md:gap-3 lg:gap-4">
+      <div
+        className="flex flex-wrap gap-4 sm:gap-6 md:flex-nowrap md:gap-3 lg:gap-4"
+        onClick={() => setActiveCardIndexes([])}
+      >
         <CardMotionWrapper
           isSmAndBelow={isSmAndBelow}
           shouldAnimate={shouldAnimate}
@@ -151,6 +182,8 @@ export function HeroCards({ shouldAnimate }: HeroCardsProps) {
             Icon={GraduationCap}
             title="BSIT Graduate"
             subtitle="Bachelor of Science in Information Technology"
+            isActive={activeCardIndexes.includes(0)}
+            onClick={handleCardClick(0)}
           />
         </CardMotionWrapper>
 
@@ -166,6 +199,8 @@ export function HeroCards({ shouldAnimate }: HeroCardsProps) {
             Icon={LaptopMinimalCheck}
             title="IT Intern Exp."
             subtitle="Technical support, system deployment & reporting"
+            isActive={activeCardIndexes.includes(1)}
+            onClick={handleCardClick(1)}
           />
         </CardMotionWrapper>
 
@@ -181,6 +216,8 @@ export function HeroCards({ shouldAnimate }: HeroCardsProps) {
             Icon={Layers}
             title="SysArch Thesis"
             subtitle="Lead Developer - Inventory Management System"
+            isActive={activeCardIndexes.includes(2)}
+            onClick={handleCardClick(2)}
           />
         </CardMotionWrapper>
 
@@ -196,6 +233,8 @@ export function HeroCards({ shouldAnimate }: HeroCardsProps) {
             Icon={BugOff}
             title="Capstone Thesis"
             subtitle="Planning, debugging & feature support"
+            isActive={activeCardIndexes.includes(3)}
+            onClick={handleCardClick(3)}
           />
         </CardMotionWrapper>
       </div>
