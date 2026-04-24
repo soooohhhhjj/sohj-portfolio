@@ -118,13 +118,44 @@
   /* #region Skills Editor */
   .skills-editor-lane {
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .skills-map-shell {
     position: relative;
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
+    border: none;
+    background: transparent;
+  }
+
+  .skills-map-shell--editable {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+      rgba(7, 10, 16, 0.18);
+    background-size: auto, auto;
+  }
+
+  .skills-map__title-object {
+    position: absolute;
+    z-index: 2;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .skills-map__title-object:active {
+    cursor: grabbing;
+  }
+
+  .skills-map__title-object--selected {
+    outline: 1px dashed rgba(255, 255, 255, 0.16);
+    outline-offset: 8px;
+  }
+
+  .skills-map__title-object .skills-section__title {
+    margin: 0;
+    pointer-events: none;
   }
 
   .skills-map--editable {
@@ -142,8 +173,104 @@
     pointer-events: none;
   }
 
-  .skills-map-card {
+  .skills-map-shell__center-guide {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background:
+      linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(247, 247, 217, 0.24) 14%,
+        rgba(247, 247, 217, 0.42) 50%,
+        rgba(247, 247, 217, 0.24) 86%,
+        transparent 100%
+      );
+    box-shadow:
+      0 0 10px rgba(247, 247, 217, 0.16),
+      0 0 22px rgba(247, 247, 217, 0.08);
+    pointer-events: none;
+    transform: translateX(-1px);
     z-index: 1;
+  }
+
+  .skills-map-card {
+    z-index: 3;
+  }
+
+  .skills-map-line {
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    cursor: grab;
+  }
+
+  .skills-map-line:active {
+    cursor: grabbing;
+  }
+
+  .skills-map-line__glow {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--base-text-color);
+    box-shadow:
+      0 0 8px rgba(247, 247, 217, 0.5),
+      0 0 16px rgba(247, 247, 217, 0.32),
+      0 0 28px rgba(247, 247, 217, 0.18);
+  }
+
+  .skills-map-line--selected .skills-map-line__glow {
+    box-shadow:
+      0 0 10px rgba(247, 247, 217, 0.62),
+      0 0 22px rgba(247, 247, 217, 0.4),
+      0 0 34px rgba(247, 247, 217, 0.24);
+  }
+
+  .skills-line-resize-handle {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    background: rgba(7, 10, 16, 0.92);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.08);
+    transform: translateY(-50%);
+    z-index: 3;
+  }
+
+  .skills-line-resize-handle--w {
+    left: -5px;
+    cursor: ew-resize;
+  }
+
+  .skills-line-resize-handle--e {
+    right: -5px;
+    cursor: ew-resize;
+  }
+
+  .skills-line-rotate-handle {
+    position: absolute;
+    top: 50%;
+    right: -24px;
+    width: 12px;
+    height: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    border-radius: 999px;
+    background: var(--base-text-color);
+    box-shadow:
+      0 0 8px rgba(247, 247, 217, 0.35),
+      0 0 16px rgba(247, 247, 217, 0.18);
+    transform: translateY(-50%);
+    cursor: grab;
+    z-index: 3;
+  }
+
+  .skills-line-rotate-handle:active {
+    cursor: grabbing;
   }
 
   .skills-map-card--editable {

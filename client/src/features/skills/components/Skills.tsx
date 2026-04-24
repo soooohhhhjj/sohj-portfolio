@@ -34,10 +34,13 @@ import { BREAKPOINTS } from '../../../shared/constants/breakpoints';
 import { Section, SectionContent } from '../../../shared/components/Container';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { useSkillsEditorState } from '../hooks/useSkillsEditorState';
-import type { SkillsCard, SkillsCardLayout } from '../types/skills.types';
+import type { SkillsCard, SkillsCardLayout, SkillsLine, SkillsTitleLayout } from '../types/skills.types';
 import {
   SKILLS_MIN_CARD_HEIGHT,
   SKILLS_MIN_CARD_WIDTH,
+  SKILLS_LINE_HEIGHT,
+  SKILLS_MIN_LINE_WIDTH,
+  SKILLS_TITLE_DEFAULT_LAYOUT,
 } from '../utils/skillsContent';
 import './Skills.css';
 
@@ -47,11 +50,22 @@ interface SkillsProps {
 }
 
 type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se';
+type LineResizeHandle = 'w' | 'e';
 
 const orderedCardIds = ['frontend', 'backend', 'database', 'tools'] as const;
 const SKILLS_CANVAS_MIN_HEIGHT = 620;
 const SKILLS_CANVAS_MIN_WIDTH = 1160;
 const SKILLS_HUD_POS_STORAGE_KEY = 'sohj.debug.skills.hudPos.v1';
+const SKILLS_TITLE_OBJECT_ID = 'skills-title-object';
+const SKILLS_SECTION_TITLE = 'Skills & Tools';
+
+type SkillsDragLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+};
 
 const iconMap: Record<string, IconType> = {
   react: FaReact,
@@ -109,12 +123,65 @@ function clampCardLayout(layout: SkillsCardLayout, canvasWidth: number, canvasHe
   };
 }
 
+function clampLineLayout(
+  layout: SkillsLine['layout'],
+  canvasWidth: number,
+  canvasHeight: number,
+): SkillsLine['layout'] {
+  const width = Math.max(SKILLS_MIN_LINE_WIDTH, Math.round(layout.width));
+  const height = SKILLS_LINE_HEIGHT;
+  const maxX = Math.max(0, canvasWidth - width);
+  const maxY = Math.max(0, canvasHeight - height);
+
+  return {
+    x: Math.min(Math.max(0, Math.round(layout.x)), maxX),
+    y: Math.min(Math.max(0, Math.round(layout.y)), maxY),
+    width,
+    height,
+    rotation: 'rotation' in layout && typeof layout.rotation === 'number'
+      ? Math.round(layout.rotation)
+      : 0,
+  };
+}
+
+function clampTitleLayout(layout: SkillsTitleLayout, canvasWidth: number, canvasHeight: number): SkillsTitleLayout {
+  const maxX = Math.max(0, canvasWidth - 320);
+  const maxY = Math.max(0, canvasHeight - 60);
+
+  return {
+    x: Math.min(Math.max(0, Math.round(layout.x)), maxX),
+    y: Math.min(Math.max(0, Math.round(layout.y)), maxY),
+  };
+}
+
 function resolveCanvasHeight(cards: SkillsCard[]) {
   const furthestBottom = cards.reduce((maxBottom, card) => (
     Math.max(maxBottom, card.layout.y + card.layout.height)
   ), 0);
 
   return Math.max(SKILLS_CANVAS_MIN_HEIGHT, furthestBottom);
+}
+
+function resolveCanvasHeightWithLines(cards: SkillsCard[], lines: SkillsLine[]) {
+  const cardsBottom = resolveCanvasHeight(cards);
+  const linesBottom = lines.reduce((maxBottom, line) => (
+    Math.max(maxBottom, line.layout.y + line.layout.height)
+  ), 0);
+
+  return Math.max(cardsBottom, SKILLS_CANVAS_MIN_HEIGHT, linesBottom);
+}
+
+function createSkillsLine(id: string, existingLineCount: number): SkillsLine {
+  return {
+    id,
+    layout: {
+      x: 48,
+      y: 40 + existingLineCount * 28,
+      width: 220,
+      height: SKILLS_LINE_HEIGHT,
+      rotation: 0,
+    },
+  };
 }
 
 function resolveCanvasWidth(cards: SkillsCard[]) {
@@ -515,6 +582,394 @@ function SkillsEditorCard({
   );
 }
 
+function SkillsEditorLine({
+  line,
+  selected,
+  multiSelected,
+  editorEnabled,
+  canvasElement,
+  shouldAnimate,
+  onActivate,
+  onDragStart,
+  onDragEnd,
+  onMove,
+  onResize,
+}: {
+  line: SkillsLine;
+  selected: boolean;
+  multiSelected: boolean;
+  editorEnabled: boolean;
+  canvasElement: HTMLDivElement | null;
+  shouldAnimate: boolean;
+  onActivate: (
+    id: string,
+    options?: { toggleSelection?: boolean; preserveSelection?: boolean; additiveSelection?: boolean },
+  ) => void;
+  onDragStart: (id: string, preserveSelection: boolean) => void;
+  onDragEnd: () => void;
+  onMove: (id: string, delta: { x: number; y: number }) => void;
+  onResize: (id: string, next: SkillsLine['layout']) => void;
+}) {
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    scaleX: number;
+    scaleY: number;
+  } | null>(null);
+  const resizeStateRef = useRef<{
+    pointerId: number;
+    handle: LineResizeHandle;
+    startX: number;
+    startLeft: number;
+    startWidth: number;
+  } | null>(null);
+  const rotateStateRef = useRef<{
+    pointerId: number;
+    centerX: number;
+    centerY: number;
+    scaleX: number;
+    scaleY: number;
+  } | null>(null);
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!editorEnabled || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (event.ctrlKey || event.metaKey) {
+      onActivate(line.id, { additiveSelection: true });
+      return;
+    }
+
+    const canvasRect = canvasElement?.getBoundingClientRect();
+    const scaleX = canvasElement && canvasRect && canvasElement.offsetWidth > 0
+      ? canvasRect.width / canvasElement.offsetWidth
+      : 1;
+    const scaleY = canvasElement && canvasRect && canvasElement.offsetHeight > 0
+      ? canvasRect.height / canvasElement.offsetHeight
+      : 1;
+    const preserveSelection = selected && multiSelected;
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      scaleX: scaleX || 1,
+      scaleY: scaleY || 1,
+    };
+
+    onDragStart(line.id, preserveSelection);
+    onActivate(line.id, preserveSelection ? { preserveSelection: true } : undefined);
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      const dragState = dragStateRef.current;
+
+      if (!dragState || dragState.pointerId !== moveEvent.pointerId) {
+        return;
+      }
+
+      onMove(line.id, {
+        x: Math.round((moveEvent.clientX - dragState.startX) / dragState.scaleX),
+        y: Math.round((moveEvent.clientY - dragState.startY) / dragState.scaleY),
+      });
+    };
+
+    const handleUp = (upEvent: PointerEvent) => {
+      if (dragStateRef.current?.pointerId === upEvent.pointerId) {
+        dragStateRef.current = null;
+      }
+
+      onDragEnd();
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
+  };
+
+  const handleResizePointerDown = (handle: LineResizeHandle, event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (!editorEnabled || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    resizeStateRef.current = {
+      pointerId: event.pointerId,
+      handle,
+      startX: event.clientX,
+      startLeft: line.layout.x,
+      startWidth: line.layout.width,
+    };
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    onActivate(line.id);
+  };
+
+  const handleResizePointerMove = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    const resizeState = resizeStateRef.current;
+
+    if (!resizeState || resizeState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - resizeState.startX;
+    let nextX = resizeState.startLeft;
+    let nextWidth = resizeState.startWidth;
+
+    if (resizeState.handle === 'e') {
+      nextWidth = resizeState.startWidth + deltaX;
+    }
+
+    if (resizeState.handle === 'w') {
+      nextWidth = resizeState.startWidth - deltaX;
+      nextX = resizeState.startLeft + deltaX;
+    }
+
+    onResize(line.id, {
+      ...line.layout,
+      x: Math.round(nextX),
+      width: Math.round(nextWidth),
+    });
+  };
+
+  const handleResizePointerUp = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (resizeStateRef.current?.pointerId === event.pointerId) {
+      resizeStateRef.current = null;
+    }
+  };
+
+  const handleRotatePointerDown = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (!editorEnabled || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const canvasRect = canvasElement?.getBoundingClientRect();
+    const scaleX = canvasElement && canvasRect && canvasElement.offsetWidth > 0
+      ? canvasRect.width / canvasElement.offsetWidth
+      : 1;
+    const scaleY = canvasElement && canvasRect && canvasElement.offsetHeight > 0
+      ? canvasRect.height / canvasElement.offsetHeight
+      : 1;
+
+    rotateStateRef.current = {
+      pointerId: event.pointerId,
+      centerX: line.layout.x + line.layout.width / 2,
+      centerY: line.layout.y + line.layout.height / 2,
+      scaleX: scaleX || 1,
+      scaleY: scaleY || 1,
+    };
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    onActivate(line.id);
+  };
+
+  const handleRotatePointerMove = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    const rotateState = rotateStateRef.current;
+
+    if (!rotateState || rotateState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const canvasRect = canvasElement?.getBoundingClientRect();
+
+    if (!canvasRect) {
+      return;
+    }
+
+    const pointerX = (event.clientX - canvasRect.left) / rotateState.scaleX;
+    const pointerY = (event.clientY - canvasRect.top) / rotateState.scaleY;
+    const angle = Math.round(
+      (Math.atan2(pointerY - rotateState.centerY, pointerX - rotateState.centerX) * 180) / Math.PI,
+    );
+
+    onResize(line.id, {
+      ...line.layout,
+      rotation: angle,
+    });
+  };
+
+  const handleRotatePointerUp = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (rotateStateRef.current?.pointerId === event.pointerId) {
+      rotateStateRef.current = null;
+    }
+  };
+
+  return (
+    <motion.article
+      className={`skills-map-line absolute ${selected ? 'skills-map-line--selected' : ''}`}
+      style={{
+        left: `${line.layout.x}px`,
+        top: `${line.layout.y}px`,
+        width: `${line.layout.width}px`,
+        height: `${line.layout.height}px`,
+        transformOrigin: 'center center',
+      }}
+      initial={{ opacity: 0, y: 10, rotate: line.layout.rotation }}
+      animate={
+        shouldAnimate
+          ? { opacity: 1, y: 0, rotate: line.layout.rotation }
+          : { opacity: 0, y: 10, rotate: line.layout.rotation }
+      }
+      transition={{ duration: 0.4, ease: [0.12, 0.7, 0.63, 0.9] }}
+      onPointerDown={handlePointerDown}
+    >
+      <span className="skills-map-line__glow" aria-hidden="true" />
+      {editorEnabled ? (
+        <>
+          <span
+            className="skills-line-resize-handle skills-line-resize-handle--w"
+            onPointerDown={(event) => handleResizePointerDown('w', event)}
+            onPointerMove={handleResizePointerMove}
+            onPointerUp={handleResizePointerUp}
+          />
+          <span
+            className="skills-line-resize-handle skills-line-resize-handle--e"
+            onPointerDown={(event) => handleResizePointerDown('e', event)}
+            onPointerMove={handleResizePointerMove}
+            onPointerUp={handleResizePointerUp}
+          />
+          <span
+            className="skills-line-rotate-handle"
+            onPointerDown={handleRotatePointerDown}
+            onPointerMove={handleRotatePointerMove}
+            onPointerUp={handleRotatePointerUp}
+          />
+        </>
+      ) : null}
+    </motion.article>
+  );
+}
+
+function SkillsEditorTitle({
+  title,
+  layout,
+  selected,
+  multiSelected,
+  editorEnabled,
+  canvasElement,
+  shouldAnimate,
+  objectRef,
+  onActivate,
+  onDragStart,
+  onDragEnd,
+  onMove,
+}: {
+  title: string;
+  layout: SkillsTitleLayout;
+  selected: boolean;
+  multiSelected: boolean;
+  editorEnabled: boolean;
+  canvasElement: HTMLDivElement | null;
+  shouldAnimate: boolean;
+  objectRef: React.RefObject<HTMLDivElement | null>;
+  onActivate: (
+    id: string,
+    options?: { toggleSelection?: boolean; preserveSelection?: boolean; additiveSelection?: boolean },
+  ) => void;
+  onDragStart: (id: string, preserveSelection: boolean) => void;
+  onDragEnd: () => void;
+  onMove: (id: string, delta: { x: number; y: number }) => void;
+}) {
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    scaleX: number;
+    scaleY: number;
+  } | null>(null);
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!editorEnabled || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (event.ctrlKey || event.metaKey) {
+      onActivate(SKILLS_TITLE_OBJECT_ID, { additiveSelection: true });
+      return;
+    }
+
+    const canvasRect = canvasElement?.getBoundingClientRect();
+    const scaleX = canvasElement && canvasRect && canvasElement.offsetWidth > 0
+      ? canvasRect.width / canvasElement.offsetWidth
+      : 1;
+    const scaleY = canvasElement && canvasRect && canvasElement.offsetHeight > 0
+      ? canvasRect.height / canvasElement.offsetHeight
+      : 1;
+    const preserveSelection = selected && multiSelected;
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      scaleX: scaleX || 1,
+      scaleY: scaleY || 1,
+    };
+
+    onDragStart(SKILLS_TITLE_OBJECT_ID, preserveSelection);
+    onActivate(SKILLS_TITLE_OBJECT_ID, preserveSelection ? { preserveSelection: true } : undefined);
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      const dragState = dragStateRef.current;
+
+      if (!dragState || dragState.pointerId !== moveEvent.pointerId) {
+        return;
+      }
+
+      onMove(SKILLS_TITLE_OBJECT_ID, {
+        x: Math.round((moveEvent.clientX - dragState.startX) / dragState.scaleX),
+        y: Math.round((moveEvent.clientY - dragState.startY) / dragState.scaleY),
+      });
+    };
+
+    const handleUp = (upEvent: PointerEvent) => {
+      if (dragStateRef.current?.pointerId === upEvent.pointerId) {
+        dragStateRef.current = null;
+      }
+
+      onDragEnd();
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
+  };
+
+  return (
+    <motion.div
+      ref={objectRef}
+      className={`skills-map__title-object ${selected ? 'skills-map__title-object--selected' : ''}`}
+      style={{
+        left: `${layout.x}px`,
+        top: `${layout.y}px`,
+      }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+      transition={{ duration: 0.4, ease: [0.12, 0.7, 0.63, 0.9] }}
+      onPointerDown={handlePointerDown}
+    >
+      <h2 className="skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl">
+        {title}
+      </h2>
+    </motion.div>
+  );
+}
+
 export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   const [viewportWidth, setViewportWidth] = useState<number>(
     typeof window === 'undefined' ? BREAKPOINTS.lg : window.innerWidth,
@@ -525,6 +980,10 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     isLoading,
     error,
     updateCard,
+    updateLine,
+    addLine,
+    removeLine,
+    updateTitleLayout,
     resetToPersisted,
     save,
     isSaving,
@@ -537,7 +996,8 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   const [hudPos, setHudPos] = useState<{ x: number; y: number }>(() => (
     readLocalStorageJson(SKILLS_HUD_POS_STORAGE_KEY, { x: 0, y: 0 })
   ));
-  const groupDragStartLayoutsRef = useRef<Map<string, SkillsCardLayout> | null>(null);
+  const groupDragStartLayoutsRef = useRef<Map<string, SkillsDragLayout> | null>(null);
+  const titleObjectRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleResize = () => setViewportWidth(window.innerWidth);
@@ -587,26 +1047,59 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     }, []);
   }, [content]);
 
+  const editorLines = useMemo(() => content?.lines ?? [], [content]);
+  const titleLayout = content?.titleLayout ?? SKILLS_TITLE_DEFAULT_LAYOUT;
+
   const selectedCards = orderedCards.filter((card) => selectedCardIds.includes(card.id));
+  const selectedLines = editorLines.filter((line) => selectedCardIds.includes(line.id));
+  const selectedTitle = selectedCardIds.length === 1 && selectedCardIds[0] === SKILLS_TITLE_OBJECT_ID
+    ? titleLayout
+    : null;
   const selectedCard = selectedCardIds.length === 1
     ? orderedCards.find((card) => card.id === selectedCardIds[0]) ?? null
     : null;
+  const selectedLine = selectedCardIds.length === 1
+    ? editorLines.find((line) => line.id === selectedCardIds[0]) ?? null
+    : null;
   const layoutMode = viewportWidth >= BREAKPOINTS.md ? 'desktop' : 'linear';
-  const displayCanvasHeight = resolveCanvasHeight(orderedCards);
+  const displayCanvasHeight = resolveCanvasHeightWithLines(orderedCards, editorLines);
   const activeCanvasWidth = resolveCanvasWidth(orderedCards);
   const scale = !canvasWidth || canvasWidth >= activeCanvasWidth
     ? 1
     : canvasWidth / activeCanvasWidth;
+  const selectedTitleDimensions = useMemo(() => ({
+    width: titleObjectRef.current?.offsetWidth ?? 320,
+    height: titleObjectRef.current?.offsetHeight ?? 60,
+  }), [selectedCardIds, titleLayout.x, titleLayout.y]);
 
   const updateCardLayout = (cardId: string, nextLayout: SkillsCardLayout) => {
     updateCard(cardId, (card) => ({
       ...card,
       layout: clampCardLayout(
         nextLayout,
-        Math.max(activeCanvasWidth, nextLayout.x + nextLayout.width),
+        activeCanvasWidth,
         Math.max(displayCanvasHeight, nextLayout.y + nextLayout.height),
       ),
     }));
+  };
+
+  const updateLineLayout = (lineId: string, nextLayout: SkillsLine['layout']) => {
+    updateLine(lineId, (line) => ({
+      ...line,
+      layout: clampLineLayout(
+        nextLayout,
+        activeCanvasWidth,
+        Math.max(displayCanvasHeight, nextLayout.y + nextLayout.height),
+      ),
+    }));
+  };
+
+  const updateSkillsTitleLayout = (nextLayout: SkillsTitleLayout) => {
+    updateTitleLayout((layout) => clampTitleLayout(
+      nextLayout ?? layout,
+      activeCanvasWidth,
+      displayCanvasHeight,
+    ));
   };
 
   useEffect(() => {
@@ -626,7 +1119,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
         return;
       }
 
-      if (selectedCards.length === 0) {
+      if (selectedCards.length === 0 && selectedLines.length === 0 && !selectedTitle) {
         return;
       }
 
@@ -651,6 +1144,19 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
           y: selected.layout.y + deltaY,
         });
       });
+      selectedLines.forEach((selected) => {
+        updateLineLayout(selected.id, {
+          ...selected.layout,
+          x: selected.layout.x + deltaX,
+          y: selected.layout.y + deltaY,
+        });
+      });
+      if (selectedTitle) {
+        updateSkillsTitleLayout({
+          x: selectedTitle.x + deltaX,
+          y: selectedTitle.y + deltaY,
+        });
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -658,7 +1164,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [editorEnabled, layoutMode, selectedCardIds, selectedCards]);
+  }, [editorEnabled, layoutMode, selectedCardIds, selectedCards, selectedLines, selectedTitle]);
 
   const handleHudPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -710,15 +1216,21 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   };
 
   const handleDragStart = (cardId: string, preserveSelection: boolean) => {
-    const cardIdsToMove = preserveSelection && selectedCardIds.includes(cardId)
+    const entityIdsToMove = preserveSelection && selectedCardIds.includes(cardId)
       ? selectedCardIds
       : [cardId];
 
-    groupDragStartLayoutsRef.current = new Map(
-      orderedCards
-        .filter((card) => cardIdsToMove.includes(card.id))
-        .map((card) => [card.id, { ...card.layout }]),
-    );
+    groupDragStartLayoutsRef.current = new Map<string, SkillsDragLayout>([
+        ...(entityIdsToMove.includes(SKILLS_TITLE_OBJECT_ID)
+          ? [[SKILLS_TITLE_OBJECT_ID, { ...titleLayout, width: 0, height: 0 } satisfies SkillsDragLayout] as const]
+          : []),
+        ...orderedCards
+          .filter((card) => entityIdsToMove.includes(card.id))
+          .map((card) => [card.id, { ...card.layout } satisfies SkillsDragLayout] as const),
+        ...editorLines
+          .filter((line) => entityIdsToMove.includes(line.id))
+          .map((line) => [line.id, { ...line.layout } satisfies SkillsDragLayout] as const),
+      ]);
 
     if (!preserveSelection) {
       setSelectedCardIds([cardId]);
@@ -733,16 +1245,140 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     }
 
     startLayouts.forEach((layout, selectedId) => {
-      updateCardLayout(selectedId, {
+      if (selectedId === SKILLS_TITLE_OBJECT_ID) {
+        updateSkillsTitleLayout({
+          x: layout.x + delta.x,
+          y: layout.y + delta.y,
+        });
+        return;
+      }
+
+      if (orderedCards.some((card) => card.id === selectedId)) {
+        updateCardLayout(selectedId, {
+          ...layout,
+          x: layout.x + delta.x,
+          y: layout.y + delta.y,
+        });
+        return;
+      }
+
+      updateLineLayout(selectedId, {
         ...layout,
         x: layout.x + delta.x,
         y: layout.y + delta.y,
+        rotation: layout.rotation ?? 0,
       });
     });
   };
 
   const handleDragEnd = () => {
     groupDragStartLayoutsRef.current = null;
+  };
+
+  const handleAddLine = () => {
+    const nextLine = createSkillsLine(`line-${Date.now()}`, editorLines.length);
+    addLine(nextLine);
+    setSelectedCardIds([nextLine.id]);
+  };
+
+  const handleDuplicateLine = () => {
+    if (!selectedLine) {
+      return;
+    }
+
+    const duplicatedLine: SkillsLine = {
+      id: `line-${Date.now()}`,
+      layout: clampLineLayout(
+        {
+          ...selectedLine.layout,
+          y: selectedLine.layout.y + 20,
+        },
+        activeCanvasWidth,
+        Math.max(displayCanvasHeight, selectedLine.layout.y + selectedLine.layout.height + 20),
+      ),
+    };
+
+    addLine(duplicatedLine);
+    setSelectedCardIds([duplicatedLine.id]);
+  };
+
+  const handleFlipLine = () => {
+    if (!selectedLine) {
+      return;
+    }
+
+    updateLineLayout(selectedLine.id, {
+      ...selectedLine.layout,
+      rotation: -selectedLine.layout.rotation,
+    });
+  };
+
+  const handleRemoveLine = () => {
+    if (!selectedLine) {
+      return;
+    }
+
+    removeLine(selectedLine.id);
+    setSelectedCardIds([]);
+  };
+
+  const handleCenterSelectedObjectHorizontally = () => {
+    const selectedEntities = [
+      ...selectedCards.map((card) => ({
+        id: card.id,
+        type: 'card' as const,
+        x: card.layout.x,
+        y: card.layout.y,
+        width: card.layout.width,
+      })),
+      ...selectedLines.map((line) => ({
+        id: line.id,
+        type: 'line' as const,
+        x: line.layout.x,
+        y: line.layout.y,
+        width: line.layout.width,
+      })),
+      ...(selectedCardIds.includes(SKILLS_TITLE_OBJECT_ID)
+        ? [{
+          id: SKILLS_TITLE_OBJECT_ID,
+          type: 'title' as const,
+          x: titleLayout.x,
+          y: titleLayout.y,
+          width: selectedTitleDimensions.width,
+        }]
+        : []),
+    ];
+
+    if (selectedEntities.length === 0) {
+      return;
+    }
+
+    const selectionLeft = Math.min(...selectedEntities.map((entity) => entity.x));
+    const selectionRight = Math.max(...selectedEntities.map((entity) => entity.x + entity.width));
+    const selectionWidth = selectionRight - selectionLeft;
+    const targetLeft = Math.round((activeCanvasWidth - selectionWidth) / 2);
+    const deltaX = targetLeft - selectionLeft;
+
+    selectedCards.forEach((card) => {
+      updateCardLayout(card.id, {
+        ...card.layout,
+        x: card.layout.x + deltaX,
+      });
+    });
+
+    selectedLines.forEach((line) => {
+      updateLineLayout(line.id, {
+        ...line.layout,
+        x: line.layout.x + deltaX,
+      });
+    });
+
+    if (selectedCardIds.includes(SKILLS_TITLE_OBJECT_ID)) {
+      updateSkillsTitleLayout({
+        x: titleLayout.x + deltaX,
+        y: titleLayout.y,
+      });
+    }
   };
 
   if (isLoading) {
@@ -777,29 +1413,33 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
       <Section className="section-style skills-shell relative z-10 mt-16 text-[var(--base-text-color)] md:mt-20 lg:mt-32">
         <section id="skills-section" className="skills-section relative w-full pb-4">
           <SectionContent>
-            <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
-              <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl">
-                Skills &amp; Tools
-              </h2>
-            </div>
+            {layoutMode !== 'desktop' ? (
+              <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
+                <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl">
+                  {SKILLS_SECTION_TITLE}
+                </h2>
+              </div>
+            ) : null}
 
             {layoutMode === 'desktop' ? (
               <div ref={laneRef} className="skills-editor-lane relative z-[1] mt-[2.35rem] w-full">
                 <div
-                  className="skills-map-shell"
+                  className={`skills-map-shell ${editorEnabled ? 'skills-map-shell--editable' : ''}`}
                   style={{ height: `${displayCanvasHeight * scale}px` }}
                 >
+                  {editorEnabled ? <div className="skills-map-shell__center-guide" aria-hidden="true" /> : null}
+
                   <div
-                  ref={setCanvasElement}
+                    ref={setCanvasElement}
                     className={`
-                      skills-map relative
+                      skills-map absolute left-1/2
                       ${editorEnabled ? 'skills-map--editable' : ''}
                     `}
                     style={{
                       width: `${activeCanvasWidth}px`,
                       height: `${displayCanvasHeight}px`,
-                      transform: `scale(${scale})`,
-                      transformOrigin: 'top left',
+                      transform: `translateX(-50%) scale(${scale})`,
+                      transformOrigin: 'top center',
                     }}
                     onPointerDown={(event) => {
                       if (!editorEnabled || event.target !== event.currentTarget) {
@@ -809,7 +1449,39 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                       setSelectedCardIds([]);
                     }}
                   >
+                    <SkillsEditorTitle
+                      title={SKILLS_SECTION_TITLE}
+                      layout={titleLayout}
+                      selected={selectedCardIds.includes(SKILLS_TITLE_OBJECT_ID)}
+                      multiSelected={selectedCardIds.length > 1}
+                      editorEnabled={editorEnabled}
+                      canvasElement={canvasElement}
+                      shouldAnimate={shouldAnimate}
+                      objectRef={titleObjectRef}
+                      onActivate={handleActivateCard}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                      onMove={handleDragMove}
+                    />
+
                     {editorEnabled ? <div className="skills-map__grid" /> : null}
+
+                    {editorLines.map((line) => (
+                      <SkillsEditorLine
+                        key={line.id}
+                        line={line}
+                        selected={selectedCardIds.includes(line.id)}
+                        multiSelected={selectedCardIds.length > 1}
+                        editorEnabled={editorEnabled}
+                        canvasElement={canvasElement}
+                        shouldAnimate={shouldAnimate}
+                        onActivate={handleActivateCard}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onMove={handleDragMove}
+                        onResize={updateLineLayout}
+                      />
+                    ))}
 
                     {orderedCards.map((card) => (
                       <SkillsEditorCard
@@ -943,15 +1615,167 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                   />
                 </div>
               </div>
+            ) : selectedTitle ? (
+              <div className="skills-editor-hud__fields">
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-title-object">
+                    Object
+                  </label>
+                  <input
+                    id="skills-editor-title-object"
+                    className="skills-editor-hud__input"
+                    value="Section Title"
+                    readOnly
+                  />
+                </div>
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-title-x">
+                    X
+                  </label>
+                  <input
+                    id="skills-editor-title-x"
+                    className="skills-editor-hud__input"
+                    type="number"
+                    value={selectedTitle.x}
+                    onChange={(event) => updateSkillsTitleLayout({
+                      x: Number(event.target.value),
+                      y: selectedTitle.y,
+                    })}
+                  />
+                </div>
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-title-y">
+                    Y
+                  </label>
+                  <input
+                    id="skills-editor-title-y"
+                    className="skills-editor-hud__input"
+                    type="number"
+                    value={selectedTitle.y}
+                    onChange={(event) => updateSkillsTitleLayout({
+                      x: selectedTitle.x,
+                      y: Number(event.target.value),
+                    })}
+                  />
+                </div>
+              </div>
+            ) : selectedLine ? (
+              <div className="skills-editor-hud__fields">
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-line">
+                    Object
+                  </label>
+                  <input
+                    id="skills-editor-line"
+                    className="skills-editor-hud__input"
+                    value="Glow Line"
+                    readOnly
+                  />
+                </div>
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-line-x">
+                    X
+                  </label>
+                  <input
+                    id="skills-editor-line-x"
+                    className="skills-editor-hud__input"
+                    type="number"
+                    value={selectedLine.layout.x}
+                    onChange={(event) => updateLineLayout(selectedLine.id, {
+                      ...selectedLine.layout,
+                      x: Number(event.target.value),
+                    })}
+                  />
+                </div>
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-line-y">
+                    Y
+                  </label>
+                  <input
+                    id="skills-editor-line-y"
+                    className="skills-editor-hud__input"
+                    type="number"
+                    value={selectedLine.layout.y}
+                    onChange={(event) => updateLineLayout(selectedLine.id, {
+                      ...selectedLine.layout,
+                      y: Number(event.target.value),
+                    })}
+                  />
+                </div>
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-line-width">
+                    W
+                  </label>
+                  <input
+                    id="skills-editor-line-width"
+                    className="skills-editor-hud__input"
+                    type="number"
+                    value={selectedLine.layout.width}
+                    onChange={(event) => updateLineLayout(selectedLine.id, {
+                      ...selectedLine.layout,
+                      width: Number(event.target.value),
+                    })}
+                  />
+                </div>
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-line-height">
+                    H
+                  </label>
+                  <input
+                    id="skills-editor-line-height"
+                    className="skills-editor-hud__input"
+                    value={selectedLine.layout.height}
+                    readOnly
+                  />
+                </div>
+                <div className="skills-editor-hud__field">
+                  <label className="skills-editor-hud__label" htmlFor="skills-editor-line-rotation">
+                    Rot
+                  </label>
+                  <input
+                    id="skills-editor-line-rotation"
+                    className="skills-editor-hud__input"
+                    type="number"
+                    value={selectedLine.layout.rotation}
+                    onChange={(event) => updateLineLayout(selectedLine.id, {
+                      ...selectedLine.layout,
+                      rotation: Number(event.target.value),
+                    })}
+                  />
+                </div>
+              </div>
             ) : (
               <p className="skills-editor-hud__hint">
                 {selectedCardIds.length > 1
-                  ? `${selectedCardIds.length} cards selected. Drag or use arrow keys to move them together.`
+                  ? `${selectedCardIds.length} objects selected. Drag or use arrow keys to move them together.`
                   : 'Select a card to edit its layout.'}
               </p>
             )}
 
             <div className="skills-editor-hud__actions">
+              {selectedCardIds.length > 0 ? (
+                <button type="button" onClick={handleCenterSelectedObjectHorizontally}>
+                  Center X
+                </button>
+              ) : null}
+              {selectedLine ? (
+                <button type="button" onClick={handleDuplicateLine}>
+                  Duplicate Line
+                </button>
+              ) : null}
+              {selectedLine ? (
+                <button type="button" onClick={handleFlipLine}>
+                  Flip Line
+                </button>
+              ) : null}
+              {selectedLine ? (
+                <button type="button" onClick={handleRemoveLine}>
+                  Remove Line
+                </button>
+              ) : null}
+              <button type="button" onClick={handleAddLine}>
+                Add Line
+              </button>
               <button type="button" onClick={() => void save()} disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Save'}
               </button>

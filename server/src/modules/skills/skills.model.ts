@@ -19,6 +19,33 @@ const skillsCardLayoutSchema = new Schema(
   { _id: false },
 );
 
+const skillsLineLayoutSchema = new Schema(
+  {
+    x: { type: Number, required: true },
+    y: { type: Number, required: true },
+    width: { type: Number, required: true },
+    height: { type: Number, required: true },
+    rotation: { type: Number, required: true, default: 0 },
+  },
+  { _id: false },
+);
+
+const skillsTitleLayoutSchema = new Schema(
+  {
+    x: { type: Number, required: true },
+    y: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
+const skillsLineSchema = new Schema(
+  {
+    id: { type: String, required: true, trim: true },
+    layout: { type: skillsLineLayoutSchema, required: true },
+  },
+  { _id: false },
+);
+
 const skillsCardSchema = new Schema(
   {
     id: { type: String, required: true, trim: true },
@@ -53,6 +80,8 @@ const skillsDocumentSchema = new Schema(
     title: { type: String, required: true, trim: true },
     intro: { type: String, required: true, trim: true },
     cards: { type: [skillsCardSchema], default: [] },
+    titleLayout: { type: skillsTitleLayoutSchema, default: undefined },
+    lines: { type: [skillsLineSchema], default: [] },
     mdLayout: { type: skillsLayoutStateSchema, default: undefined },
   },
   {

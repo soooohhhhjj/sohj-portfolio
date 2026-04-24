@@ -3,7 +3,9 @@ import { getSkillsContent, saveSkillsContent } from '../services/skillsService';
 import type {
   SkillsCard,
   SkillsContentState,
+  SkillsLine,
   SkillsLayoutState,
+  SkillsTitleLayout,
 } from '../types/skills.types';
 import {
   cloneSkillsContentState,
@@ -166,6 +168,93 @@ export function useSkillsEditorState(activeLayoutKey: SkillsLayoutKey) {
     });
   }, [activeLayoutKey, getActiveLayoutState]);
 
+  const updateLine = useCallback((lineId: string, transform: (line: SkillsLine) => SkillsLine) => {
+    setContent((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      const currentLine = (prev.lines ?? []).find((line) => line.id === lineId);
+
+      if (!currentLine) {
+        return prev;
+      }
+
+      const nextLine = transform(currentLine);
+      const nextContent = {
+        ...prev,
+        lines: (prev.lines ?? []).map((line) => (
+          line.id === lineId
+            ? {
+                ...line,
+                layout: { ...nextLine.layout },
+              }
+            : line
+        )),
+      };
+
+      const clonedState = cloneSkillsContentState(nextContent);
+      contentRef.current = clonedState;
+      setSaveFeedback('idle');
+      return clonedState;
+    });
+  }, []);
+
+  const addLine = useCallback((line: SkillsLine) => {
+    setContent((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      const nextContent = {
+        ...prev,
+        lines: [...(prev.lines ?? []), { ...line, layout: { ...line.layout } }],
+      };
+
+      const clonedState = cloneSkillsContentState(nextContent);
+      contentRef.current = clonedState;
+      setSaveFeedback('idle');
+      return clonedState;
+    });
+  }, []);
+
+  const removeLine = useCallback((lineId: string) => {
+    setContent((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      const nextContent = {
+        ...prev,
+        lines: (prev.lines ?? []).filter((line) => line.id !== lineId),
+      };
+
+      const clonedState = cloneSkillsContentState(nextContent);
+      contentRef.current = clonedState;
+      setSaveFeedback('idle');
+      return clonedState;
+    });
+  }, []);
+
+  const updateTitleLayout = useCallback((transform: (layout: SkillsTitleLayout) => SkillsTitleLayout) => {
+    setContent((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      const currentLayout = prev.titleLayout ?? { x: 335, y: 26 };
+      const nextContent = {
+        ...prev,
+        titleLayout: { ...transform(currentLayout) },
+      };
+
+      const clonedState = cloneSkillsContentState(nextContent);
+      contentRef.current = clonedState;
+      setSaveFeedback('idle');
+      return clonedState;
+    });
+  }, []);
+
   const resetToPersisted = useCallback(() => {
     const persistedState = persistedStateRef.current;
 
@@ -208,6 +297,10 @@ export function useSkillsEditorState(activeLayoutKey: SkillsLayoutKey) {
     isLoading,
     error,
     updateCard,
+    updateLine,
+    addLine,
+    removeLine,
+    updateTitleLayout,
     resetToPersisted,
     save,
     isSaving,

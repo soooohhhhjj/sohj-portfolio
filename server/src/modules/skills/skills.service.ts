@@ -3,6 +3,12 @@ import { SkillsModel } from './skills.model.js';
 const SECTION_KEY = 'skills';
 const MIN_CARD_WIDTH = 260;
 const MIN_CARD_HEIGHT = 220;
+const MIN_LINE_WIDTH = 80;
+const LINE_HEIGHT = 16;
+const DEFAULT_TITLE_LAYOUT = {
+  x: 335,
+  y: 26,
+} as const;
 
 const DEFAULT_CARD_LAYOUTS: Record<string, SkillsCardLayout> = {
   frontend: { x: 0, y: 0, width: 694, height: 292 },
@@ -34,6 +40,16 @@ export type SkillsCard = {
   layout: SkillsCardLayout;
 };
 
+export type SkillsTitleLayout = {
+  x: number;
+  y: number;
+};
+
+export type SkillsLine = {
+  id: string;
+  layout: SkillsCardLayout & { rotation: number };
+};
+
 export type SkillsLayoutCard = {
   id: string;
   layout: SkillsCardLayout;
@@ -47,6 +63,8 @@ export type SkillsContentState = {
   title: string;
   intro: string;
   cards: SkillsCard[];
+  titleLayout?: SkillsTitleLayout;
+  lines?: SkillsLine[];
   mdLayout?: SkillsLayoutState;
 };
 
@@ -110,6 +128,60 @@ function sanitizeSkillsStack(input: unknown) {
     name,
     icon,
   } satisfies SkillsStack;
+}
+
+function sanitizeSkillsTitleLayout(input: unknown): SkillsTitleLayout {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { ...DEFAULT_TITLE_LAYOUT };
+  }
+
+  const layout = input as Record<string, unknown>;
+  const x = typeof layout.x === 'number' && Number.isFinite(layout.x)
+    ? Math.round(layout.x)
+    : DEFAULT_TITLE_LAYOUT.x;
+  const y = typeof layout.y === 'number' && Number.isFinite(layout.y)
+    ? Math.round(layout.y)
+    : DEFAULT_TITLE_LAYOUT.y;
+
+  return {
+    x: Math.max(0, x),
+    y: Math.max(0, y),
+  };
+}
+
+function sanitizeSkillsLine(input: unknown, index: number) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return null;
+  }
+
+  const line = input as Record<string, unknown>;
+  const id = typeof line.id === 'string' ? line.id.trim() : '';
+  const fallback = {
+    x: 0,
+    y: index * 28,
+    width: 180,
+    height: LINE_HEIGHT,
+  } satisfies SkillsCardLayout;
+  const layout = sanitizeSkillsCardLayout(line.layout, fallback);
+  const rotation = (
+    line.layout &&
+    typeof line.layout === 'object' &&
+    !Array.isArray(line.layout) &&
+    typeof (line.layout as Record<string, unknown>).rotation === 'number' &&
+    Number.isFinite((line.layout as Record<string, unknown>).rotation)
+  )
+    ? Math.round((line.layout as Record<string, unknown>).rotation as number)
+    : 0;
+
+  return {
+    id: id || `line-${index + 1}`,
+    layout: {
+      ...layout,
+      width: Math.max(MIN_LINE_WIDTH, layout.width),
+      height: LINE_HEIGHT,
+      rotation,
+    },
+  } satisfies SkillsLine;
 }
 
 function sanitizeSkillsLayoutCard(input: unknown, index: number) {
@@ -199,6 +271,12 @@ function sanitizeSkillsContent(input: unknown): SkillsContentState | null {
         .map((card, index) => sanitizeSkillsCard(card, index))
         .filter((card): card is SkillsCard => card !== null)
     : [];
+  const lines = Array.isArray(content.lines)
+    ? content.lines
+        .map((line, index) => sanitizeSkillsLine(line, index))
+        .filter((line): line is SkillsLine => line !== null)
+    : [];
+  const titleLayout = sanitizeSkillsTitleLayout(content.titleLayout);
 
   if (!title || !intro || cards.length === 0) {
     return null;
@@ -210,6 +288,8 @@ function sanitizeSkillsContent(input: unknown): SkillsContentState | null {
     title,
     intro,
     cards,
+    titleLayout,
+    lines,
     ...(mdLayout ? { mdLayout } : {}),
   };
 }
@@ -245,6 +325,8 @@ export async function saveSkillsContentState(input: unknown) {
         title: sanitizedContent.title,
         intro: sanitizedContent.intro,
         cards: sanitizedContent.cards,
+        titleLayout: sanitizedContent.titleLayout,
+        lines: sanitizedContent.lines ?? [],
         mdLayout: sanitizedContent.mdLayout,
       },
     },
