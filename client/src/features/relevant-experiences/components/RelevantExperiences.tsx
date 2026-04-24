@@ -1679,7 +1679,7 @@ export function RelevantExperiences({ editorEnabled = false, shouldAnimate = fal
             </div>,
           document.body,
         ) : null}
-        {editorEnabled ? (
+        {editorEnabled && isRawEditorOpen ? (
           <OverlayModal
             isOpen={isRawEditorOpen}
             onClose={handleCloseRawEditor}
