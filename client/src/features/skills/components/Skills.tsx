@@ -1456,7 +1456,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   }
 
   return (
-      <Section className="section-style skills-shell relative z-10 mt-16 text-[var(--base-text-color)] md:mt-20 lg:mt-32">
+      <Section className="section-style skills-shell relative z-10 mt-16 text-[var(--base-text-color)]">
         <section id="skills-section" className="skills-section relative w-full pb-4">
           <SectionContent>
             {layoutMode !== 'desktop' ? (
