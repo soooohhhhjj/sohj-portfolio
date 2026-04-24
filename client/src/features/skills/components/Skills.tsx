@@ -234,6 +234,22 @@ function SkillsAnimatedText({
   );
 }
 
+function SkillsSectionTitle({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) {
+  return (
+    <h2 className={className}>
+      <span className="skills-section__title-text">
+        <SkillsAnimatedText text={text} />
+      </span>
+    </h2>
+  );
+}
+
 function SkillsStackItem({
   icon,
   name,
@@ -963,9 +979,10 @@ function SkillsEditorTitle({
       transition={{ duration: 0.4, ease: [0.12, 0.7, 0.63, 0.9] }}
       onPointerDown={handlePointerDown}
     >
-      <h2 className="skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl">
-        {title}
-      </h2>
+      <SkillsSectionTitle
+        text={title}
+        className="skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl"
+      />
     </motion.div>
   );
 }
@@ -993,6 +1010,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   const [canvasElement, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
+  const [titleObjectDimensions, setTitleObjectDimensions] = useState({ width: 320, height: 60 });
   const [hudPos, setHudPos] = useState<{ x: number; y: number }>(() => (
     readLocalStorageJson(SKILLS_HUD_POS_STORAGE_KEY, { x: 0, y: 0 })
   ));
@@ -1067,12 +1085,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   const scale = !canvasWidth || canvasWidth >= activeCanvasWidth
     ? 1
     : canvasWidth / activeCanvasWidth;
-  const selectedTitleDimensions = useMemo(() => ({
-    width: titleObjectRef.current?.offsetWidth ?? 320,
-    height: titleObjectRef.current?.offsetHeight ?? 60,
-  }), [selectedCardIds, titleLayout.x, titleLayout.y]);
-
-  const updateCardLayout = (cardId: string, nextLayout: SkillsCardLayout) => {
+  const updateCardLayout = useMemo(() => (cardId: string, nextLayout: SkillsCardLayout) => {
     updateCard(cardId, (card) => ({
       ...card,
       layout: clampCardLayout(
@@ -1081,9 +1094,9 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
         Math.max(displayCanvasHeight, nextLayout.y + nextLayout.height),
       ),
     }));
-  };
+  }, [activeCanvasWidth, displayCanvasHeight, updateCard]);
 
-  const updateLineLayout = (lineId: string, nextLayout: SkillsLine['layout']) => {
+  const updateLineLayout = useMemo(() => (lineId: string, nextLayout: SkillsLine['layout']) => {
     updateLine(lineId, (line) => ({
       ...line,
       layout: clampLineLayout(
@@ -1092,15 +1105,42 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
         Math.max(displayCanvasHeight, nextLayout.y + nextLayout.height),
       ),
     }));
-  };
+  }, [activeCanvasWidth, displayCanvasHeight, updateLine]);
 
-  const updateSkillsTitleLayout = (nextLayout: SkillsTitleLayout) => {
+  const updateSkillsTitleLayout = useMemo(() => (nextLayout: SkillsTitleLayout) => {
     updateTitleLayout((layout) => clampTitleLayout(
       nextLayout ?? layout,
       activeCanvasWidth,
       displayCanvasHeight,
     ));
-  };
+  }, [activeCanvasWidth, displayCanvasHeight, updateTitleLayout]);
+
+  useEffect(() => {
+    const titleElement = titleObjectRef.current;
+
+    if (!titleElement) {
+      return;
+    }
+
+    const updateTitleDimensions = () => {
+      setTitleObjectDimensions({
+        width: titleElement.offsetWidth || 320,
+        height: titleElement.offsetHeight || 60,
+      });
+    };
+
+    updateTitleDimensions();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateTitleDimensions();
+    });
+
+    resizeObserver.observe(titleElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [titleLayout.x, titleLayout.y, viewportWidth]);
 
   useEffect(() => {
     if (!editorEnabled || layoutMode !== 'desktop' || selectedCardIds.length === 0) {
@@ -1164,7 +1204,17 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [editorEnabled, layoutMode, selectedCardIds, selectedCards, selectedLines, selectedTitle]);
+  }, [
+    editorEnabled,
+    layoutMode,
+    selectedCardIds,
+    selectedCards,
+    selectedLines,
+    selectedTitle,
+    updateCardLayout,
+    updateLineLayout,
+    updateSkillsTitleLayout,
+  ]);
 
   const handleHudPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -1344,7 +1394,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
           type: 'title' as const,
           x: titleLayout.x,
           y: titleLayout.y,
-          width: selectedTitleDimensions.width,
+          width: titleObjectDimensions.width,
         }]
         : []),
     ];
@@ -1390,9 +1440,10 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
       <Section className="section-style relative z-10 mt-16 text-[var(--base-text-color)] md:mt-20 lg:mt-24">
         <SectionContent>
           <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
-            <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl">
-              Skills &amp; Tools
-            </h2>
+            <SkillsSectionTitle
+              text={SKILLS_SECTION_TITLE}
+              className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl"
+            />
             {error ? (
               <p className="skills-error-copy relevant-experiences-intro__copy mt-3 font-jura text-[13px] tracking-[0.3px] sm:text-[16px] lg:text-[17px]">
                 {error}
@@ -1405,19 +1456,15 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
   }
 
   return (
-    <motion.div
-      initial={{ y: '100vh' }}
-      animate={{ y: shouldAnimate ? 0 : '100vh' }}
-      transition={{ duration: 1.7, ease: [0.12, 0.7, 0.63, 0.9], delay: 0.14 }}
-    >
       <Section className="section-style skills-shell relative z-10 mt-16 text-[var(--base-text-color)] md:mt-20 lg:mt-32">
         <section id="skills-section" className="skills-section relative w-full pb-4">
           <SectionContent>
             {layoutMode !== 'desktop' ? (
               <div className="relevant-experiences-intro skills-section__intro relative z-[1] mt-8 text-center md:mt-[2.4rem] lg:mt-[2.8rem]">
-                <h2 className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl">
-                  {SKILLS_SECTION_TITLE}
-                </h2>
+                <SkillsSectionTitle
+                  text={SKILLS_SECTION_TITLE}
+                  className="relevant-experiences-intro__title skills-section__title font-bruno text-[35px] font-bold tracking-[2px] text-[var(--base-text-color)] md:text-5xl"
+                />
               </div>
             ) : null}
 
@@ -1517,7 +1564,7 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
                     animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                     transition={{
                       duration: 0.55,
-                      delay: 0.08 + index * 0.08,
+                      delay: 0.1 + index * 0.09,
                       ease: [0.12, 0.7, 0.63, 0.9],
                     }}
                   >
@@ -1792,6 +1839,5 @@ export function Skills({ editorEnabled = false, shouldAnimate }: SkillsProps) {
           </div>
         ) : null}
       </Section>
-    </motion.div>
   );
 }

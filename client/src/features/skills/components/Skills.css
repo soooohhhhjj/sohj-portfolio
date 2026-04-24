@@ -64,8 +64,14 @@
     color: var(--base-text-color);
     line-height: 1;
     opacity: 1;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.62);
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.34));
+    text-shadow:
+      0 0 8px rgba(255, 255, 255, 0.54),
+      0 0 16px rgba(255, 255, 255, 0.42),
+      0 0 24px rgba(255, 255, 255, 0.26);
+    filter:
+      drop-shadow(0 0 6px rgba(255, 255, 255, 0.28))
+      drop-shadow(0 0 14px rgba(255, 255, 255, 0.22))
+      drop-shadow(0 0 24px rgba(255, 255, 255, 0.14));
   }
 
   .skills-panel__header-line {
@@ -423,7 +429,9 @@
   /* #region Skills Stack Effects */
   .skills-stack-item__icon {
     color: var(--base-text-color);
-    filter: drop-shadow(0 0 12px rgba(255, 248, 197, 0.15));
+    filter:
+      drop-shadow(0 0 4px rgba(255, 248, 197, 0.16))
+      drop-shadow(0 0 10px rgba(255, 248, 197, 0.08));
   }
 
   .skills-stack-item__icon--empty {
@@ -433,7 +441,9 @@
 
   .skills-stack-item__name {
     color: color-mix(in srgb, var(--base-text-color) 90%, transparent);
-    text-shadow: 0 0 7px rgba(255, 255, 255, 0.18);
+    text-shadow:
+      0 0 4px rgba(255, 255, 255, 0.12),
+      0 0 9px rgba(255, 255, 255, 0.05);
   }
 
   .skills-group__label {
