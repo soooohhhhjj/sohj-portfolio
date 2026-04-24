@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .resume-disclaimer-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+  }
+
+  .resume-disclaimer-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(8px);
+  }
+
+  .resume-disclaimer-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 32rem);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+      rgba(9, 12, 16, 0.98);
+    box-shadow:
+      0 18px 40px rgba(0, 0, 0, 0.36),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .resume-disclaimer-modal__header {
+    padding: 1.45rem 1.1rem 0;
+  }
+
+  .resume-disclaimer-modal__title {
+    margin: 0;
+    color: var(--base-text-color);
+    font-size: 1.3rem;
+    line-height: 1.1;
+  }
+
+  .resume-disclaimer-modal__body {
+    padding: 0.9rem 1.1rem 1rem;
+  }
+
+  .resume-disclaimer-modal__copy {
+    margin: 0;
+    color: rgba(247, 247, 217, 0.78);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .resume-disclaimer-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 1.1rem 1.1rem;
+  }
+
+  .resume-disclaimer-modal__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 6.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(247, 247, 217, 0.88);
+    padding: 0.62rem 0.95rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition:
+      border-color 0.24s ease,
+      background 0.24s ease,
+      color 0.24s ease,
+      box-shadow 0.24s ease,
+      transform 0.24s ease;
+  }
+
+  .resume-disclaimer-modal__button:hover {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(247, 247, 217, 0.98);
+    box-shadow:
+      0 0 16px rgba(255, 255, 255, 0.08),
+      0 10px 20px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+  }
+}

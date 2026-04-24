@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ResumeDisclaimerModal } from '../components/ResumeDisclaimerModal';
 import './footer.css';
 
 const footerLinks = [
@@ -29,7 +30,7 @@ const socialLinks = [
   },
   {
     label: 'LinkedIn',
-    href: 'http://linkedin.com/in/carlojoshua-abellera',
+    href: 'https://linkedin.com/in/carlojoshua-abellera',
   },
   {
     label: 'Email',
@@ -121,6 +122,7 @@ function scrollToSection(sectionId: string) {
 export function Footer() {
   const year = new Date().getFullYear();
   const resumeUrl = `${import.meta.env.BASE_URL}sohj-resume.pdf`;
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -144,6 +146,11 @@ export function Footer() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  const handleConfirmResume = () => {
+    window.open(resumeUrl, '_blank', 'noopener,noreferrer');
+    setIsResumeModalOpen(false);
+  };
 
   return (
     <footer className="section-style relative z-10 mt-16 border-t border-white/10 bg-black/60 text-[var(--base-text-color)] md:mt-10">
@@ -232,10 +239,9 @@ export function Footer() {
                     </a>
                   ))}
 
-                  <a
-                    href={resumeUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => setIsResumeModalOpen(true)}
                     className="
                       inline-flex items-center px-[2px]
                       font-jura text-[12px] tracking-[0.3px] text-[rgb(var(--base-text-color-rgb)_/_0.7)] underline underline-offset-[5px]
@@ -243,7 +249,7 @@ export function Footer() {
                     "
                   >
                     <span>Download Resume</span>
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -321,17 +327,16 @@ export function Footer() {
                     ))}
                   </div>
 
-                  <a
-                    href={resumeUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => setIsResumeModalOpen(true)}
                     className="inline-flex items-center px-[2px]
                       font-jura text-[12px] tracking-[0.3px] text-[rgb(var(--base-text-color-rgb)_/_0.7)] underline underline-offset-[5px]
                       transition-colors duration-200 hover:text-[var(--base-text-color)]
                     "
                   >
                     <span>Download Resume</span>
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -351,6 +356,11 @@ export function Footer() {
           </div>
         </div>
       </div>
+      <ResumeDisclaimerModal
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        onConfirm={handleConfirmResume}
+      />
     </footer>
   );
 }

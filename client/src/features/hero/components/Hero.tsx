@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, type Easing } from 'framer-motion';
 import { FileText, Github, Linkedin, Mail } from 'lucide-react';
 import { type ComponentType } from 'react';
 import { Section, SectionContent } from '../../../shared/components/Container';
 import { GlassCard } from '../../../shared/components/GlassCard';
+import { ResumeDisclaimerModal } from '../../../shared/components/ResumeDisclaimerModal';
 import { HeroCards } from './HeroCards';
 import './Hero.css';
 
@@ -22,18 +23,19 @@ type HeroActionLink = {
   Icon: ComponentType<{ className?: string }>;
   target?: '_blank';
   rel?: string;
+  onClick?: () => void;
 };
 
 export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
   const resumeUrl = `${import.meta.env.BASE_URL}sohj-resume.pdf`;
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const heroActionLinks: HeroActionLink[] = [
     {
-      href: resumeUrl,
+      href: '#',
       label: 'Resume',
       ariaLabel: 'Open resume',
       Icon: FileText,
-      target: '_blank',
-      rel: 'noopener noreferrer',
+      onClick: () => setIsResumeModalOpen(true),
     },
     {
       href: 'https://github.com/soooohhhhjj',
@@ -44,7 +46,7 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
       rel: 'noopener noreferrer',
     },
     {
-      href: 'http://linkedin.com/in/carlojoshua-abellera',
+      href: 'https://linkedin.com/in/carlojoshua-abellera',
       label: 'LinkedIn',
       ariaLabel: 'Open LinkedIn profile',
       Icon: Linkedin,
@@ -72,6 +74,11 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
       window.clearTimeout(timer);
     };
   }, [shouldAnimate, onAnimationsComplete]);
+
+  const handleConfirmResume = () => {
+    window.open(resumeUrl, '_blank', 'noopener,noreferrer');
+    setIsResumeModalOpen(false);
+  };
 
   return (
     <Section className="section-style relative z-10 mt-[30px] text-[rgb(247,247,217)]">
@@ -139,7 +146,7 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                 className="hero-icon-links mt-6 sm:mt-7 
                 [--hero-action-icon-size:21px] md:[--hero-action-icon-size:18px] lg:[--hero-action-icon-size:21px]"
               >
-                {heroActionLinks.map(({ href, label, ariaLabel, Icon, target, rel }, index) => (
+                {heroActionLinks.map(({ href, label, ariaLabel, Icon, target, rel, onClick }, index) => (
                   <motion.a
                     key={label}
                     href={href}
@@ -154,6 +161,14 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
                       ease: easeSmooth,
                       delay: 0.04 + index * 0.03,
                     }}
+                    onClick={(event) => {
+                      if (!onClick) {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      onClick();
+                    }}
                   >
                     <Icon className="hero-icon-link__icon" />
                     <span className="hero-icon-link__label">{label}</span>
@@ -166,6 +181,11 @@ export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
           <HeroCards shouldAnimate={shouldAnimate} />
         </div>
       </SectionContent>
+      <ResumeDisclaimerModal
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        onConfirm={handleConfirmResume}
+      />
     </Section>
   );
 }
