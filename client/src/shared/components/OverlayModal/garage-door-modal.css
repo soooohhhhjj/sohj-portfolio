@@ -1,0 +1,112 @@
+/* #region Terminal Screen */
+.terminal-screen {
+  background: #000;
+}
+/* #endregion */
+
+/* #region Top Bar */
+.screen-topbar {
+  flex-shrink: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgb(var(--base-text-color-rgb) / 0.16);
+}
+
+.terminal-title {
+  font-family: "Jura", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--base-text-color);
+  letter-spacing: 0.06em;
+}
+
+@media (min-width: 640px) {
+  .terminal-title {
+    font-size: 19px;
+  }
+}
+/* #endregion */
+
+/* #region X Close Button */
+.terminal-x {
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #fff;
+  opacity: 0.55;
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease;
+}
+
+.terminal-x:hover {
+  opacity: 1;
+  color: #2ad85e;
+}
+/* #endregion */
+
+/* #region Terminal Text */
+.terminal-text {
+  font-family: "Jura", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.88;
+  color: var(--base-text-color);
+  padding-top: 30px;
+  padding-bottom: 20px;
+}
+
+.terminal-text p {
+  margin-bottom: 16px;
+}
+
+.terminal-text .highlight {
+  color: #2ad85e;
+}
+
+.terminal-text .signature {
+  color: #2ad85e;
+  font-weight: 600;
+}
+
+.terminal-text .closing {
+  color: rgb(var(--base-text-color-rgb) / 0.6);
+  margin-bottom: 2px;
+}
+
+.terminal-text .accent-blue {
+  color: #6297e6;
+}
+
+.terminal-text .accent-purple {
+  color: #db62e6;
+}
+
+@media (min-width: 640px) {
+  .terminal-text {
+    font-size: 16px;
+  }
+}
+/* #endregion */
+
+/* #region Blinking Cursor */
+.terminal-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.2em;
+  margin-left: 4px;
+  background: #2ad85e;
+  animation: cursor-blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+/* #endregion */
