@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
-import { BREAKPOINTS } from '../constants/breakpoints';
 import './navbar.css';
 
 interface NavbarProps {
@@ -11,7 +10,6 @@ interface NavbarProps {
 export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
   const shouldRender = mode !== 'home' || shouldAnimate;
   const [runFlicker, setRunFlicker] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     if (mode !== 'home' || !shouldAnimate) {
@@ -24,20 +22,6 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
       window.clearTimeout(timer);
     };
   }, [mode, shouldAnimate]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= BREAKPOINTS.lg) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   const motionProps = useMemo(() => {
     if (mode !== 'home') {
@@ -52,23 +36,6 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
       animate: { y: shouldAnimate ? 0 : '100vh' },
     };
   }, [mode, shouldAnimate]);
-
-  const scrollToSection = (sectionId: string) => {
-    if (sectionId === 'home-top') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    const section = document.getElementById(sectionId);
-
-    if (!section) {
-      setIsMenuOpen(false);
-      return;
-    }
-
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setIsMenuOpen(false);
-  };
 
   if (!shouldRender) {
     return null;
@@ -91,7 +58,14 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
             ))}
           </h1>
 
-          <div className="nav-links hidden gap-6 lg:flex">
+      <div className="hire-status mb-[7px] flex items-center gap-2 text-[#7df7b6]">
+        <span className="hire-status-dot" aria-hidden="true" />
+        <span className="hire-status-text font-jura text-[11px] leading-[1] tracking-[0.08em]">
+          Available for hire
+        </span>
+      </div>
+
+          {/* <div className="nav-links hidden gap-6 lg:flex">
             <button
               type="button"
               className="nav-link nav-link-size border-0 bg-transparent p-0"
@@ -120,22 +94,21 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
             >
               Contact
             </button>
-          </div>
+          </div> */}
 
-          <button
+          {/* <button
             type="button"
-            className={`hamburger inline-flex lg:hidden ${isMenuOpen ? 'is-open' : ''}`}
-            aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            aria-expanded={isMenuOpen}
-            onClick={() => setIsMenuOpen((previous) => !previous)}
+            className="hamburger inline-flex lg:hidden"
+            aria-label="Open navigation menu"
+            aria-expanded={false}
           >
             <span className="hamburger-line line-1" />
             <span className="hamburger-line line-2" />
             <span className="hamburger-line line-3" />
-          </button>
+          </button> */}
         </motion.nav>
 
-        <div className={`nav-mobile flex flex-col lg:hidden ${isMenuOpen ? 'nav-open' : ''}`}>
+        {/* <div className="nav-mobile flex flex-col lg:hidden">
           <div className="nav-links flex flex-col items-start gap-4 pt-4">
             <button
               type="button"
@@ -166,8 +139,9 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
               Contact
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
+
     </header>
   );
 }
