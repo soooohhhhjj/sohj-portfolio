@@ -1,5 +1,4 @@
-import { useEffect, type RefObject } from 'react';
-import Lenis from 'lenis';
+import { useEffect } from 'react';
 
 type LockedScrollSnapshot = {
   htmlOverflow: string;
@@ -13,8 +12,6 @@ let lockedScrollSnapshot: LockedScrollSnapshot | null = null;
 
 export function useLockedOverlayScroll(
   isOpen: boolean,
-  wrapperRef: RefObject<HTMLDivElement | null>,
-  contentRef: RefObject<HTMLDivElement | null>,
   onClose?: () => void,
 ) {
   useEffect(() => {
@@ -72,27 +69,4 @@ export function useLockedOverlayScroll(
       }
     };
   }, [isOpen, onClose]);
-
-  useEffect(() => {
-    if (!isOpen || !wrapperRef.current || !contentRef.current) {
-      return;
-    }
-
-    const lenis = new Lenis({
-      wrapper: wrapperRef.current,
-      content: contentRef.current,
-      eventsTarget: wrapperRef.current,
-      lerp: 0.1,
-      wheelMultiplier: 1,
-      touchMultiplier: 1,
-      syncTouch: true,
-      autoRaf: true,
-    });
-
-    lenis.scrollTo(0, { immediate: true, force: true });
-
-    return () => {
-      lenis.destroy();
-    };
-  }, [isOpen, wrapperRef, contentRef]);
 }

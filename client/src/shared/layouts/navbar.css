@@ -13,6 +13,13 @@
   -webkit-text-stroke: 1px;
 }
 
+.hire-status-trigger {
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
 .hire-status-dot {
   width: 5px;
   height: 5px;
@@ -27,6 +34,18 @@
   text-transform: uppercase;
   text-shadow: 0 0 14px rgba(125, 247, 182, 0.35);
   animation: hire-status-pulse 3.2s ease-in-out infinite;
+}
+
+.hire-status-trigger:hover .hire-status-dot,
+.hire-status-trigger:hover .hire-status-text,
+.hire-status-trigger.is-open .hire-status-dot,
+.hire-status-trigger.is-open .hire-status-text {
+  animation-play-state: paused;
+}
+
+.hire-letter-panel {
+  margin-left: auto;
+  margin-right: auto;
 }
 /* #endregion */
 

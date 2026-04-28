@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
+import { OverlayModal } from '../components/OverlayModal/OverlayModal';
 import './navbar.css';
 
 interface NavbarProps {
@@ -10,6 +11,7 @@ interface NavbarProps {
 export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
   const shouldRender = mode !== 'home' || shouldAnimate;
   const [runFlicker, setRunFlicker] = useState(false);
+  const [isHireLetterOpen, setIsHireLetterOpen] = useState(false);
 
   useEffect(() => {
     if (mode !== 'home' || !shouldAnimate) {
@@ -58,12 +60,16 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
             ))}
           </h1>
 
-      <div className="hire-status mb-[7px] flex items-center gap-2 text-[#7df7b6]">
-        <span className="hire-status-dot" aria-hidden="true" />
-        <span className="hire-status-text font-jura text-[11px] leading-[1] tracking-[0.08em]">
-          Available for hire
-        </span>
-      </div>
+          <button
+            type="button"
+            className={`hire-status-trigger mb-[7px] flex items-center gap-2 text-[#7df7b6] ${isHireLetterOpen ? 'is-open' : ''}`}
+            onClick={() => setIsHireLetterOpen(true)}
+          >
+            <span className="hire-status-dot" aria-hidden="true" />
+            <span className="hire-status-text font-jura text-[11px] leading-[1] tracking-[0.08em]">
+              Available for hire
+            </span>
+          </button>
 
           {/* <div className="nav-links hidden gap-6 lg:flex">
             <button
@@ -142,6 +148,56 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
         </div> */}
       </div>
 
+      <OverlayModal
+        isOpen={isHireLetterOpen}
+        onClose={() => setIsHireLetterOpen(false)}
+        rootClassName="fixed inset-0 z-[90]"
+        backdropClassName="absolute inset-0 bg-black"
+        dialogClassName="relative h-screen w-screen bg-black text-[#f3f0e8]"
+        bodyClassName="h-full overflow-y-auto"
+        titleId="hire-letter-title"
+        dialogDuration={0.35}
+      >
+        <div className="responsiveness flex min-h-screen items-start py-[96px] xxsm:py-[104px] sm:py-[112px] md:py-[128px]">
+          <div className="hire-letter-panel w-full max-w-[920px]">
+            <p
+              id="hire-letter-title"
+              className="font-jura text-[12px] uppercase tracking-[0.22em] text-[#7df7b6] xxsm:text-[13px] sm:text-[14px]"
+            >
+              Subject: Availability for Entry-Level Web and IT Opportunities
+            </p>
+
+            <div className="mt-8 space-y-6 font-jura text-[15px] leading-[1.9] text-[#f3f0e8] xxsm:text-[16px] sm:text-[17px] md:mt-10 md:text-[18px]">
+              <p>
+                I am a fresh graduate currently available for opportunities in web development,
+                front-end development, and other IT-related roles aligned with my academic
+                background and internship experience.
+              </p>
+
+              <p>
+                While I am still exploring which specialization to focus on long-term, I am open
+                to roles where I can apply my foundational skills, continue learning, and
+                contribute meaningfully to a team.
+              </p>
+
+              <p>
+                I am particularly interested in positions involving web technologies, systems
+                support, or general IT operations, but I remain flexible as long as the role is
+                relevant to my field and offers opportunities for growth.
+              </p>
+
+              <p>Thank you for your time and consideration.</p>
+            </div>
+
+            <div className="mt-12 flex justify-end md:mt-16">
+              <div className="font-jura text-right text-[15px] leading-[1.9] text-[#f3f0e8] xxsm:text-[16px] sm:text-[17px] md:text-[18px]">
+                <p>Regards,</p>
+                <p>sohj</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </OverlayModal>
     </header>
   );
 }

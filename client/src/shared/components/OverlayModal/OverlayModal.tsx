@@ -47,7 +47,7 @@ export function OverlayModal({
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  useLockedOverlayScroll(isOpen, bodyRef, contentRef, onClose);
+  useLockedOverlayScroll(isOpen, onClose);
 
   if (typeof document === 'undefined') {
     return null;
@@ -57,10 +57,12 @@ export function OverlayModal({
     <div
       key={rootKey}
       className={rootClassName}
+      aria-hidden={!isOpen}
       data-lenis-prevent=""
       data-lenis-prevent-wheel=""
       data-lenis-prevent-touch=""
       onClick={onClose}
+      style={isOpen ? undefined : { pointerEvents: 'none' }}
     >
       <AnimatePresence>
         {isOpen ? (
