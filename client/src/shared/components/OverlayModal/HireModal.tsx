@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRef, type ReactNode } from 'react';
+import { useRef, useEffect, type ReactNode } from 'react';
+import Lenis from 'lenis';
 import { AnimatedCloseIcon } from '../AnimatedCloseIcon/AnimatedCloseIcon';
 import { useLockedOverlayScroll } from '../../hooks/useLockedOverlayScroll';
 import './hire-modal.css';
@@ -13,8 +14,44 @@ interface HireModalProps {
 
 export function HireModal({ isOpen, onClose, children }: HireModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const lenisRef = useRef<Lenis | null>(null);
 
   useLockedOverlayScroll(isOpen, onClose);
+
+  // Initialize Lenis for the modal content when it opens
+  useEffect(() => {
+    if (isOpen && contentRef.current) {
+      lenisRef.current = new Lenis({
+        wrapper: contentRef.current,
+        content: contentRef.current.firstElementChild as HTMLElement,
+        lerp: 0.1,
+        wheelMultiplier: 1,
+        touchMultiplier: 1,
+      });
+
+      let frameId: number;
+      const tick = (time: number) => {
+        lenisRef.current?.raf(time);
+        frameId = requestAnimationFrame(tick);
+      };
+
+      frameId = requestAnimationFrame(tick);
+
+      return () => {
+        cancelAnimationFrame(frameId);
+        lenisRef.current?.destroy();
+        lenisRef.current = null;
+      };
+    }
+  }, [isOpen]);
+
+  // Forward wheel events from the outer modal to Lenis with smooth animation
+  const handleWheel = (e: React.WheelEvent) => {
+    if (lenisRef.current) {
+      e.preventDefault();
+      lenisRef.current.scrollTo(lenisRef.current.scroll + e.deltaY);
+    }
+  };
 
   if (typeof document === 'undefined') {
     return null;
@@ -33,6 +70,7 @@ export function HireModal({ isOpen, onClose, children }: HireModalProps) {
           data-lenis-prevent-wheel=""
           data-lenis-prevent-touch=""
           onClick={onClose}
+          onWheel={handleWheel}
         >
           <div
             className="mx-auto flex h-full w-full max-w-[310px] flex-col
@@ -44,7 +82,7 @@ export function HireModal({ isOpen, onClose, children }: HireModalProps) {
               <div
                 className="mt-14 flex w-full items-center justify-between"
               >
-                <p className="terminal-title">Subject: Role &amp; Availability</p>
+                <p className="terminal-title">Subject: Role & Availability</p>
                 <button
                   type="button"
                   onClick={onClose}
@@ -59,9 +97,6 @@ export function HireModal({ isOpen, onClose, children }: HireModalProps) {
             <div
               ref={contentRef}
               className="flex-1 overflow-y-auto"
-              data-lenis-prevent=""
-              data-lenis-prevent-wheel=""
-              data-lenis-prevent-touch=""
               role="dialog"
               aria-modal="true"
               aria-labelledby="hire-availability-title"
