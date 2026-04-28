@@ -3,15 +3,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRef, type ReactNode } from 'react';
 import { AnimatedCloseIcon } from '../AnimatedCloseIcon/AnimatedCloseIcon';
 import { useLockedOverlayScroll } from '../../hooks/useLockedOverlayScroll';
-import './garage-door-modal.css';
+import './hire-modal.css';
 
-interface GarageDoorModalProps {
+interface HireModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
 }
 
-export function GarageDoorModal({ isOpen, onClose, children }: GarageDoorModalProps) {
+export function HireModal({ isOpen, onClose, children }: HireModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   useLockedOverlayScroll(isOpen, onClose);

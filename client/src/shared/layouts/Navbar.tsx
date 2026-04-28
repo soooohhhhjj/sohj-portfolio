@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
-import { GarageDoorModal } from '../components/OverlayModal/GarageDoorModal';
+import { HireModal } from '../components/OverlayModal/HireModal';
 import './navbar.css';
 
 interface NavbarProps {
@@ -150,24 +150,24 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
         </div> */}
       </div>
 
-      <GarageDoorModal
+      <HireModal
         isOpen={isHireLetterOpen}
         onClose={() => setIsHireLetterOpen(false)}
       >
-        <div className="font-medium text-white">
-          <p className="accent-purple">Heelllooo! :)</p>
+        <div className="font-medium text-[var(--base-text-color)]">
+          <p>Heelllooo! :)</p>
 
           <p className="mt-6">
             My name is Josh, and I&apos;m a fresh graduate looking to start my career.
             I&apos;m particularly interested in <span className="highlight">Web Development,</span>{' '}
             <span className="highlight">Front-End Development,</span> and{' '}
-            <span className="highlight">IT Support roles</span>. However, I am also <span className="accent-blue">open to any position </span>
-            that aligns with my <span className="accent-blue">academic background</span> and <span className="accent-blue">internship experience</span>,
+            <span className="highlight">IT Support roles</span>. However, I am also <span className="highlight">open to any position </span>
+            that aligns with my <span className="highlight">academic background</span> and <span className="highlight">internship experience</span>,
             especially if it presents a great opportunity for me to grow and improve my skills.
           </p>
 
           <p className="mt-6">
-            I am based in <span className="accent-blue">North Caloocan City</span> and I&apos;m open
+            I am based in <span className="highlight">North Caloocan City</span> and I&apos;m open
             to on-site or hybrid setups within a reasonable commute, as well as remote work.
           </p>
 
@@ -175,14 +175,14 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
             Regarding my schedule, I&apos;m mostly looking for{' '}
             <span className="highlight">weekday roles</span>. Saturdays are negotiable,
             but as much as possible, I&apos;d like to keep my{' '}
-            <span className="underline text-white decoration-[rgb(var(--base-text-color-rgb)_/_0.7)] underline-offset-4">
+            <span className="highlight">
               Sundays free of work
             </span>.
           </p>
 
           <p className="mt-6">
             Thank you so much for stopping by my portfolio and for your time and
-            consideration. <span className="accent-purple">I hope you&apos;re having a great day!</span>
+            consideration. <span className="highlight">I hope you&apos;re having a great day!</span>
           </p>
 
           <div className="mt-6">
@@ -193,7 +193,7 @@ export function Navbar({ mode = 'home', shouldAnimate = true }: NavbarProps) {
             </p>
           </div>
         </div>
-      </GarageDoorModal>
+      </HireModal>
     </header>
   );
 }

@@ -14,7 +14,7 @@
 .terminal-title {
   font-family: "Jura", sans-serif;
   font-size: 17px;
-  font-weight: 600;
+  -webkit-text-stroke: .4px;
   color: var(--base-text-color);
   letter-spacing: 0.06em;
 }
@@ -36,54 +36,42 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: #fff;
-  opacity: 0.55;
-  transition:
-    opacity 0.2s ease,
-    color 0.2s ease;
+  color: var(--base-text-color);
 }
 
-.terminal-x:hover {
-  opacity: 1;
-  color: #2ad85e;
-}
 /* #endregion */
 
 /* #region Terminal Text */
 .terminal-text {
   font-family: "Jura", sans-serif;
   font-size: 14px;
-  font-weight: 500;
+  -webkit-text-stroke: .2px;
+  letter-spacing: .5px;
   line-height: 1.88;
   color: var(--base-text-color);
   padding-top: 30px;
   padding-bottom: 20px;
 }
 
+.highlight {
+  color: var(--base-text-color);
+  text-decoration-line: underline;
+  text-decoration-color: rgb(var(--base-text-color-rgb) / 0.7);
+  text-underline-offset: 4px;
+}
+
 .terminal-text p {
   margin-bottom: 16px;
 }
 
-.terminal-text .highlight {
-  color: #2ad85e;
-}
-
 .terminal-text .signature {
-  color: #2ad85e;
+  color: var(--base-text-color);
   font-weight: 600;
 }
 
 .terminal-text .closing {
-  color: rgb(var(--base-text-color-rgb) / 0.6);
+  color: var(--base-text-color);
   margin-bottom: 2px;
-}
-
-.terminal-text .accent-blue {
-  color: #6297e6;
-}
-
-.terminal-text .accent-purple {
-  color: #db62e6;
 }
 
 @media (min-width: 640px) {
@@ -99,7 +87,7 @@
   width: 8px;
   height: 1.2em;
   margin-left: 4px;
-  background: #2ad85e;
+  background: var(--base-text-color);
   animation: cursor-blink 1s step-end infinite;
   vertical-align: text-bottom;
 }
