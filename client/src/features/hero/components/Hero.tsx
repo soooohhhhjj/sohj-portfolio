@@ -27,7 +27,7 @@ type HeroActionLink = {
 };
 
 export function Hero({ shouldAnimate, onAnimationsComplete }: HeroProps) {
-  const resumeUrl = `${import.meta.env.BASE_URL}sohj-resume.pdf`;
+  const resumeUrl = `${import.meta.env.BASE_URL}Abellera_Carlo_Joshua_B.pdf`;
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const heroActionLinks: HeroActionLink[] = [
     {

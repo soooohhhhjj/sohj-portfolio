@@ -121,7 +121,7 @@ function scrollToSection(sectionId: string) {
 
 export function Footer() {
   const year = new Date().getFullYear();
-  const resumeUrl = `${import.meta.env.BASE_URL}sohj-resume.pdf`;
+  const resumeUrl = `${import.meta.env.BASE_URL}Abellera_Carlo_Joshua_B.pdf`;
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
   useEffect(() => {
